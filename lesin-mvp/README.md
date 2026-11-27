@@ -1,6 +1,6 @@
 # Lesin — MVP marketplace tutor ↔ murid
 
-Web app mobile-first (font Plus Jakarta Sans, aksen ungu). Dibuat dengan HTML/CSS/JS biasa, tanpa backend.
+Web app mobile-first LesIn (font Plus Jakarta Sans, aksen ungu, maskot burung hantu). Dibuat dengan HTML/CSS/JS biasa, tanpa backend.
 Semua data disimpan di `localStorage`, dan pembayarannya masih **simulasi**.
 
 ## Cara menjalankan
@@ -42,3 +42,8 @@ Buka http://localhost:5181 lalu aktifkan tampilan HP di DevTools. Kalau mau, bis
 - Payment gateway Indonesia (Midtrans/Xendit) untuk QRIS/e-wallet/VA, plus webhook untuk menambah saldo.
 - Login OTP via WhatsApp/SMS. Chat realtime. Lokasi pakai kelurahan/kecamatan atau geocoding.
 - Moderasi: blokir nomor HP/link di bio dan chat sebelum unlock (anti-bypass).
+
+## Opsi tampilan untuk dicoba (lewat URL)
+- Tempat ganti mode: `/?sw=1` (segmented di beranda), `/?sw=2` (ikon di pojok kanan atas, default), `/?sw=3` (kartu di bawah beranda).
+- Teks hero: `/?copy=A` (default), `B`, `C`, `D`.
+Pilihan tersimpan di browser.

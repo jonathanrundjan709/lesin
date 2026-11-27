@@ -1,4 +1,4 @@
-/* ============ Lesin — MVP marketplace tutor ↔ murid ============
+/* ============ LesIn — MVP marketplace tutor ↔ murid ============
    Semua data disimpan di localStorage (belum ada backend).
    Pembayaran = simulasi. Kontak lanjut lewat WhatsApp (tanpa chat in-app).
    Pencari membeli KUOTA buka kontak dalam paket; tutor membayar per lowongan. */
@@ -45,6 +45,11 @@ const ICON = {
   doc: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
   wa: '<path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 .8c-1-.5-1.8-1.3-2.3-2.3l.8-1-1-2z"/>',
   megaphone: '<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 8a5 5 0 0 1 0 8M18 5a9 9 0 0 1 0 14"/>',
+  chevR: '<path d="m9 6 6 6-6 6"/>',
+  close: '<path d="M6 6l12 12M18 6 6 18"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  tag: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.2"/>',
   ticket: '<path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 6v12" stroke-dasharray="2 2"/>',
 };
 const ic = (n, cls = "") => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[n]}</svg>`;
@@ -63,18 +68,38 @@ const waLink = (phone, text) => `https://wa.me/62${String(phone).replace(/\D/g, 
 const stars = (n) => `<span class="stars">${[1, 2, 3, 4, 5].map((i) => ic(i <= n ? "star" : "starO")).join("")}</span>`;
 const minPerContact = () => Math.min(...PRICE.UNLOCK_PACKS.map((p) => p.price / p.n));
 
-function distKm(a, b) {
-  const R = 6371, rad = Math.PI / 180;
-  const dLa = (b[0] - a[0]) * rad, dLo = (b[1] - a[1]) * rad;
-  const h = Math.sin(dLa / 2) ** 2 + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(dLo / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h)) * 1.25;
-}
-// Jarak hanya dipakai di belakang layar (antar-pusat daerah). Tidak ditampilkan karena tanpa GPS angkanya tidak akurat.
-const areaDist = (a, b) => (a === b ? 0 : AREAS[a] && AREAS[b] ? distKm(AREAS[a], AREAS[b]) : Infinity);
+// Tanpa radius: 2 = satu kecamatan, 1 = satu kota/kabupaten, 0 = beda kota.
+const areaLevel = (a, b) => (a === b ? 2 : AREAS[a] && AREAS[a] === AREAS[b] ? 1 : 0);
+// Tarif selalu dibandingkan per jam, supaya sesi 60/90/120 menit adil.
+const DURS = [[60, "1 jam"], [90, "1,5 jam"], [120, "2 jam"]];
+const durLabel = (d) => (d === 60 ? "jam" : d === 90 ? "90 menit" : d === 120 ? "2 jam" : d + " menit");
+const perHour = (rate, dur) => (rate / (dur || 90)) * 60;
+TUTORS.forEach((t) => { t.dur = t.dur || 90; });
+const DAYS_FULL = { Sen: "Senin", Sel: "Selasa", Rab: "Rabu", Kam: "Kamis", Jum: "Jumat", Sab: "Sabtu", Min: "Minggu" };
+const fmtT = (t) => String(t).replace(":", ".");
+const addMin = (t, m) => { const [h, mi] = t.split(":").map(Number); const x = h * 60 + mi + m; return String(Math.floor(x / 60) % 24).padStart(2, "0") + "." + String(x % 60).padStart(2, "0"); };
+
+// Opsi tampilan untuk dicoba lewat URL: ?sw=1|2|3 (tempat ganti mode) dan ?copy=A|B|C|D (teks hero). Tersimpan di browser.
+const UI = (() => {
+  let o = {};
+  try {
+    o = JSON.parse(localStorage.getItem("lesin-ui") || "{}");
+    const q = new URLSearchParams(location.search);
+    ["sw", "copy"].forEach((k) => { if (q.get(k)) o[k] = q.get(k); });
+    localStorage.setItem("lesin-ui", JSON.stringify(o));
+  } catch {}
+  return { sw: ["1", "2", "3"].includes(o.sw) ? o.sw : "2", copy: ["A", "B", "C", "D"].includes((o.copy || "").toUpperCase()) ? o.copy.toUpperCase() : "A" };
+})();
+const HERO_COPY = {
+  A: ["Cari guru les", "Temukan guru les yang pas untuk anakmu.", "Baca CV tutor dulu, gratis. Bayar hanya saat kamu siap menghubungi."],
+  B: ["Les di rumah", "Les di rumah, tanpa ribet.", "Pilih tutor terverifikasi di sekitarmu, lalu lanjut chat lewat WhatsApp."],
+  C: ["Cari guru les", "Cari guru les yang cocok, bukan asal dekat.", "Lihat CV lengkap dan rating dulu. Kontak dibuka kalau kamu sudah yakin."],
+  D: ["Guru les terpercaya", "Guru les terpercaya, dekat dari rumah.", "Semua CV bisa dibaca gratis. Kamu bayar hanya saat membuka kontak tutor."],
+};
 
 // ---------- state ----------
-const KEY = "lesin-mvp-v3";
-const DEFAULT_SEARCH = { area: "Tebet", subject: "Matematika", level: "", curr: "", mode: "any", budget: 150000, gender: "any", sort: "match" };
+const KEY = "lesin-mvp-v4";
+const DEFAULT_SEARCH = { area: "Tebet", subject: "Matematika", level: "", curr: "", mode: "any", budget: 150000, dur: 90, gender: "any", sort: "match" };
 const DEFAULT_STATE = {
   role: "pencari",
   balance: 0,
@@ -84,12 +109,11 @@ const DEFAULT_STATE = {
   myPosts: [],
   newInterest: 0,
   reviews: {},
-  customAreas: [],
   customSubjects: [],
   tx: [],
   search: { ...DEFAULT_SEARCH },
   profile: {
-    name: "", phone: "", headline: "", area: "Tebet", radius: 7, rate: 100000, subjects: ["Matematika"], levels: ["SMP"], curricula: ["Merdeka"],
+    name: "", phone: "", headline: "", area: "Tebet", rate: 100000, dur: 60, cvDone: false, subjects: ["Matematika"], levels: ["SMP"], curricula: ["Merdeka"],
     edu: "", exp: 1, bio: "", achievements: "", online: true, offline: true, pro: false, docs: [],
   },
 };
@@ -100,40 +124,41 @@ function load() {
     const st = Object.assign(structuredClone(DEFAULT_STATE), saved);
     st.search = Object.assign({ ...DEFAULT_SEARCH }, saved.search || {});
     st.profile = Object.assign(structuredClone(DEFAULT_STATE.profile), saved.profile || {});
+    if (!AREAS[st.search.area]) st.search.area = DEFAULT_SEARCH.area;
+    if (!AREAS[st.profile.area]) st.profile.area = DEFAULT_STATE.profile.area;
     return st;
   } catch { return structuredClone(DEFAULT_STATE); }
 }
 const save = () => localStorage.setItem(KEY, JSON.stringify(S));
 const addTx = (label, amount) => { S.tx.unshift({ id: uid(), label, amount, t: now() }); };
-const allAreas = () => [...Object.keys(AREAS), ...OTHER_CITIES, ...S.customAreas];
 const allSubjects = () => [...SUBJECTS, ...S.customSubjects];
 // Filter tambahan yang sedang aktif (di luar daerah & mapel)
-const activeFilters = (s) => [s.level, s.curr, s.mode !== "any", s.budget !== DEFAULT_SEARCH.budget, s.gender !== "any"].filter(Boolean).length;
+const activeFilters = (s) => [s.level, s.curr, s.mode !== "any", s.budget !== DEFAULT_SEARCH.budget || s.dur !== DEFAULT_SEARCH.dur, s.gender !== "any"].filter(Boolean).length;
 
 // ---------- matching ----------
 function matchTutors(f) {
   return TUTORS.map((t) => {
-    const d = areaDist(f.area, t.area);
-    const reach = t.offline && d <= t.radius;
+    const lvl = areaLevel(f.area, t.area), d = 2 - lvl;
+    const reach = t.offline && lvl > 0;
     const modeOk = f.mode === "online" ? t.online : f.mode === "offline" ? reach : reach || t.online;
     const ok = (!f.subject || t.subjects.includes(f.subject)) && (!f.level || t.levels.includes(f.level))
-      && (!f.curr || t.curricula.includes(f.curr)) && modeOk && (f.gender === "any" || t.gender === f.gender) && t.rate <= f.budget * 1.25;
+      && (!f.curr || t.curricula.includes(f.curr)) && modeOk && (f.gender === "any" || t.gender === f.gender) && perHour(t.rate, t.dur) <= perHour(f.budget, f.dur) * 1.25;
     let score = 52;
     score += f.subject && t.subjects[0] === f.subject ? 10 : 5;
-    score += reach ? Math.round(18 * (1 - d / Math.max(t.radius, 1))) : 6;
-    score += t.rate <= f.budget ? 10 : 2;
+    score += reach ? (lvl === 2 ? 18 : 10) : 6;
+    score += perHour(t.rate, t.dur) <= perHour(f.budget, f.dur) ? 10 : 2;
     score += Math.round((t.rating - 4.5) * 14);
     score += Math.min(t.exp, 8);
     if (t.verified) score += 3;
-    return { t, d, reach, same: t.area === f.area, ok, score: Math.min(99, score) };
+    return { t, d, reach, same: lvl === 2, ok, score: Math.min(99, score) };
   }).filter((r) => r.ok);
 }
 function sortResults(list, by) {
-  const fn = { match: (a, b) => b.score - a.score, dist: (a, b) => a.d - b.d, price: (a, b) => a.t.rate - b.t.rate, rating: (a, b) => b.t.rating - a.t.rating }[by] || ((a, b) => b.score - a.score);
+  const fn = { match: (a, b) => b.score - a.score, dist: (a, b) => a.d - b.d, price: (a, b) => perHour(a.t.rate, a.t.dur) - perHour(b.t.rate, b.t.dur), rating: (a, b) => b.t.rating - a.t.rating }[by] || ((a, b) => b.score - a.score);
   return list.sort(fn);
 }
 const isUnlocked = (id) => S.unlocked.includes(id);
-const locLabel = (r) => (r.reach ? (r.same ? "Satu daerah · bisa ke rumah" : "Daerah sekitar · bisa ke rumah") : "Online");
+const locLabel = (r) => (r.reach ? (r.same ? "Satu kecamatan · bisa ke rumah" : "Satu kota · bisa ke rumah") : "Online");
 
 // ---------- sheet ----------
 function openSheet(html, onMount) {
@@ -165,20 +190,22 @@ function openPicker(btn) {
   const cfg = PK[btn.dataset.pk], hidden = btn.nextElementSibling, cur = hidden.value;
   // groups: [{title, items}] — dipakai daerah (Jabodetabek dulu, lalu kota lain)
   const groups = cfg.groups ? cfg.groups() : [{ title: "", items: cfg.options() }];
-  const all = groups.flatMap((g) => g.items);
+  const all = groups.filter((g) => !g.soon).flatMap((g) => g.items);
   const optHTML = (list) => list.map((v) => `<button type="button" class="opt ${v === cur ? "on" : ""}" data-v="${esc(v)}">
       ${cfg.mono && v ? mono(v, "xs") : ""}<span>${esc(v || cfg.blank)}</span>${v === cur ? ic("check", "ck") : ""}</button>`).join("");
   const listHTML = (q = "") => {
     const blank = cfg.blank && !q ? `<div class="opt-grid ${cfg.cols === 1 ? "one" : ""}">${optHTML([""])}</div>` : "";
     const body = groups.map((g) => {
       const items = g.items.filter((v) => v.toLowerCase().includes(q));
-      return items.length ? `${g.title ? `<p class="opt-group">${esc(g.title)}</p>` : ""}<div class="opt-grid ${cfg.cols === 1 ? "one" : ""}">${optHTML(items)}</div>` : "";
+      if (!items.length) return "";
+      const grid = g.soon ? items.map((v) => `<span class="opt dis"><span>${esc(v)}</span></span>`).join("") : optHTML(items);
+      return `${g.title ? `<p class="opt-group">${esc(g.title)}${g.soon ? ` <em class="soon">Segera hadir</em>` : ""}</p>` : ""}<div class="opt-grid ${cfg.cols === 1 ? "one" : ""}">${grid}</div>`;
     }).join("");
     return blank + (body || `<p class="small muted" style="padding:8px 2px">Tidak ditemukan. Tambahkan di bawah.</p>`);
   };
   openSheet(`
     <div class="row between" style="margin-bottom:12px"><h2>${esc(btn.dataset.label)}</h2><button type="button" class="link" data-x>Tutup</button></div>
-    ${cfg.search ? `<input class="input" id="pkSearch" placeholder="Cari ${esc(btn.dataset.label.toLowerCase())}…" style="margin-bottom:12px">` : ""}
+    ${cfg.search ? `<input class="input" id="pkSearch" placeholder="${cfg.searchHint || `Cari ${esc(btn.dataset.label.toLowerCase())}…`}" style="margin-bottom:12px">` : ""}
     <div class="opt-scroll" id="pkList">${listHTML()}</div>
     ${cfg.custom ? `<div class="custom-add"><p class="small muted" style="margin-bottom:8px">${esc(cfg.customHint || "Tidak ada di daftar?")}</p>
       <div class="row"><input class="input grow" id="pkCustom" placeholder="${esc(cfg.custom)}" maxlength="40"><button type="button" class="btn sm" id="pkAdd">${ic("plus")}Tambah</button></div></div>` : ""}
@@ -206,8 +233,8 @@ function openPicker(btn) {
   });
 }
 const areaPicker = (name, label, value) => picker(name, label, value, {
-  groups: () => [{ title: "Jabodetabek", items: Object.keys(AREAS) }, { title: "Kota lain", items: OTHER_CITIES }, { title: "Ditambahkan", items: S.customAreas }],
-  search: true, custom: "cth. Cipete, Pamulang", customHint: "Daerahmu belum ada? Tambahkan sendiri.", onAdd: (v) => S.customAreas.push(v) });
+  groups: () => [...Object.entries(AREA_TREE).map(([city, items]) => ({ title: city, items })), { title: "Kota lain", items: OTHER_CITIES, soon: true }],
+  search: true, searchHint: "Cari kecamatan atau kota…", placeholder: "Pilih kecamatan" });
 const subjectPicker = (name, label, value, blank) => picker(name, label, value, { options: allSubjects, blank, mono: true, custom: "cth. Ekonomi, Gitar", customHint: "Mata pelajaran lain?", onAdd: (v) => S.customSubjects.push(v) });
 const levelPicker = (name, value, blank) => picker(name, "Jenjang", value, { options: () => LEVELS, blank });
 const currPicker = (name, value, blank) => picker(name, "Kurikulum", value, { options: () => CURRICULA, blank });
@@ -216,7 +243,7 @@ const currPicker = (name, value, blank) => picker(name, "Kurikulum", value, { op
 function pay(o) {
   const canSaldo = o.allowSaldo !== false && S.balance >= o.amount;
   const methods = [
-    o.allowSaldo !== false && { v: "saldo", i: "wallet", t: "Saldo Lesin", s: `Tersedia ${rp(S.balance)}`, dis: !canSaldo },
+    o.allowSaldo !== false && { v: "saldo", i: "wallet", t: "Saldo LesIn", s: `Tersedia ${rp(S.balance)}`, dis: !canSaldo },
     { v: "qris", i: "qr", t: "QRIS", s: "Scan dari aplikasi bank / e-wallet apa pun" },
     { v: "ewallet", i: "phone", t: "E-Wallet", s: "Bayar lewat aplikasi dompet digital" },
     { v: "va", i: "bank", t: "Virtual Account", s: "Transfer dari m-banking" },
@@ -343,13 +370,14 @@ function render() {
   view.mount && view.mount(id);
   bindPickers();
   bindCopy();
+  bindRole();
   renderChrome();
 }
 function renderChrome() {
   const rb = $("#roleBtn");
-  rb.className = "role-pill " + (S.role === "tutor" ? "tutor" : "");
-  rb.innerHTML = `<span class="dot"></span>${S.role === "tutor" ? "Mode Tutor" : "Mode Pencari"} ${ic("swap")}`;
-  rb.querySelector("svg").style.cssText = "width:13px;height:13px;opacity:.6";
+  rb.hidden = UI.sw !== "2";
+  rb.innerHTML = `${ic(S.role === "tutor" ? "cap" : "user")}<span class="mdot"></span>`;
+  rb.setAttribute("aria-label", S.role === "tutor" ? "Mode tutor — ganti mode" : "Mode pencari — ganti mode");
   $("#walletPill").innerHTML = S.role === "tutor" ? `${ic("wallet")}${rp(S.balance)}` : `${ic("ticket")}${S.credits} kuota`;
   renderNav();
 }
@@ -358,25 +386,48 @@ function renderNav() {
   const items = S.role === "pencari"
     ? [["", "home", "Beranda"], ["search", "search", "Cari"], ["post", "plus", "Posting", true], ["kontak", "users", "Kontak"], ["myposts", "board", "Postinganku"]]
     : [["", "home", "Beranda"], ["board", "board", "Lowongan"], ["profile", "user", "CV Saya"], ["kontak", "users", "Kontak"], ["wallet", "wallet", "Saldo"]];
-  const active = { tutor: "search", results: "search", lowongan: "board" }[page] || page;
+  const active = { tutor: "search", results: "search", lowongan: "board", harga: "wallet", riwayat: "wallet" }[page] || page;
   $("#nav").innerHTML = items.map(([p, i, l, center]) => `
     <a href="#/${p}" class="${active === p ? "on" : ""} ${center ? "center" : ""}">
       ${center ? `<span class="ic">${ic(i)}</span>` : ic(i)}${l}
       ${p === "myposts" && S.newInterest ? `<span class="badge-dot">${S.newInterest}</span>` : ""}
     </a>`).join("");
 }
-$("#roleBtn").onclick = () => {
-  S.role = S.role === "tutor" ? "pencari" : "tutor"; save();
-  toast(S.role === "tutor" ? "Beralih ke <b>Mode Tutor</b>" : "Beralih ke <b>Mode Pencari</b>", "info");
+const cvReady = () => { const p = S.profile; return !!(p.cvDone && p.name && p.phone && p.subjects.length && p.levels.length && p.edu && p.rate); };
+function setRole(r) {
+  if (S.role === r) return;
+  S.role = r; save();
+  if (r === "tutor" && !cvReady()) {
+    location.hash = "#/profile"; render();
+    toast("Lengkapi <b>CV</b> dulu untuk jadi tutor. <b>Cara mengajar</b> boleh dikosongkan.", "info", 5200);
+    return;
+  }
+  toast(r === "tutor" ? "Beralih ke <b>Mode Tutor</b>" : "Beralih ke <b>Mode Pencari</b>", "info");
   location.hash = "#/"; render();
-};
-window.addEventListener("hashchange", () => { window.scrollTo(0, 0); render(); });
+}
+function modeSheet() {
+  const opt = (r, icon, t, d) => `<button type="button" class="mode-opt ${S.role === r ? "on" : ""}" data-role="${r}"><span class="mi">${ic(icon)}</span>
+    <span class="grow"><b>${t}</b><small>${d}</small></span>${S.role === r ? ic("check", "ck") : ""}</button>`;
+  openSheet(`<h2>Pakai LesIn sebagai</h2><p class="sub" style="margin:4px 0 14px">Kamu bisa pindah kapan saja. Data dan saldo tetap tersimpan.</p>
+    <div class="stack">${opt("pencari", "search", "Pencari guru les", "Cari tutor untuk anak atau dirimu sendiri")}${opt("tutor", "cap", "Tutor", "Pasang CV dan temukan murid baru")}</div>`, (sh) => {
+    $$("[data-role]", sh).forEach((b) => (b.onclick = () => { closeSheet(); setRole(b.dataset.role); }));
+  });
+}
+$("#roleBtn").onclick = modeSheet;
+const bindRole = () => $$("[data-setrole]").forEach((b) => (b.onclick = () => setRole(b.dataset.setrole)));
+const modeSeg = () => `<div class="mode-seg" role="group" aria-label="Mode">
+  <button type="button" class="${S.role === "pencari" ? "on" : ""}" data-setrole="pencari">${ic("search")}Cari guru</button>
+  <button type="button" class="${S.role === "tutor" ? "on" : ""}" data-setrole="tutor">${ic("cap")}Jadi tutor</button></div>`;
+const modeCard = () => S.role === "pencari"
+  ? `<section class="card mode-card section"><img src="assets/mascot.svg" alt="" width="64" height="64"><div class="grow"><h3>Kamu guru les?</h3><p class="small muted">Pasang CV dan dapatkan murid baru.</p></div><button class="btn sm ghost" data-setrole="tutor">Jadi tutor</button></section>`
+  : `<section class="card mode-card section"><img src="assets/mascot.svg" alt="" width="64" height="64"><div class="grow"><h3>Cari guru les?</h3><p class="small muted">Beralih ke mode pencari.</p></div><button class="btn sm ghost" data-setrole="pencari">Mode pencari</button></section>`;
+window.addEventListener("hashchange", () => { closeSheet(); window.scrollTo(0, 0); render(); });
 
 // ---------- shared components ----------
 const seg = (name, items, val) => `<div class="seg">${items.map(([v, l]) => `<label><input type="radio" name="${name}" value="${v}" ${v === val ? "checked" : ""}><span>${l}</span></label>`).join("")}</div>`;
 const back = (href = "javascript:history.back()", attr = "") => `<a class="back" href="${href}" aria-label="Kembali" ${attr}>${ic("back")}</a>`;
-const emptyBox = (icon, html) => `<div class="empty"><span class="empty-ic">${ic(icon)}</span>${html}</div>`;
-const inRadius = (p) => p.mode === "online" || areaDist(S.profile.area, p.area) <= S.profile.radius;
+const emptyBox = (icon, html) => `<div class="empty"><img class="empty-mascot" src="assets/mascot.svg" alt="" width="84" height="84">${html}</div>`;
+const inRadius = (p) => p.mode === "online" || areaLevel(S.profile.area, p.area) > 0;
 const bindCopy = () => $$("[data-copy]").forEach((b) => (b.onclick = () => copyText(b.dataset.copy)));
 
 function avatarHTML(t, lg) {
@@ -414,7 +465,7 @@ function tutorCard(r, asDiv) {
     <div class="divider"></div>
     <div class="row between">
       <div class="chips">${t.subjects.slice(0, 2).map((s) => `<span class="chip">${esc(s)}</span>`).join("")}${t.subjects.length > 2 ? `<span class="chip">+${t.subjects.length - 2}</span>` : ""}</div>
-      <div class="price">${rp(t.rate)}<small>/sesi</small></div>
+      <div class="price">${rp(t.rate)}<small>/${durLabel(t.dur)}</small></div>
     </div>
   </${tag}>`;
 }
@@ -433,11 +484,11 @@ function postCard(p, mode = "tutor") {
     <p class="sub" style="margin-top:10px;font-size:13px">${esc(p.student)}</p>
     <div class="post-meta">
       <div><span>Daerah</span><b>${esc(p.area)}</b></div>
-      <div><span>Budget / sesi</span><b>${rp(p.budget)}</b></div>
-      <div><span>Jadwal</span><b>${p.days.join(", ")} · ${esc(p.time)}</b></div>
+      <div><span>Budget / ${durLabel(p.dur || 90)}</span><b>${rp(p.budget)}</b></div>
+      <div><span>Jadwal</span><b>${p.times ? p.days.map((d) => `${d} ${fmtT(p.times[d])}`).join(" · ") : `${p.days.join(", ")} · ${esc(p.time)}`}</b></div>
       <div><span>Mode · Kurikulum</span><b>${p.mode === "online" ? "Online" : p.mode === "offline" ? "Ke rumah" : "Bebas"} · ${esc(p.curr || "Bebas")}</b></div>
     </div>
-    ${mode !== "own" ? `<div class="row between" style="margin-top:10px"><span class="small muted">${p.contacted} tutor sudah menghubungi</span>${inRadius(p) && p.mode !== "online" ? `<span class="chip">${ic("pin")}Dalam radiusmu</span>` : ""}</div>` : ""}
+    ${mode !== "own" ? `<div class="row between" style="margin-top:10px"><span class="small muted">${p.contacted} tutor sudah menghubungi</span>${inRadius(p) && p.mode !== "online" ? `<span class="chip">${ic("pin")}Satu kota denganmu</span>` : ""}</div>` : ""}
   </${tag}>`;
 }
 
@@ -452,12 +503,14 @@ function homePencari() {
   const s = S.search;
   const n = matchTutors(s).length;
   const popular = SUBJECTS.slice(0, 6);
-  return `
+  const hc = HERO_COPY[UI.copy];
+  return `${UI.sw === "1" ? modeSeg() : ""}
   <section class="hero">
-    <p class="eyebrow light">Cari guru les</p>
-    <h1 style="margin-top:6px">Guru les terbaik,<br>dekat rumahmu.</h1>
-    <p style="margin-top:6px">Lihat CV tutor dulu, bayar hanya saat kamu mau kontaknya.</p>
-    <div style="height:28px"></div>
+    <img class="hero-mascot" src="assets/mascot.svg" alt="" width="120" height="120">
+    <p class="eyebrow light">${hc[0]}</p>
+    <h1 style="margin-top:6px">${hc[1]}</h1>
+    <p style="margin-top:6px">${hc[2]}</p>
+    <div style="height:40px"></div>
   </section>
   <form class="card quick" id="quickForm">
     ${areaPicker("area", "Daerah rumah", s.area)}
@@ -501,7 +554,8 @@ function homePencari() {
     <div class="stat"><b>${TUTORS.length}</b><span>Tutor aktif</span></div>
     <div class="stat"><b>${TUTORS.filter((t) => t.verified).length}</b><span>Terverifikasi</span></div>
     <div class="stat"><b>4,8</b><span>Rata-rata rating</span></div>
-  </div>`;
+  </div>
+  ${UI.sw === "3" ? modeCard() : ""}`;
 }
 
 function homeTutor() {
@@ -509,7 +563,8 @@ function homeTutor() {
   const near = SEED_POSTS.filter(inRadius);
   const mine = near.filter((x) => p.subjects.includes(x.subject));
   const comp = profileCompletion();
-  return `
+  return `${UI.sw === "1" ? modeSeg() : ""}
+  ${cvReady() ? "" : cvGate()}
   <section class="card tutor-sum">
     <div class="row between" style="align-items:flex-start">
       <div><p class="eyebrow">Mode tutor</p><h1 style="font-size:22px;margin-top:4px">Halo, ${esc((p.name || "Tutor").split(" ")[0])}</h1>
@@ -535,14 +590,20 @@ function homeTutor() {
     <div class="stack">${(mine.length ? mine : near).slice(0, 3).map((x) => postCard(x)).join("") || emptyBox("board", "Belum ada postingan di sekitarmu.")}</div>
   </div>
 
-  ${proCard()}`;
+  ${proCard()}
+  ${UI.sw === "3" ? modeCard() : ""}`;
+}
+function cvGate() {
+  return `<section class="card cv-gate"><img src="assets/mascot.svg" alt="" width="64" height="64"><div class="grow"><h3>Lengkapi CV untuk mulai</h3>
+    <p class="small" style="color:var(--ink-2);margin-top:2px;line-height:1.45">Nama, WhatsApp, mapel, jenjang, pendidikan, dan tarif wajib diisi. “Tentang caramu mengajar” boleh dikosongkan.</p>
+    <a class="btn sm" href="#/profile" style="margin-top:10px">Isi CV sekarang ${ic("arrow")}</a></div></section>`;
 }
 function proCard() {
   if (S.profile.pro) return `<div class="pro-card section"><div class="row"><span class="pro-ic">${ic("bolt")}</span><div><h3>Tutor Pro aktif</h3><p class="small" style="color:#7A4E00">CV-mu diprioritaskan & dapat 5 kredit hubungi gratis/bulan.</p></div></div></div>`;
   return `<div class="pro-card section">
     <div class="row" style="align-items:flex-start"><span class="pro-ic">${ic("bolt")}</span><div class="grow"><h3>Tutor Pro — ${rp(PRICE.PRO)}/bulan</h3>
-    <p class="small" style="color:#7A4E00;margin-top:4px;line-height:1.5">Badge Pro, CV tampil paling atas di daerahmu, 5 kredit hubungi gratis tiap bulan, statistik siapa yang melihat CV-mu.</p></div></div>
-    <button class="btn acc" id="goPro" style="margin-top:12px">Coba Tutor Pro</button>
+    <p class="small" style="color:#7A4E00;margin-top:4px;line-height:1.5">CV-mu tampil lebih tinggi dan dapat kredit hubungi gratis tiap bulan.</p></div></div>
+    <button class="btn acc" id="goPro" style="margin-top:12px">Lihat keuntungan Pro</button>
   </div>`;
 }
 VIEWS[""].mount = () => {
@@ -555,10 +616,20 @@ VIEWS[""].mount = () => {
   $$("[data-subj]").forEach((a) => (a.onclick = () => { S.search = { ...DEFAULT_SEARCH, area: S.search.area, subject: a.dataset.subj }; save(); }));
   bindPro();
 };
-function bindPro() {
-  const g = $("#goPro");
-  if (g) g.onclick = () => pay({ title: "Langganan Tutor Pro", desc: "Berlaku 30 hari, bisa berhenti kapan saja.", amount: PRICE.PRO,
-    successTitle: "Tutor Pro aktif", successText: "CV-mu sekarang diprioritaskan di hasil pencarian.", onSuccess: () => { S.profile.pro = true; addTx("Langganan Tutor Pro", -PRICE.PRO); } });
+function bindPro() { const g = $("#goPro"); if (g) g.onclick = proSheet; }
+function proSheet() {
+  const perks = [["bolt", "Badge Pro di CV", "Pencari langsung melihat kamu tutor yang aktif dan serius."], ["eye", "Tampil paling atas", "CV-mu diprioritaskan di hasil pencarian daerahmu, jadi lebih sering dilihat."],
+    ["ticket", "5 kredit hubungi gratis / bulan", `Setara ${rp(PRICE.CHAT * 5)}. Pakai untuk menghubungi murid dari Lowongan.`], ["board", "Statistik pelihat CV", "Lihat berapa pencari yang membuka CV-mu tiap minggu."]];
+  openSheet(`<div class="pro-hero"><img src="assets/mascot.svg" alt="" width="72" height="72"><div><p class="eyebrow">Langganan bulanan</p><h2>Tutor Pro</h2></div></div>
+    <ul class="perks">${perks.map(([i, t, d]) => `<li><span class="pi">${ic(i)}</span><div><b>${t}</b><p>${d}</p></div></li>`).join("")}</ul>
+    <div class="pro-price"><span class="muted small">Harga</span><b>${rp(PRICE.PRO)}<small> / bulan</small></b></div>
+    <button class="btn acc" id="proGo">Langganan Tutor Pro</button>
+    <button class="btn line" id="proLater" style="margin-top:8px">Nanti saja</button>
+    <p class="demo-note">Berlaku 30 hari, bisa berhenti kapan saja.</p>`, (sh) => {
+    $("#proLater", sh).onclick = closeSheet;
+    $("#proGo", sh).onclick = () => pay({ title: "Langganan Tutor Pro", desc: "Berlaku 30 hari, bisa berhenti kapan saja.", amount: PRICE.PRO,
+      successTitle: "Tutor Pro aktif", successText: "CV-mu sekarang diprioritaskan di hasil pencarian.", onSuccess: () => { S.profile.pro = true; addTx("Langganan Tutor Pro", -PRICE.PRO); } });
+  });
 }
 
 // ---------- SEARCH (filters) ----------
@@ -576,8 +647,9 @@ VIEWS.search = () => {
       <div class="grow" style="min-width:0">${currPicker("curr", s.curr, "Semua")}</div>
     </div>
     <div class="field"><span class="lbl">Cara belajar</span>${seg("mode", [["any", "Bebas"], ["offline", "Ke rumah"], ["online", "Online"]], s.mode)}</div>
+    <div class="field"><span class="lbl">Durasi sesi</span>${seg("dur", DURS, s.dur)}</div>
     <div class="field"><span class="lbl">Budget maks per sesi: <span class="range-val" id="budgetVal">${rp(s.budget)}</span></span>
-      <input type="range" name="budget" min="50000" max="300000" step="10000" value="${s.budget}"></div>
+      <input type="range" name="budget" min="50000" max="400000" step="10000" value="${s.budget}"><span class="hint">Maksimal Rp400.000 untuk durasi yang dipilih.</span></div>
     <div class="field"><span class="lbl">Preferensi tutor</span>${seg("gender", [["any", "Bebas"], ["P", "Perempuan"], ["L", "Laki-laki"]], s.gender)}</div>
     <div class="info" style="margin-bottom:14px">${ic("info")}<span><b id="liveCount">0</b> tutor cocok dengan kriteria ini. CV bisa dilihat gratis — kontak dibuka mulai ${rp(minPerContact())}.</span></div>
     <button class="btn">${ic("search")} Tampilkan tutor</button>
@@ -586,7 +658,7 @@ VIEWS.search = () => {
 VIEWS.search.mount = () => {
   const f = $("#searchForm");
   const read = () => { const fd = new FormData(f); return { ...S.search, area: fd.get("area"), subject: fd.get("subject"), level: fd.get("level"), curr: fd.get("curr"),
-    mode: fd.get("mode"), budget: +fd.get("budget"), gender: fd.get("gender") }; };
+    mode: fd.get("mode"), budget: +fd.get("budget"), dur: +fd.get("dur"), gender: fd.get("gender") }; };
   const upd = () => { const v = read(); $("#budgetVal").textContent = rp(v.budget); $("#liveCount").textContent = matchTutors(v).length; };
   f.oninput = upd; f.onchange = upd; upd();
   f.onsubmit = (e) => { e.preventDefault(); S.search = read(); save(); location.hash = "#/results"; };
@@ -599,15 +671,13 @@ VIEWS.results = () => {
   const s = S.search;
   const list = sortResults(matchTutors(s), s.sort);
   const nf = activeFilters(s);
-  const sum = [s.subject || "Semua pelajaran", s.level || "semua jenjang", s.curr, s.area, s.mode === "online" ? "online" : s.mode === "offline" ? "ke rumah" : null, nf && s.budget !== DEFAULT_SEARCH.budget ? `≤ ${rp(s.budget)}` : null, s.gender === "P" ? "tutor perempuan" : s.gender === "L" ? "tutor laki-laki" : null].filter(Boolean).join(" · ");
-  const outside = !AREAS[s.area];
+  const sum = [s.subject || "Semua pelajaran", s.level || "semua jenjang", s.curr, s.area, s.mode === "online" ? "online" : s.mode === "offline" ? "ke rumah" : null, nf && (s.budget !== DEFAULT_SEARCH.budget || s.dur !== DEFAULT_SEARCH.dur) ? `≤ ${rp(s.budget)} / ${durLabel(s.dur)}` : null, s.gender === "P" ? "tutor perempuan" : s.gender === "L" ? "tutor laki-laki" : null].filter(Boolean).join(" · ");
   return `
   <div class="row" style="margin-bottom:12px">${back("#/", "data-reset")}<h2 class="grow">Hasil pencarian</h2>
     <a href="#/search" class="btn sm ${nf ? "filter-on" : "line"}">${ic("filter")}Filter${nf ? `<span class="fcount">${nf}</span>` : ""}</a></div>
   <div class="result-head">
     <div class="row" style="gap:12px"><b class="big">${list.length}</b><div><b>tutor cocok dengan kriteriamu</b><p class="filters-sum">${esc(sum)}</p></div></div>
   </div>
-  ${outside ? `<div class="info" style="margin-top:10px">${ic("info")}<span>Tutor tatap muka baru tersedia di Jabodetabek. Untuk ${esc(s.area)}, kami tampilkan tutor online dulu. Posting kebutuhanmu supaya tutor di sana bisa menemukanmu.</span></div>` : ""}
   <div class="hscroll" style="margin-top:12px">${[["match", "Paling cocok"], ["dist", "Terdekat"], ["price", "Termurah"], ["rating", "Rating"]].map(([v, l]) =>
     `<button class="chip ${s.sort === v ? "pri" : ""}" data-sort="${v}" style="padding:8px 12px">${l}</button>`).join("")}</div>
   <div class="stack" style="margin-top:12px">
@@ -625,7 +695,7 @@ VIEWS.tutor = (id) => {
   const t = TUTORS.find((x) => x.id === id); if (!t) return emptyBox("search", "Tutor tidak ditemukan.");
   const r = matchTutors({ ...S.search, subject: "", level: "", curr: "", gender: "any", budget: 9e9 }).find((x) => x.t.id === id);
   const open = isUnlocked(id);
-  const msg = `Halo Kak ${t.name.split(" ")[0]}, saya lihat profil Kakak di Lesin. Saya sedang cari les ${S.search.subject || t.subjects[0]}${S.search.level ? " " + S.search.level : ""} di daerah ${S.search.area}. Apakah masih ada jadwal kosong?`;
+  const msg = `Halo Kak ${t.name.split(" ")[0]}, saya lihat profil Kakak di LesIn. Saya sedang cari les ${S.search.subject || t.subjects[0]}${S.search.level ? " " + S.search.level : ""} di daerah ${S.search.area}. Apakah masih ada jadwal kosong?`;
   const mine = S.reviews[t.id];
   const revs = [...(mine ? [{ ...mine, name: "Kamu", when: "baru saja" }] : []), ...(REVIEWS[t.id] || [])];
   return `
@@ -668,7 +738,7 @@ VIEWS.tutor = (id) => {
     <div class="cv-sec"><h3>Kurikulum</h3><div class="chips">${t.curricula.map((c) => `<span class="chip">${esc(c)}</span>`).join("")}</div></div>
     <div class="cv-sec"><h3>Hari tersedia</h3><div class="days">${DAYS.map((x) => `<span class="${t.avail.includes(x) ? "on" : ""}">${x}</span>`).join("")}</div></div>
     <div class="cv-sec"><h3>Daerah & cara mengajar</h3>
-      <dl class="kv"><dt>Domisili</dt><dd>${esc(t.area)}</dd><dt>Ke rumah</dt><dd>${t.offline ? `Ya, sekitar ${t.radius} km dari domisili` : "Tidak"}</dd><dt>Online</dt><dd>${t.online ? "Ya" : "Tidak"}</dd></dl></div>
+      <dl class="kv"><dt>Domisili</dt><dd>Kec. ${esc(t.area)}</dd><dt>Ke rumah</dt><dd>${t.offline ? `Ya, area ${esc(AREAS[t.area] || t.area)}` : "Tidak"}</dd><dt>Online</dt><dd>${t.online ? "Ya" : "Tidak"}</dd></dl></div>
   </div>
 
   <div class="card section">
@@ -680,7 +750,7 @@ VIEWS.tutor = (id) => {
   </div>
 
   <div class="card section row between">
-    <div><span class="small muted">Tarif tutor (dibayar langsung ke tutor)</span><div class="price" style="font-size:20px">${rp(t.rate)}<small> / sesi 90 menit</small></div></div>
+    <div><span class="small muted">Tarif tutor (dibayar langsung ke tutor)</span><div class="price" style="font-size:20px">${rp(t.rate)}<small> / ${durLabel(t.dur)}</small></div></div>
     ${r ? `<div class="match"><b>${r.score}%</b><span>cocok</span></div>` : ""}
   </div>`;
 };
@@ -708,15 +778,25 @@ VIEWS.post = () => {
     </div>
     <label class="field" data-f="student"><span class="lbl">Tentang murid</span><input class="input" name="student" placeholder="cth. Kelas 8, nilai ulangan turun"></label>
     ${areaPicker("area", "Daerah", s.area)}
-    <div class="field"><span class="lbl">Cara belajar</span>${seg("mode", [["offline", "Ke rumah"], ["online", "Online"], ["any", "Bebas"]], "offline")}</div>
-    <div class="field" data-f="days"><span class="lbl">Hari</span><div class="chips">${DAYS.map((d, i) => `<label class="pick"><input type="checkbox" name="days" value="${d}" ${i === 0 || i === 3 ? "checked" : ""}><span>${d}</span></label>`).join("")}</div></div>
-    <label class="field" data-f="time"><span class="lbl">Jam</span><input class="input" name="time" value="16.00–17.30"></label>
-    <div class="field"><span class="lbl">Budget per sesi: <span class="range-val" id="pbVal">${rp(120000)}</span></span><input type="range" name="budget" min="50000" max="300000" step="5000" value="120000"></div>
+    <div class="field"><span class="lbl">Cara belajar</span>${seg("mode", [["offline", "Ke rumah"], ["online", "Online"]], "offline")}</div>
+    <div class="field"><span class="lbl">Durasi per sesi</span>${seg("dur", DURS, 90)}</div>
+    <div class="field" data-f="days"><span class="lbl">Hari & jam les</span>
+      <div class="daylist">${Object.entries(DAYS_FULL).map(([d, full], i) => { const on = i === 0 || i === 3; return `
+        <div class="dayrow ${on ? "on" : ""}" data-day="${d}">
+          <label class="daytoggle"><input type="checkbox" name="days" value="${d}" ${on ? "checked" : ""}><span class="dn">${full}</span><span class="dsum"></span><span class="dchk">${ic("check")}</span></label>
+          <div class="daytime"><span class="small muted">Jam mulai</span><input class="input" type="time" name="t_${d}" value="16:00" step="900"></div>
+        </div>`; }).join("")}</div>
+      <span class="hint">Pilih hari, lalu atur jam mulainya. Tiap hari boleh beda jam.</span></div>
+    <div class="field"><span class="lbl">Budget per sesi: <span class="range-val" id="pbVal">${rp(120000)}</span><span class="muted" id="pbDur"> / 90 menit</span></span>
+      <input type="range" name="budget" min="50000" max="400000" step="5000" value="120000"><span class="hint">Maksimal Rp400.000 per sesi.</span></div>
     <label class="field"><span class="lbl">Catatan untuk tutor (opsional)</span><textarea class="input" name="notes" placeholder="cth. Lebih suka tutor perempuan, ada laporan perkembangan"></textarea></label>
-    <div class="field"><span class="lbl">Boost postingan</span>
+    <section class="card boost-card">
+      <div class="row" style="gap:10px;margin-bottom:12px"><span class="boost-ic">${ic("bolt")}</span>
+        <div><h3>Boost postingan</h3><p class="small" style="color:var(--ink-2);margin-top:2px">Tampil paling atas supaya tutor lebih cepat melihat kebutuhanmu.</p></div></div>
       <div class="boost-list">${pk.map(([d, t, sub, price, tag]) => `
         <label class="boost"><input type="radio" name="boost" value="${d}" ${d === 0 ? "checked" : ""}>
-          <span class="bx"><span class="grow"><b>${t}</b>${tag ? `<em>${tag}</em>` : ""}<small>${sub}</small></span><strong>${price}</strong></span></label>`).join("")}</div></div>
+          <span class="bx"><span class="grow"><b>${t}</b>${tag ? `<em>${tag}</em>` : ""}<small>${sub}</small></span><strong>${price}</strong></span></label>`).join("")}</div>
+    </section>
     <div class="info" style="margin-bottom:14px">${ic("shield")}<span>Nama lengkap & alamatmu tidak ditampilkan. Tutor hanya melihat daerah dan kebutuhan les.</span></div>
     <button class="btn" id="postSubmit">Tayangkan postingan</button>
   </form>`;
@@ -724,20 +804,32 @@ VIEWS.post = () => {
 VIEWS.post.mount = () => {
   const f = $("#postForm");
   const updBtn = () => { const d = +f.querySelector("input[name=boost]:checked").value; $("#postSubmit").textContent = d ? `Tayangkan + boost ${d} hari — ${rp(PRICE.BOOST[d])}` : "Tayangkan postingan"; };
-  f.addEventListener("input", (e) => { $("#pbVal").textContent = rp(+f.budget.value); updBtn(); clearErr(e.target.closest(".field.err")); });
-  f.addEventListener("change", (e) => { updBtn(); clearErr(e.target.closest(".field.err")); });
+  const updDays = () => {
+    const dur = +f.querySelector("input[name=dur]:checked").value;
+    $$(".dayrow", f).forEach((r) => {
+      const on = r.querySelector("input[type=checkbox]").checked, t = r.querySelector("input[type=time]").value;
+      r.classList.toggle("on", on);
+      r.querySelector(".dsum").textContent = on && t ? `${fmtT(t)} – ${addMin(t, dur)}` : "";
+    });
+    $("#pbDur").textContent = ` / ${durLabel(dur)}`;
+  };
+  const upd = (e) => { $("#pbVal").textContent = rp(+f.budget.value); updDays(); updBtn(); e && clearErr(e.target.closest(".field.err")); };
+  f.addEventListener("input", upd); f.addEventListener("change", upd); updDays();
   f.onsubmit = (e) => {
     e.preventDefault(); const fd = new FormData(f);
     const p = { id: "m" + uid(), owner: fd.get("owner").trim(), phone: fd.get("phone").trim(), subject: fd.get("subject"), level: fd.get("level"), curr: fd.get("curr"),
-      student: fd.get("student").trim(), area: fd.get("area"), mode: fd.get("mode"), days: fd.getAll("days"), time: fd.get("time").trim(), budget: +fd.get("budget"),
+      student: fd.get("student").trim(), area: fd.get("area"), mode: fd.get("mode"), days: fd.getAll("days"), dur: +fd.get("dur"), budget: +fd.get("budget"),
       notes: fd.get("notes").trim(), hoursAgo: 0, contacted: 0, created: now(), boost: 0, interested: [] };
     const digits = p.phone.replace(/\D/g, "");
+    p.times = {}; p.days.forEach((d) => { p.times[d] = fd.get("t_" + d); });
+    const t0 = p.times[p.days[0]];
+    p.time = t0 ? `${fmtT(t0)}–${addMin(t0, p.dur)}` : "";
     const ok = showErrors(f, [
       { f: "owner", ok: p.owner.length >= 2, msg: "Isi nama yang akan tampil, cth. Ibu Ratna." },
       { f: "phone", ok: /^(0|62)8\d{7,12}$/.test(digits), msg: p.phone ? "Nomor WhatsApp harus diawali 08, 10–13 angka." : "Isi nomor WhatsApp supaya tutor bisa menghubungimu." },
       { f: "student", ok: p.student.length >= 3, msg: "Ceritakan singkat tentang murid, cth. kelas berapa." },
       { f: "days", ok: p.days.length > 0, msg: "Pilih minimal satu hari." },
-      { f: "time", ok: p.time.length >= 2, msg: "Isi jam les, cth. 16.00–17.30." },
+      { f: "days", ok: p.days.every((d) => p.times[d]), msg: "Isi jam mulai untuk tiap hari yang dipilih." },
     ]);
     if (!ok) return;
     S.lastOwner = p.owner; S.lastPhone = p.phone;
@@ -775,7 +867,7 @@ VIEWS.myposts = () => {
     return `<div class="post-group">
       ${postCard(p, "own")}
       <div class="row between" style="margin:12px 4px 4px"><b class="small">${ts.length} tutor tertarik</b>${p.boost ? `<span class="chip pri">${ic("bolt")}Boost ${p.boost} hari</span>` : `<span class="chip">Aktif</span>`}</div>
-      <div class="card" style="padding:4px 14px">${ts.map((t) => contactRow(t.name, t.headline, t.id, waLink(t.phone, `Halo Kak ${t.name.split(" ")[0]}, terima kasih sudah tertarik dengan postingan les ${p.subject} saya di Lesin.`), `#/tutor/${t.id}`)).join("")
+      <div class="card" style="padding:4px 14px">${ts.map((t) => contactRow(t.name, t.headline, t.id, waLink(t.phone, `Halo Kak ${t.name.split(" ")[0]}, terima kasih sudah tertarik dengan postingan les ${p.subject} saya di LesIn.`), `#/tutor/${t.id}`)).join("")
         || `<p class="small muted" style="padding:12px 0">Menunggu tutor… biasanya dalam beberapa jam.</p>`}</div>
     </div>`;
   }).join("")}</div>`;
@@ -795,13 +887,13 @@ VIEWS.kontak = () => {
     const me = S.profile.name ? S.profile.name.split(" ")[0] : "tutor";
     return `<h1>Kontak</h1><p class="sub">Calon murid yang sudah kamu buka kontaknya. Lanjutkan di WhatsApp.</p>
     ${posts.length ? `<div class="card section" style="padding:4px 14px">${posts.map((p) => contactRow(p.owner, `${p.subject} ${p.level} · ${p.area} · ${p.phone}`, p.id,
-      waLink(p.phone, `Halo ${p.owner}, saya ${me}, tutor ${p.subject} dari Lesin. Saya tertarik dengan kebutuhan les ${p.subject} ${p.level} di ${p.area}. Boleh kita atur jadwal trial?`), `#/lowongan/${p.id}`)).join("")}</div>`
+      waLink(p.phone, `Halo ${p.owner}, saya ${me}, tutor ${p.subject} dari LesIn. Saya tertarik dengan kebutuhan les ${p.subject} ${p.level} di ${p.area}. Boleh kita atur jadwal trial?`), `#/lowongan/${p.id}`)).join("")}</div>`
       : emptyBox("users", "Belum ada kontak. Buka kontak calon murid dari <a href='#/board' class='link'>Lowongan</a>.")}`;
   }
   const ts = S.unlocked.map((id) => TUTORS.find((t) => t.id === id)).filter(Boolean);
   return `<h1>Kontak</h1><p class="sub">Tutor yang kontaknya sudah terbuka. Chat lewat WhatsApp, lalu beri ulasan setelah les.</p>
   ${ts.length ? `<div class="card section" style="padding:4px 14px">${ts.map((t) => contactRow(t.name, `${t.subjects.slice(0, 2).join(", ")} · ${t.phone}`, t.id,
-    waLink(t.phone, `Halo Kak ${t.name.split(" ")[0]}, saya lihat profil Kakak di Lesin. Apakah masih ada jadwal kosong untuk les ${t.subjects[0]}?`), `#/tutor/${t.id}`,
+    waLink(t.phone, `Halo Kak ${t.name.split(" ")[0]}, saya lihat profil Kakak di LesIn. Apakah masih ada jadwal kosong untuk les ${t.subjects[0]}?`), `#/tutor/${t.id}`,
     S.reviews[t.id] ? `<span class="chip">${ic("star", "star")}${S.reviews[t.id].stars}</span>` : `<button class="icon-btn" aria-label="Tulis ulasan" title="Tulis ulasan" data-review="${t.id}">${ic("starO")}</button>`)).join("")}</div>`
     : emptyBox("users", "Belum ada kontak. Buka kontak tutor dari <a href='#/search' class='link'>pencarian</a>.")}`;
 };
@@ -809,6 +901,7 @@ VIEWS.kontak.mount = () => $$("[data-review]").forEach((b) => (b.onclick = () =>
 
 // ---------- BOARD (tutor melihat postingan) ----------
 VIEWS.board = () => {
+  if (!cvReady()) return `<h1>Lowongan les</h1><div class="section">${cvGate()}</div>`;
   const filt = S.boardFilter || "Untukku";
   const p = S.profile;
   let list = [...SEED_POSTS];
@@ -820,14 +913,15 @@ VIEWS.board = () => {
   <div class="hscroll section" style="margin-top:14px">${["Untukku", "Dekat", "Semua", ...SUBJECTS].map((x) => `<button class="chip ${filt === x ? "pri" : ""}" data-bf="${esc(x)}" style="padding:8px 12px">${esc(x)}</button>`).join("")}</div>
   <div class="stack" style="margin-top:12px">${list.map((x) => postCard(x)).join("") || emptyBox("board", "Tidak ada lowongan untuk filter ini.")}</div>`;
 };
-VIEWS.board.mount = () => $$("[data-bf]").forEach((b) => (b.onclick = () => { S.boardFilter = b.dataset.bf; save(); render(); }));
+VIEWS.board.mount = () => !cvReady() ? 0 : $$("[data-bf]").forEach((b) => (b.onclick = () => { S.boardFilter = b.dataset.bf; save(); render(); }));
 
 VIEWS.lowongan = (id) => {
+  if (!cvReady()) return `<h1>Lowongan les</h1><div class="section">${cvGate()}</div>`;
   const p = SEED_POSTS.find((x) => x.id === id); if (!p) return emptyBox("board", "Postingan tidak ditemukan.");
   const done = S.contactedPosts.includes(id);
   const fit = S.profile.subjects.includes(p.subject) && S.profile.levels.includes(p.level);
   const me = S.profile.name ? S.profile.name.split(" ")[0] : "tutor";
-  const wa = waLink(p.phone, `Halo ${p.owner}, saya ${me}, tutor ${p.subject} dari Lesin. Saya tertarik dengan kebutuhan les ${p.subject} ${p.level} di ${p.area}. Boleh kita atur jadwal trial?`);
+  const wa = waLink(p.phone, `Halo ${p.owner}, saya ${me}, tutor ${p.subject} dari LesIn. Saya tertarik dengan kebutuhan les ${p.subject} ${p.level} di ${p.area}. Boleh kita atur jadwal trial?`);
   return `<div class="row" style="margin-bottom:12px">${back()}<h2 class="grow">Detail lowongan</h2></div>
   ${postCard(p, "detail")}
   ${p.notes ? `<div class="card section"><h3 class="cap-title">Catatan</h3><p class="sub" style="margin-top:6px">${esc(p.notes)}</p></div>` : ""}
@@ -837,6 +931,7 @@ VIEWS.lowongan = (id) => {
        <div class="sticky-cta"><button class="btn" id="contactBtn">${ic("unlock")}Buka WhatsApp ${esc(maskOwner(p.owner))} — ${rp(PRICE.CHAT)}</button></div>`}`;
 };
 VIEWS.lowongan.mount = (id) => {
+  if (!cvReady()) return;
   const p = SEED_POSTS.find((x) => x.id === id); const b = $("#contactBtn"); if (!b) return;
   b.onclick = () => pay({
     title: "Buka kontak calon murid", desc: `Nama & nomor WhatsApp <b>${esc(maskOwner(p.owner))}</b> untuk les ${esc(p.subject)} ${esc(p.level)} akan terbuka. CV-mu juga dikirim ke pencari.`,
@@ -851,69 +946,89 @@ function profileCompletion() {
   const checks = [p.name, p.phone, p.headline, p.edu, p.bio, p.achievements, p.subjects.length, p.levels.length, p.docs.length >= 2];
   return Math.round((checks.filter(Boolean).length / checks.length) * 100);
 }
+function readCv(f) {
+  const fd = new FormData(f);
+  return { name: fd.get("name").trim(), phone: fd.get("phone").trim(), headline: fd.get("headline").trim(), subjects: fd.getAll("subjects"), levels: fd.getAll("levels"),
+    curricula: fd.getAll("curricula"), area: fd.get("area"), rate: +fd.get("rate"), dur: +fd.get("dur"), exp: +fd.get("exp"), edu: fd.get("edu").trim(),
+    bio: fd.get("bio").trim(), achievements: fd.get("achievements").trim() };
+}
 VIEWS.profile = () => {
   const p = S.profile;
   const preview = { id: "me", name: p.name || "Nama Kamu", area: p.area, headline: p.headline || "Headline singkat tentang caramu mengajar", edu: p.edu || "Pendidikan terakhir", exp: p.exp,
-    rating: 5.0, reviews: 0, subjects: p.subjects.length ? p.subjects : ["Mapel"], rate: p.rate, verified: p.docs.length >= 2 };
-  const subjOpts = [...new Set([...allSubjects(), ...p.subjects])];
+    rating: 5.0, reviews: 0, subjects: p.subjects.length ? p.subjects : ["Mapel"], rate: p.rate, dur: p.dur, verified: p.docs.length >= 2 };
+  const subjOpts = [...new Set([...SUBJECTS, ...S.customSubjects, ...p.subjects])];
   const doc = (k, icon, t, s) => { const done = p.docs.includes(k); return `<button type="button" class="doc-up ${done ? "done" : ""}" data-doc="${k}" ${done ? "disabled" : ""}>
     <span class="mi">${ic(done ? "check" : icon)}</span><span class="grow"><b>${t}</b><small>${done ? "Terkirim — ditinjau 1×24 jam" : s}</small></span></button>`; };
+  const req = `<b class="req" title="Wajib">*</b>`;
   return `<h1>CV Saya</h1><p class="sub">Ini yang dilihat pencari. Nama & kontakmu disamarkan sampai mereka membuka kontak.</p>
+  ${cvReady() ? "" : `<div class="info" style="margin-top:12px">${ic("info")}<span><b>CV wajib diisi</b> untuk memakai mode tutor. Kolom bertanda <b class="req">*</b> harus lengkap. “Tentang caramu mengajar” boleh kosong.</span></div>`}
   <div class="section"><p class="small muted" style="margin-bottom:6px;font-weight:700">PRATINJAU DI HASIL PENCARIAN</p>
-    ${tutorCard({ t: preview, reach: p.offline, same: true, score: 90 }, true)}</div>
+    ${tutorCard({ t: preview, reach: true, same: true, score: 90 }, true)}</div>
   <form id="cvForm" class="section" novalidate>
-    <label class="field" data-f="name"><span class="lbl">Nama lengkap</span><input class="input" name="name" value="${esc(p.name)}" placeholder="Nama sesuai identitas"></label>
-    <label class="field" data-f="phone"><span class="lbl">Nomor WhatsApp</span><input class="input" name="phone" inputmode="tel" value="${esc(p.phone)}" placeholder="08xx-xxxx-xxxx">
+    <label class="field" data-f="name"><span class="lbl">Nama lengkap ${req}</span><input class="input" name="name" value="${esc(p.name)}" placeholder="Nama sesuai identitas"></label>
+    <label class="field" data-f="phone"><span class="lbl">Nomor WhatsApp ${req}</span><input class="input" name="phone" inputmode="tel" value="${esc(p.phone)}" placeholder="08xx-xxxx-xxxx">
       <span class="hint">Terbuka untuk pencari yang membayar, dan dipakai saat kamu menghubungi calon murid.</span></label>
-    <label class="field"><span class="lbl">Headline</span><input class="input" name="headline" maxlength="60" value="${esc(p.headline)}" placeholder="cth. Bikin Matematika jadi masuk akal"></label>
-    <div class="field" data-f="subjects"><span class="lbl">Mata pelajaran</span><div class="chips" id="subjChips">${subjOpts.map((s) => `<label class="pick"><input type="checkbox" name="subjects" value="${esc(s)}" ${p.subjects.includes(s) ? "checked" : ""}><span>${esc(s)}</span></label>`).join("")}</div>
-      <div class="row" style="margin-top:8px"><input class="input grow" id="newSubj" placeholder="Tambah mapel lain, cth. Ekonomi" maxlength="40"><button type="button" class="btn sm ghost" id="addSubj">${ic("plus")}Tambah</button></div></div>
-    <div class="field" data-f="levels"><span class="lbl">Jenjang</span><div class="chips">${LEVELS.map((s) => `<label class="pick"><input type="checkbox" name="levels" value="${s}" ${p.levels.includes(s) ? "checked" : ""}><span>${s}</span></label>`).join("")}</div></div>
+    <label class="field"><span class="lbl">Headline (opsional)</span><input class="input" name="headline" maxlength="60" value="${esc(p.headline)}" placeholder="cth. Bikin Matematika jadi masuk akal"></label>
+    <div class="field" data-f="subjects"><span class="lbl">Mata pelajaran ${req}</span><div class="chips" id="subjChips">${subjOpts.map((s) => `<label class="pick"><input type="checkbox" name="subjects" value="${esc(s)}" ${p.subjects.includes(s) ? "checked" : ""}><span>${esc(s)}</span></label>`).join("")}
+      <button type="button" class="pick-add" id="addSubj">${ic("plus")}Tambah</button></div></div>
+    <div class="field" data-f="levels"><span class="lbl">Jenjang ${req}</span><div class="chips">${LEVELS.map((s) => `<label class="pick"><input type="checkbox" name="levels" value="${s}" ${p.levels.includes(s) ? "checked" : ""}><span>${s}</span></label>`).join("")}</div></div>
     <div class="field"><span class="lbl">Kurikulum yang dikuasai</span><div class="chips">${CURRICULA.map((s) => `<label class="pick"><input type="checkbox" name="curricula" value="${s}" ${p.curricula.includes(s) ? "checked" : ""}><span>${s}</span></label>`).join("")}</div></div>
-    <div class="row" style="gap:10px;align-items:flex-start">
-      <div class="grow" style="min-width:0">${areaPicker("area", "Domisili", p.area)}</div>
-      <label class="field" style="width:34%"><span class="lbl">Radius (km)</span><input class="input" type="number" min="1" max="30" name="radius" value="${p.radius}"></label>
-    </div>
-    <div class="row" style="gap:10px">
-      <label class="field grow"><span class="lbl">Tarif per sesi (Rp)</span><input class="input" type="number" step="5000" min="25000" name="rate" value="${p.rate}"></label>
-      <label class="field" style="width:34%"><span class="lbl">Pengalaman (th)</span><input class="input" type="number" min="0" max="50" name="exp" value="${p.exp}"></label>
-    </div>
-    <label class="field"><span class="lbl">Pendidikan</span><input class="input" name="edu" value="${esc(p.edu)}" placeholder="cth. S1 Matematika — Universitas ..."></label>
-    <label class="field"><span class="lbl">Tentang caramu mengajar</span><textarea class="input" name="bio" placeholder="Jangan tulis nomor HP atau akun sosmed di sini.">${esc(p.bio)}</textarea></label>
-    <label class="field"><span class="lbl">Prestasi & pengalaman (1 per baris)</span><textarea class="input" name="achievements">${esc(p.achievements)}</textarea></label>
+    ${areaPicker("area", "Domisili (kecamatan)", p.area)}
+    <label class="field" data-f="rate"><span class="lbl">Tarif (Rp) ${req}</span><input class="input" type="number" step="5000" min="25000" max="400000" name="rate" value="${p.rate}"></label>
+    <div class="field"><span class="lbl">Tarif itu untuk durasi</span>${seg("dur", DURS, p.dur || 60)}<span class="hint">Pencari melihat tarifmu per ${durLabel(p.dur || 60)}.</span></div>
+    <label class="field"><span class="lbl">Pengalaman mengajar (tahun)</span><input class="input" type="number" min="0" max="50" name="exp" value="${p.exp}"></label>
+    <label class="field" data-f="edu"><span class="lbl">Pendidikan ${req}</span><input class="input" name="edu" value="${esc(p.edu)}" placeholder="cth. S1 Matematika — Universitas ..."></label>
+    <label class="field"><span class="lbl">Tentang caramu mengajar (opsional)</span><textarea class="input" name="bio" placeholder="Jangan tulis nomor HP atau akun sosmed di sini.">${esc(p.bio)}</textarea></label>
+    <label class="field"><span class="lbl">Prestasi & pengalaman</span><textarea class="input" name="achievements">${esc(p.achievements)}</textarea></label>
     <div class="field"><span class="lbl">Verifikasi</span>
       ${doc("id", "idcard", "Foto identitas (KTP/KTM)", "Hanya dilihat tim verifikasi, dihapus setelah dicek")}
       ${doc("skill", "doc", "Bukti keahlian", "Sertifikat kursus, sertifikat lomba, atau portofolio")}
       <p class="hint" style="margin-top:8px">Dokumen tidak pernah ditampilkan ke pencari. Pencari hanya melihat badge "Identitas terverifikasi".</p></div>
-    <button class="btn">Simpan CV</button>
+    <button class="btn">${cvReady() ? "Simpan CV" : "Simpan CV & mulai jadi tutor"}</button>
   </form>
   ${proCard()}`;
 };
+function addSubjectSheet(form) {
+  openSheet(`<h2>Tambah mata pelajaran</h2>
+    <p class="sub" style="margin-top:4px">Untuk mapel di luar daftar. Biaya sekali bayar <b>${rp(PRICE.ADD_SUBJECT)}</b> per mapel, tanpa masa berlaku.</p>
+    <label class="field" data-f="nm" style="margin-top:14px"><span class="lbl">Nama mata pelajaran</span><input class="input" id="subjName" maxlength="40" placeholder="cth. Ekonomi, Gitar" autocomplete="off"></label>
+    <button class="btn" id="subjGo">Lanjut bayar ${rp(PRICE.ADD_SUBJECT)}</button>`, (sh) => {
+    $("#subjGo", sh).onclick = () => {
+      const v = $("#subjName", sh).value.trim().replace(/\s+/g, " ");
+      if (!showErrors(sh, [{ f: "nm", ok: v.length >= 2, msg: "Tulis nama mapel minimal 2 huruf." }])) return;
+      pay({ title: `Tambah mapel “${v}”`, desc: "Mapel akan masuk ke daftar mata pelajaranmu.", amount: PRICE.ADD_SUBJECT,
+        successTitle: "Mapel ditambahkan", successText: `“${esc(v)}” sudah ada di daftar mapelmu.`,
+        onSuccess: () => {
+          if (form && document.body.contains(form)) Object.assign(S.profile, readCv(form)); // jangan hilangkan isian yang belum disimpan
+          if (!allSubjects().some((x) => x.toLowerCase() === v.toLowerCase())) S.customSubjects.push(v);
+          const have = S.profile.subjects.find((x) => x.toLowerCase() === v.toLowerCase());
+          if (!have) S.profile.subjects.push(v);
+          addTx(`Tambah mapel ${v}`, -PRICE.ADD_SUBJECT);
+        } });
+    };
+  });
+}
 VIEWS.profile.mount = () => {
   const f = $("#cvForm");
   f.addEventListener("input", (e) => clearErr(e.target.closest(".field.err")));
   f.addEventListener("change", (e) => clearErr(e.target.closest(".field.err")));
-  $$("[data-doc]").forEach((b) => (b.onclick = () => { S.profile.docs.push(b.dataset.doc); save(); render(); toast("Dokumen terkirim untuk ditinjau."); }));
-  $("#addSubj").onclick = () => {
-    const v = $("#newSubj").value.trim().replace(/\s+/g, " "); if (v.length < 2) return toast("Tulis minimal 2 huruf.", "err");
-    if (!allSubjects().some((s) => s.toLowerCase() === v.toLowerCase())) S.customSubjects.push(v);
-    $("#subjChips").insertAdjacentHTML("beforeend", `<label class="pick"><input type="checkbox" name="subjects" value="${esc(v)}" checked><span>${esc(v)}</span></label>`);
-    $("#newSubj").value = ""; save();
-  };
+  $$("[data-doc]").forEach((b) => (b.onclick = () => { Object.assign(S.profile, readCv(f)); S.profile.docs.push(b.dataset.doc); save(); render(); toast("Dokumen terkirim untuk ditinjau."); }));
+  $("#addSubj").onclick = () => addSubjectSheet(f);
   f.onsubmit = (e) => {
-    e.preventDefault(); const fd = new FormData(f);
-    const phone = fd.get("phone").trim(), digits = phone.replace(/\D/g, "");
+    e.preventDefault(); const v = readCv(f), digits = v.phone.replace(/\D/g, "");
     const ok = showErrors(f, [
-      { f: "name", ok: fd.get("name").trim().length >= 3, msg: "Isi nama lengkapmu." },
-      { f: "phone", ok: !phone || /^(0|62)8\d{7,12}$/.test(digits), msg: "Nomor WhatsApp harus diawali 08, 10–13 angka." },
-      { f: "subjects", ok: fd.getAll("subjects").length > 0, msg: "Pilih minimal satu mata pelajaran." },
-      { f: "levels", ok: fd.getAll("levels").length > 0, msg: "Pilih minimal satu jenjang." },
+      { f: "name", ok: v.name.length >= 3, msg: "Isi nama lengkapmu." },
+      { f: "phone", ok: /^(0|62)8\d{7,12}$/.test(digits), msg: v.phone ? "Nomor WhatsApp harus diawali 08, 10–13 angka." : "Isi nomor WhatsApp supaya murid bisa menghubungimu." },
+      { f: "subjects", ok: v.subjects.length > 0, msg: "Pilih minimal satu mata pelajaran." },
+      { f: "levels", ok: v.levels.length > 0, msg: "Pilih minimal satu jenjang." },
+      { f: "rate", ok: v.rate >= 25000 && v.rate <= 400000, msg: "Isi tarif antara Rp25.000 dan Rp400.000." },
+      { f: "edu", ok: v.edu.length >= 3, msg: "Isi pendidikan terakhirmu." },
     ]);
     if (!ok) return;
-    Object.assign(S.profile, { name: fd.get("name").trim(), phone, headline: fd.get("headline").trim(), subjects: fd.getAll("subjects"), levels: fd.getAll("levels"),
-      curricula: fd.getAll("curricula"), area: fd.get("area"), radius: +fd.get("radius"), rate: +fd.get("rate"), exp: +fd.get("exp"), edu: fd.get("edu").trim(),
-      bio: fd.get("bio").trim(), achievements: fd.get("achievements").trim() });
-    save(); render(); toast("CV tersimpan");
+    const first = !cvReady();
+    Object.assign(S.profile, v, { cvDone: true });
+    save(); render(); toast(first ? "CV tersimpan. Kamu siap jadi tutor." : "CV tersimpan");
+    if (first && S.role === "tutor") location.hash = "#/";
   };
   bindPro();
 };
@@ -927,19 +1042,20 @@ VIEWS.wallet = () => {
   <div class="balance section"><span class="small" style="opacity:.8;font-weight:600">Kuota buka kontak</span><div class="amt">${S.credits} kontak</div>
     <span class="small" style="opacity:.8">Tidak ada masa berlaku · Saldo: ${rp(S.balance)}</span></div>
   <div class="section"><div class="section-head"><h2>Beli paket kontak</h2><span class="small muted">Makin banyak, makin hemat</span></div>
-    ${PRICE.UNLOCK_PACKS.map((p, i) => `<button class="pkg" data-pack="${i}"><span><b>${p.n} kontak</b>${p.tag ? ` <span class="chip pri" style="margin-left:4px">${p.tag}</span>` : ""}<br><span class="small muted">${rp(p.price / p.n)} per kontak</span></span><span class="btn sm">${rp(p.price)}</span></button>`).join("")}
+    <div class="pack-row">${PRICE.UNLOCK_PACKS.map((p, i) => `<button class="pack ${p.tag ? "hl" : ""}" data-pack="${i}">
+      ${p.tag ? `<em class="ptag">${p.tag}</em>` : ""}<b class="pn">${p.n}</b><span class="pu">kontak</span>
+      ${p.was ? `<s>${rp(p.was)}</s>` : ""}<strong>${rp(p.price)}</strong><small>${rp(p.price / p.n)}/kontak</small></button>`).join("")}</div>
   </div>` : `
-  <div class="balance section"><span class="small" style="opacity:.8;font-weight:600">Saldo Lesin</span><div class="amt">${rp(S.balance)}</div>
+  <div class="balance section"><span class="small" style="opacity:.8;font-weight:600">Saldo LesIn</span><div class="amt">${rp(S.balance)}</div>
     <span class="small" style="opacity:.8">≈ ${Math.floor(S.balance / PRICE.CHAT)} kali buka kontak murid</span></div>`}
   <div class="section"><div class="section-head"><h2>Top up saldo</h2><span class="small muted">Bonus untuk nominal besar</span></div>
-    ${pk.map(([a, b]) => `<button class="pkg" data-top="${a}" data-bonus="${b}"><span><b>${rp(a)}</b>${b ? `<br><span class="chip ok" style="margin-top:4px">+ bonus ${rp(b)}</span>` : ""}</span><span class="btn sm">Top up</span></button>`).join("")}
+    <div class="pack-row">${pk.map(([a, b]) => `<button class="pack" data-top="${a}" data-bonus="${b}">
+      <span class="pu">Top up</span><strong class="pn2">${rp(a)}</strong>${b ? `<span class="chip ok">+ ${rp(b)}</span>` : `<small>tanpa bonus</small>`}</button>`).join("")}</div>
   </div>
-  <div class="card section"><h3 style="margin-bottom:8px">Harga</h3>
-    <dl class="kv"><dt>Buka kontak tutor</dt><dd>${PRICE.UNLOCK_PACKS.map((p) => `${p.n} kontak ${rp(p.price)}`).join("<br>")}</dd><dt>Buka kontak murid</dt><dd>${rp(PRICE.CHAT)} / postingan</dd>
-      <dt>Boost postingan</dt><dd>${rp(PRICE.BOOST[3])} · ${rp(PRICE.BOOST[7])} · ${rp(PRICE.BOOST[14])}<br><span class="muted small">3 · 7 · 14 hari</span></dd><dt>Tutor Pro</dt><dd>${rp(PRICE.PRO)} / bulan</dd></dl>
+  <div class="section stack">
+    <a class="card tap link-row" href="#/harga"><span class="mi">${ic("tag")}</span><span class="grow"><b>Daftar harga</b><small>Kontak, boost, dan Tutor Pro</small></span>${ic("chevR")}</a>
+    <a class="card tap link-row" href="#/riwayat"><span class="mi">${ic("list")}</span><span class="grow"><b>Riwayat transaksi</b><small>${S.tx.length ? `${S.tx.length} transaksi` : "Belum ada transaksi"}</small></span>${ic("chevR")}</a>
   </div>
-  <div class="card section"><h3>Riwayat</h3>${S.tx.length ? S.tx.slice(0, 20).map((x) => `<div class="tx"><span>${esc(x.label)}<br><span class="muted small">${new Date(x.t).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}</span></span>
-    <span class="${x.amount < 0 ? "neg" : x.amount > 0 ? "pos" : ""}">${x.amount === 0 ? "1 kuota" : (x.amount > 0 ? "+" : "−") + rp(Math.abs(x.amount))}</span></div>`).join("") : `<p class="small muted" style="margin-top:8px">Belum ada transaksi.</p>`}</div>
   <button class="btn line section" id="resetDemo">Reset data demo</button>`;
 };
 VIEWS.wallet.mount = () => {
@@ -951,6 +1067,17 @@ VIEWS.wallet.mount = () => {
   $$("[data-pack]").forEach((b) => (b.onclick = () => buyPack(+b.dataset.pack)));
   $("#resetDemo").onclick = () => { if (confirm("Hapus semua data demo?")) { localStorage.removeItem(KEY); S = load(); location.hash = "#/"; render(); } };
 };
+
+VIEWS.harga = () => `<div class="row" style="margin-bottom:12px">${back("#/wallet")}<h1 class="grow" style="margin:0">Daftar harga</h1></div>
+  <div class="card"><dl class="kv"><dt>Buka kontak tutor</dt><dd>${PRICE.UNLOCK_PACKS.map((p) => `${p.n} kontak — ${rp(p.price)}`).join("<br>")}</dd>
+    <dt>Buka kontak murid</dt><dd>${rp(PRICE.CHAT)} / postingan</dd>
+    <dt>Boost postingan</dt><dd>${[3, 7, 14].map((d) => `${d} hari — ${rp(PRICE.BOOST[d])}`).join("<br>")}</dd>
+    <dt>Tutor Pro</dt><dd>${rp(PRICE.PRO)} / bulan</dd>
+    <dt>Tambah mapel</dt><dd>${rp(PRICE.ADD_SUBJECT)} / mapel di luar daftar</dd></dl></div>`;
+VIEWS.riwayat = () => `<div class="row" style="margin-bottom:12px">${back("#/wallet")}<h1 class="grow" style="margin:0">Riwayat transaksi</h1></div>
+  <div class="card">${S.tx.length ? S.tx.map((x) => `<div class="tx"><span>${esc(x.label)}<br><span class="muted small">${new Date(x.t).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}</span></span>
+    <span class="${x.amount < 0 ? "neg" : x.amount > 0 ? "pos" : ""}">${x.amount === 0 ? "1 kuota" : (x.amount > 0 ? "+" : "−") + rp(Math.abs(x.amount))}</span></div>`).join("")
+    : `<p class="small muted">Belum ada transaksi.</p>`}</div>`;
 
 // ---------- boot ----------
 render();
