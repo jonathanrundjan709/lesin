@@ -608,3 +608,22 @@ input[type=range] { width: 100%; accent-color: var(--pri); }
 .pro-price { display: flex; align-items: baseline; justify-content: space-between; padding: 12px 14px; border-radius: 14px; background: var(--bg); margin-bottom: 14px; }
 .pro-price b { font-size: 22px; } .pro-price small { font-size: 13px; color: var(--ink-3); font-weight: 600; }
 .card.tap.link-row { display: flex; }
+
+/* ================= masuk / daftar ================= */
+.auth-head { text-align: center; padding-top: 6px; }
+.auth-head img { width: 84px; height: 84px; display: block; margin: 0 auto 8px; }
+.auth-head h1 { font-size: 24px; margin-bottom: 4px; }
+.auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin-top: 18px; background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+.auth-tabs a { display: grid; place-items: center; height: 40px; border-radius: 10px; font-weight: 700; font-size: 14px; color: var(--ink-2); }
+.auth-tabs a.on { background: var(--pri-l); color: var(--pri-d); }
+.pw { position: relative; display: block; }
+.pw .input { padding-right: 48px; }
+.pw-eye { position: absolute; right: 4px; top: 4px; width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; color: var(--ink-3); }
+.pw-eye svg { width: 20px; height: 20px; }
+.pw-eye.on { color: var(--pri); }
+.auth-gate { text-align: center; padding: 36px 8px; display: grid; gap: 10px; justify-items: center; }
+.auth-gate img { width: 96px; height: 96px; }
+.auth-gate .sub { max-width: 300px; margin-bottom: 8px; }
+.auth-gate .btn { max-width: 320px; }
+.acc-row { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
+.acc-row b { font-size: 14px; display: block; } .acc-row small { font-size: 12px; color: var(--ink-3); }

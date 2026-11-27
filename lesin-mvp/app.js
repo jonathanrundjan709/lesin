@@ -99,6 +99,19 @@ const HERO_COPY = {
 
 // ---------- state ----------
 const KEY = "lesin-mvp-v4";
+// Akun (demo): disimpan di browser, belum ada server. Data tiap akun terpisah.
+const ACC_KEY = "lesin-accounts", SES_KEY = "lesin-session";
+const readAcc = () => { try { return JSON.parse(localStorage.getItem(ACC_KEY) || "[]"); } catch { return []; } };
+let SESSION = (() => { try { const id = localStorage.getItem(SES_KEY) || ""; return readAcc().some((a) => a.id === id) ? id : ""; } catch { return ""; } })();
+const me = () => readAcc().find((a) => a.id === SESSION);
+const keyFor = (id = SESSION) => KEY + ":" + (id || "guest");
+const normPhone = (p) => { const d = String(p).replace(/\D/g, ""); return d.startsWith("62") ? "0" + d.slice(2) : d; };
+const validPhone = (p) => /^08\d{8,12}$/.test(normPhone(p));
+async function hashPw(pw, salt) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(salt + ":" + pw));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+let authNext = "#/";
 const DEFAULT_SEARCH = { area: "Tebet", subject: "Matematika", level: "", curr: "", mode: "any", budget: 150000, dur: 90, gender: "any", sort: "match" };
 const DEFAULT_STATE = {
   role: "pencari",
@@ -120,7 +133,7 @@ const DEFAULT_STATE = {
 let S = load();
 function load() {
   try {
-    const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
+    const saved = JSON.parse(localStorage.getItem(keyFor()) || "{}");
     const st = Object.assign(structuredClone(DEFAULT_STATE), saved);
     st.search = Object.assign({ ...DEFAULT_SEARCH }, saved.search || {});
     st.profile = Object.assign(structuredClone(DEFAULT_STATE.profile), saved.profile || {});
@@ -129,7 +142,7 @@ function load() {
     return st;
   } catch { return structuredClone(DEFAULT_STATE); }
 }
-const save = () => localStorage.setItem(KEY, JSON.stringify(S));
+const save = () => localStorage.setItem(keyFor(), JSON.stringify(S));
 const addTx = (label, amount) => { S.tx.unshift({ id: uid(), label, amount, t: now() }); };
 const allSubjects = () => [...SUBJECTS, ...S.customSubjects];
 // Filter tambahan yang sedang aktif (di luar daerah & mapel)
@@ -286,6 +299,7 @@ function buyPack(i, after) {
     onSuccess: () => { S.credits += p.n; addTx(`Paket ${p.n} kontak`, -p.price); after && after.run(); } });
 }
 function unlockFlow(t) {
+  if (!SESSION) return needLogin("Masuk atau daftar gratis dulu untuk membuka kontak. Akun baru dapat 1 kuota.");
   const done = () => { S.credits--; S.unlocked.push(t.id); addTx(`Buka kontak ${t.name}`, 0); };
   const text = `Nama & WhatsApp ${esc(t.name)} sudah terbuka dan tersimpan di menu Kontak.`;
   if (S.credits > 0) {
@@ -363,9 +377,12 @@ function currentRoute() {
   return { page, id: decodeURIComponent(id) };
 }
 const VIEWS = {};
+const PUBLIC = new Set(["", "search", "results", "tutor", "masuk", "daftar"]);
 function render() {
   const { page, id } = currentRoute();
-  const view = VIEWS[page] || VIEWS[""];
+  const needAuth = !SESSION && !PUBLIC.has(page);
+  if (needAuth) authNext = location.hash || "#/";
+  const view = needAuth ? VIEWS.gate : VIEWS[page] || VIEWS[""];
   $("#app").innerHTML = `<div class="fade-in">${view(id)}</div>`;
   view.mount && view.mount(id);
   bindPickers();
@@ -375,10 +392,12 @@ function render() {
 }
 function renderChrome() {
   const rb = $("#roleBtn");
-  rb.hidden = UI.sw !== "2";
+  rb.hidden = UI.sw !== "2" || !SESSION;
   rb.innerHTML = `${ic(S.role === "tutor" ? "cap" : "user")}<span class="mdot"></span>`;
   rb.setAttribute("aria-label", S.role === "tutor" ? "Mode tutor — ganti mode" : "Mode pencari — ganti mode");
-  $("#walletPill").innerHTML = S.role === "tutor" ? `${ic("wallet")}${rp(S.balance)}` : `${ic("ticket")}${S.credits} kuota`;
+  const wp = $("#walletPill");
+  if (!SESSION) { wp.setAttribute("href", "#/masuk"); wp.innerHTML = `${ic("user")}Masuk`; }
+  else { wp.setAttribute("href", "#/wallet"); wp.innerHTML = S.role === "tutor" ? `${ic("wallet")}${rp(S.balance)}` : `${ic("ticket")}${S.credits} kuota`; }
   renderNav();
 }
 function renderNav() {
@@ -394,7 +413,13 @@ function renderNav() {
     </a>`).join("");
 }
 const cvReady = () => { const p = S.profile; return !!(p.cvDone && p.name && p.phone && p.subjects.length && p.levels.length && p.edu && p.rate); };
+function needLogin(msg) {
+  authNext = location.hash || "#/";
+  toast(msg || "Masuk dulu untuk melanjutkan.", "info");
+  location.hash = "#/masuk";
+}
 function setRole(r) {
+  if (!SESSION) return needLogin(r === "tutor" ? "Daftar atau masuk dulu untuk jadi tutor." : "Masuk dulu untuk melanjutkan.");
   if (S.role === r) return;
   S.role = r; save();
   if (r === "tutor" && !cvReady()) {
@@ -408,9 +433,13 @@ function setRole(r) {
 function modeSheet() {
   const opt = (r, icon, t, d) => `<button type="button" class="mode-opt ${S.role === r ? "on" : ""}" data-role="${r}"><span class="mi">${ic(icon)}</span>
     <span class="grow"><b>${t}</b><small>${d}</small></span>${S.role === r ? ic("check", "ck") : ""}</button>`;
-  openSheet(`<h2>Pakai LesIn sebagai</h2><p class="sub" style="margin:4px 0 14px">Kamu bisa pindah kapan saja. Data dan saldo tetap tersimpan.</p>
+  const acc = me();
+  openSheet(`<div class="acc-row"><div class="avatar sm" style="background:${avColor(acc.id)}">${esc(initials(acc.name))}</div><div class="grow"><b>${esc(acc.name)}</b><small>${esc(acc.phone)}</small></div>
+    <button type="button" class="link" id="logoutBtn">Keluar</button></div>
+    <h2>Pakai LesIn sebagai</h2><p class="sub" style="margin:4px 0 14px">Kamu bisa pindah kapan saja. Data dan saldo tetap tersimpan.</p>
     <div class="stack">${opt("pencari", "search", "Pencari guru les", "Cari tutor untuk anak atau dirimu sendiri")}${opt("tutor", "cap", "Tutor", "Pasang CV dan temukan murid baru")}</div>`, (sh) => {
     $$("[data-role]", sh).forEach((b) => (b.onclick = () => { closeSheet(); setRole(b.dataset.role); }));
+    $("#logoutBtn", sh).onclick = () => { closeSheet(); logout(); };
   });
 }
 $("#roleBtn").onclick = modeSheet;
@@ -1056,7 +1085,8 @@ VIEWS.wallet = () => {
     <a class="card tap link-row" href="#/harga"><span class="mi">${ic("tag")}</span><span class="grow"><b>Daftar harga</b><small>Kontak, boost, dan Tutor Pro</small></span>${ic("chevR")}</a>
     <a class="card tap link-row" href="#/riwayat"><span class="mi">${ic("list")}</span><span class="grow"><b>Riwayat transaksi</b><small>${S.tx.length ? `${S.tx.length} transaksi` : "Belum ada transaksi"}</small></span>${ic("chevR")}</a>
   </div>
-  <button class="btn line section" id="resetDemo">Reset data demo</button>`;
+  <button class="btn line section" id="logoutBtn2">Keluar dari akun</button>
+  <button class="btn line" id="resetDemo" style="margin-top:8px">Reset data demo</button>`;
 };
 VIEWS.wallet.mount = () => {
   $$("[data-top]").forEach((b) => (b.onclick = () => {
@@ -1065,7 +1095,8 @@ VIEWS.wallet.mount = () => {
       successTitle: "Top up berhasil", successText: `Saldo bertambah ${rp(a + bonus)}.`, onSuccess: () => { S.balance += a + bonus; addTx("Top up saldo", a + bonus); } });
   }));
   $$("[data-pack]").forEach((b) => (b.onclick = () => buyPack(+b.dataset.pack)));
-  $("#resetDemo").onclick = () => { if (confirm("Hapus semua data demo?")) { localStorage.removeItem(KEY); S = load(); location.hash = "#/"; render(); } };
+  $("#logoutBtn2").onclick = logout;
+  $("#resetDemo").onclick = () => { if (confirm("Hapus semua data demo?")) { localStorage.removeItem(keyFor()); S = load(); location.hash = "#/"; render(); } };
 };
 
 VIEWS.harga = () => `<div class="row" style="margin-bottom:12px">${back("#/wallet")}<h1 class="grow" style="margin:0">Daftar harga</h1></div>
@@ -1078,6 +1109,85 @@ VIEWS.riwayat = () => `<div class="row" style="margin-bottom:12px">${back("#/wal
   <div class="card">${S.tx.length ? S.tx.map((x) => `<div class="tx"><span>${esc(x.label)}<br><span class="muted small">${new Date(x.t).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}</span></span>
     <span class="${x.amount < 0 ? "neg" : x.amount > 0 ? "pos" : ""}">${x.amount === 0 ? "1 kuota" : (x.amount > 0 ? "+" : "−") + rp(Math.abs(x.amount))}</span></div>`).join("")
     : `<p class="small muted">Belum ada transaksi.</p>`}</div>`;
+
+// ---------- AKUN: masuk / daftar ----------
+function logout() {
+  SESSION = ""; localStorage.removeItem(SES_KEY); S = load();
+  location.hash = "#/"; render(); toast("Kamu sudah keluar.", "info");
+}
+function startSession(id) {
+  SESSION = id; localStorage.setItem(SES_KEY, id); S = load();
+}
+const pwField = (name, label, hint = "") => `<label class="field" data-f="${name}"><span class="lbl">${label}</span>
+  <span class="pw"><input class="input" type="password" name="${name}" autocomplete="${name === "pw" ? "current-password" : "new-password"}" placeholder="Minimal 6 karakter"><button type="button" class="pw-eye" data-eye aria-label="Lihat password">${ic("eye")}</button></span>${hint}</label>`;
+const authHead = (m) => `<div class="auth-head"><img src="assets/mascot.svg" alt="" width="84" height="84">
+  <h1>${m === "masuk" ? "Masuk ke LesIn" : "Buat akun LesIn"}</h1>
+  <p class="sub">${m === "masuk" ? "Lanjutkan cari guru les atau kelola CV tutormu." : "Gratis. Akun baru dapat 1 kuota buka kontak tutor."}</p></div>
+  <div class="auth-tabs" role="tablist"><a href="#/masuk" class="${m === "masuk" ? "on" : ""}">Masuk</a><a href="#/daftar" class="${m === "daftar" ? "on" : ""}">Daftar</a></div>`;
+const bindEye = (f) => $$("[data-eye]", f).forEach((b) => (b.onclick = () => { const i = b.previousElementSibling; i.type = i.type === "password" ? "text" : "password"; b.classList.toggle("on", i.type === "text"); }));
+const demoNote = `<p class="demo-note">Mode demo — akun disimpan di browser ini saja, belum ada server.</p>`;
+
+VIEWS.gate = () => `<div class="auth-gate"><img src="assets/mascot.svg" alt="" width="96" height="96"><h2>Masuk dulu ya</h2>
+  <p class="sub">Halaman ini khusus pengguna LesIn. Mencari tutor dan membaca CV tetap bisa tanpa akun.</p>
+  <a class="btn" href="#/masuk">Masuk</a><a class="btn line" href="#/daftar">Daftar gratis</a></div>`;
+
+VIEWS.masuk = () => SESSION ? (location.replace("#/"), "") : `${authHead("masuk")}
+  <form id="authForm" class="section" novalidate>
+    <label class="field" data-f="phone"><span class="lbl">Nomor WhatsApp</span><input class="input" name="phone" inputmode="tel" autocomplete="tel" placeholder="08xx-xxxx-xxxx"></label>
+    ${pwField("pw", "Password")}
+    <button class="btn" id="authGo">Masuk</button>
+    <p class="small muted" style="text-align:center;margin-top:14px">Belum punya akun? <a class="link" href="#/daftar">Daftar gratis</a></p>
+    ${demoNote}
+  </form>`;
+VIEWS.masuk.mount = () => {
+  const f = $("#authForm"); if (!f) return; bindEye(f);
+  f.addEventListener("input", (e) => clearErr(e.target.closest(".field.err")));
+  f.onsubmit = async (e) => {
+    e.preventDefault(); const fd = new FormData(f), phone = normPhone(fd.get("phone")), pw = fd.get("pw");
+    if (!showErrors(f, [{ f: "phone", ok: validPhone(phone), msg: "Isi nomor WhatsApp yang diawali 08." }, { f: "pw", ok: pw.length > 0, msg: "Isi password." }])) return;
+    const b = $("#authGo"); b.disabled = true;
+    const acc = readAcc().find((a) => a.phone === phone);
+    const ok = acc && (await hashPw(pw, acc.id)) === acc.hash;
+    b.disabled = false;
+    if (!ok) return void showErrors(f, [{ f: "pw", ok: false, msg: "Nomor atau password salah." }]);
+    startSession(acc.id); const to = authNext; authNext = "#/";
+    location.hash = to === "#/masuk" || to === "#/daftar" ? "#/" : to; render(); toast(`Halo, <b>${esc(acc.name.split(" ")[0])}</b>. Selamat datang kembali.`);
+  };
+};
+
+VIEWS.daftar = () => SESSION ? (location.replace("#/"), "") : `${authHead("daftar")}
+  <form id="authForm" class="section" novalidate>
+    <label class="field" data-f="name"><span class="lbl">Nama lengkap</span><input class="input" name="name" autocomplete="name" placeholder="Nama kamu"></label>
+    <label class="field" data-f="phone"><span class="lbl">Nomor WhatsApp</span><input class="input" name="phone" inputmode="tel" autocomplete="tel" placeholder="08xx-xxxx-xxxx">
+      <span class="hint">Dipakai untuk masuk. Tidak ditampilkan ke siapa pun sebelum kamu mengizinkan.</span></label>
+    ${pwField("pw", "Password")}
+    <div class="field"><span class="lbl">Saya mau</span>${seg("role", [["pencari", "Cari guru les"], ["tutor", "Jadi tutor"]], "pencari")}
+      <span class="hint">Bisa ganti kapan saja. Jadi tutor perlu mengisi CV.</span></div>
+    <button class="btn" id="authGo">Buat akun</button>
+    <p class="small muted" style="text-align:center;margin-top:14px">Sudah punya akun? <a class="link" href="#/masuk">Masuk</a></p>
+    ${demoNote}
+  </form>`;
+VIEWS.daftar.mount = () => {
+  const f = $("#authForm"); if (!f) return; bindEye(f);
+  f.addEventListener("input", (e) => clearErr(e.target.closest(".field.err")));
+  f.addEventListener("change", (e) => clearErr(e.target.closest(".field.err")));
+  f.onsubmit = async (e) => {
+    e.preventDefault(); const fd = new FormData(f), name = fd.get("name").trim().replace(/\s+/g, " "), phone = normPhone(fd.get("phone")), pw = fd.get("pw"), role = fd.get("role");
+    const dup = readAcc().some((a) => a.phone === phone);
+    if (!showErrors(f, [{ f: "name", ok: name.length >= 3, msg: "Isi nama lengkapmu." },
+      { f: "phone", ok: validPhone(phone) && !dup, msg: dup ? "Nomor ini sudah terdaftar. Silakan masuk." : "Nomor WhatsApp harus diawali 08, 10–13 angka." },
+      { f: "pw", ok: pw.length >= 6, msg: "Password minimal 6 karakter." }])) return;
+    const b = $("#authGo"); b.disabled = true;
+    const id = "u" + uid(), acc = { id, name, phone, hash: await hashPw(pw, id), created: now() };
+    localStorage.setItem(ACC_KEY, JSON.stringify([...readAcc(), acc]));
+    startSession(id);
+    S.role = role === "tutor" ? "tutor" : "pencari"; S.lastOwner = name; S.lastPhone = phone;
+    Object.assign(S.profile, { name, phone }); save();
+    const to = authNext; authNext = "#/";
+    if (S.role === "tutor") { location.hash = "#/profile"; render(); toast("Akun dibuat. Lengkapi <b>CV</b> untuk mulai jadi tutor.", "info", 5000); }
+    else { location.hash = to === "#/masuk" || to === "#/daftar" ? "#/" : to; render(); toast(`Akun dibuat. Kamu punya <b>${S.credits} kuota</b> gratis.`); }
+  };
+};
 
 // ---------- boot ----------
 render();

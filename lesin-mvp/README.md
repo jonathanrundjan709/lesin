@@ -47,3 +47,6 @@ Buka http://localhost:5181 lalu aktifkan tampilan HP di DevTools. Kalau mau, bis
 - Tempat ganti mode: `/?sw=1` (segmented di beranda), `/?sw=2` (ikon di pojok kanan atas, default), `/?sw=3` (kartu di bawah beranda).
 - Teks hero: `/?copy=A` (default), `B`, `C`, `D`.
 Pilihan tersimpan di browser.
+
+## Masuk / daftar (demo)
+Daftar dengan nama, nomor WhatsApp, dan password (di-hash SHA-256 di browser), lalu pilih mau cari guru atau jadi tutor. Tanpa akun masih bisa cari tutor dan baca CV. Buka kontak, posting, Kontak, Saldo, dan mode tutor perlu akun. Data tiap akun terpisah di `localStorage`. Belum ada server, jadi ini hanya untuk demo, bukan keamanan sungguhan.
