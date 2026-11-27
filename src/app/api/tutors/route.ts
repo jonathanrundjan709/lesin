@@ -1,6 +1,3 @@
-import { NextRequest, NextResponse } from "next/server";
-import { searchTutors } from "@/lib/store";
-export function GET(req: NextRequest) {
-  const p = req.nextUrl.searchParams;
-  return NextResponse.json(searchTutors({ area: p.get("area") || undefined, subject: p.get("subject") || undefined, level: p.get("level") || undefined, mode: p.get("mode") || undefined }));
-}
+import { api, queryObject } from "@/app/api/_lib/http";
+
+export const GET = api(async (c) => ({ tutors: await c.services.tutors.search(c.user?.id ?? null, queryObject(c.req, ["budget", "durationMin"])) }));

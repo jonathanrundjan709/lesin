@@ -1,6 +1,5 @@
 {
-  "framework": null,
-  "installCommand": null,
-  "buildCommand": null,
-  "outputDirectory": "lesin-mvp"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "crons": [{ "path": "/api/cron", "schedule": "0 0 * * *" }]
 }

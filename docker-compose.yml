@@ -1,0 +1,9 @@
+# Database lokal untuk pengembangan: docker compose up -d db
+services:
+  db:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: lesin, POSTGRES_PASSWORD: lesin, POSTGRES_DB: lesin }
+    ports: ["5432:5432"]
+    volumes: ["lesin-pgdata:/var/lib/postgresql/data"]
+volumes:
+  lesin-pgdata:
