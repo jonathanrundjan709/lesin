@@ -44,7 +44,10 @@ async function build(): Promise<Container> {
     // Selama gateway masih simulasi, tombol "bayar" demo harus tersedia. Matikan saat gateway sungguhan dipasang.
     allowPaymentSimulation: env.ALLOW_PAYMENT_SIMULATION !== "false",
   };
-  if (env.SEED_DEMO_DATA !== "false") await seedDemoData({ uow, clock, hasher });
+  if (env.SEED_DEMO_DATA !== "false") {
+    // Bila instance lain sedang mengisi data yang sama, abaikan: yang penting datanya ada.
+    await seedDemoData({ uow, clock, hasher }).catch((e) => console.warn("[seed] dilewati:", (e as Error).message));
+  }
   await ensureAdmin(ports, env.ADMIN_PHONE, env.ADMIN_PASSWORD);
   return { services: buildServices(ports), mode, ports };
 }
@@ -62,4 +65,10 @@ async function ensureAdmin(p: Ports, phone?: string, password?: string): Promise
 
 const g = globalThis as unknown as { __lesinContainer?: Promise<Container> };
 /** Satu container per proses (dan per instance serverless). */
-export const getContainer = (): Promise<Container> => (g.__lesinContainer ??= build());
+export const getContainer = (): Promise<Container> => {
+  if (!g.__lesinContainer) {
+    // Gagal start (mis. database belum terjangkau) tidak boleh tersimpan selamanya: coba lagi di permintaan berikutnya.
+    g.__lesinContainer = build().catch((e) => { g.__lesinContainer = undefined; throw e; });
+  }
+  return g.__lesinContainer;
+};

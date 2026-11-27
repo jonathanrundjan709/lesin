@@ -14,7 +14,7 @@ npm run dev        # http://localhost:3000 (mode demo, data di memori, ada 16 tu
 ```
 
 ```bash
-npm test           # 36 tes: domain + aplikasi pada adapter memory DAN Postgres (PGlite)
+npm test           # domain + aplikasi pada adapter memory dan Postgres (PGlite); isi TEST_DATABASE_URL untuk menambah PostgreSQL sungguhan
 npm run typecheck
 npm run build
 ```
@@ -34,17 +34,20 @@ Tabel dibuat otomatis saat start. Data contoh dimasukkan hanya bila database mas
 ## Deploy di Vercel
 
 1. Import repo, biarkan preset **Next.js**.
-2. Tambahkan database: **Storage → Create → Postgres (Neon)**. Vercel mengisi `DATABASE_URL` otomatis.
-3. (Disarankan) isi `SESSION_SECRET` dan `PAYMENT_WEBHOOK_SECRET` dengan string acak panjang. Bila kosong, keduanya diturunkan dari `DATABASE_URL`.
+2. Sambungkan database: **Storage → Supabase** (atau Neon). Integrasinya mengisi `POSTGRES_URL` otomatis. Aplikasi memakai `DATABASE_URL`, atau `POSTGRES_URL` bila yang pertama kosong. Pakai URL **pooler** (port 6543) untuk serverless.
+3. (Disarankan) isi `SESSION_SECRET` dan `PAYMENT_WEBHOOK_SECRET` dengan string acak panjang. Bila kosong, keduanya diturunkan dari URL database.
 4. Opsional: `ADMIN_PHONE` dan `ADMIN_PASSWORD` untuk akun admin pertama, `CRON_SECRET` agar cron harian jalan.
+5. **Redeploy** (variabel baru hanya berlaku untuk deployment baru).
 
-Tanpa `DATABASE_URL`, Vercel memakai memori per instance, jadi akun bisa hilang antar permintaan. Itu hanya cocok untuk melihat tampilan.
+Tabel dibuat otomatis saat start dan **RLS diaktifkan di semua tabel**. Supabase membuka skema `public` lewat REST API publik, jadi tanpa RLS data pengguna bisa terbaca. Backend memakai role pemilik tabel yang melewati RLS, jadi tidak terpengaruh. Jangan menambah kebijakan RLS untuk `anon` atau `authenticated`.
+
+Tanpa database, Vercel memakai memori per instance dan akun bisa hilang antar permintaan. Aplikasi menampilkan banner "Mode demo" saat itu terjadi.
 
 ## Variabel lingkungan
 
 | Nama | Fungsi |
 |---|---|
-| `DATABASE_URL` atau `POSTGRES_URL` | PostgreSQL. Kosong = mode demo (memori) |
+| `DATABASE_URL` atau `POSTGRES_URL` | PostgreSQL (Supabase/Neon/lokal). Kosong = mode demo (memori) |
 | `SESSION_SECRET` | Tanda tangan cookie sesi |
 | `PAYMENT_WEBHOOK_SECRET` | Tanda tangan webhook pembayaran |
 | `ALLOW_PAYMENT_SIMULATION` | `false` mematikan tombol bayar demo (saat gateway sungguhan dipasang) |

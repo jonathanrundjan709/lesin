@@ -132,9 +132,15 @@ function buildRepos(db: SqlClient): Repositories {
 export class PostgresUnitOfWork implements UnitOfWork {
   constructor(private db: SqlDatabase) {}
 
-  /** Membuat tabel bila belum ada (idempoten). */
+  /**
+   * Membuat tabel bila belum ada (idempoten). Dikunci dengan advisory lock supaya beberapa instance serverless
+   * yang start bersamaan tidak saling bentrok saat CREATE TABLE.
+   */
   async migrate(): Promise<void> {
-    await this.db.transaction(async (tx) => { await tx.query(SCHEMA_SQL); });
+    await this.db.transaction(async (tx) => {
+      await tx.query("SELECT pg_advisory_xact_lock(72727401)");
+      await tx.query(SCHEMA_SQL);
+    });
   }
 
   run<T>(fn: (repos: Repositories) => Promise<T>): Promise<T> {
