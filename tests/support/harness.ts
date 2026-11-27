@@ -22,7 +22,7 @@ export const DAY = 86_400_000;
 
 export interface Env { adapter: Adapter; services: Services; clock: FakeClock; uow: UnitOfWork; notifier: ConsoleNotifier; otp: EchoOtpSender; signer: HmacWebhookSigner; close(): Promise<void> }
 
-export async function makeEnv(adapter: Adapter): Promise<Env> {
+export async function makeEnv(adapter: Adapter, opts: { manualPayment?: boolean } = {}): Promise<Env> {
   let uow: UnitOfWork, close = async () => {};
   if (adapter === "postgres" || adapter === "pg") {
     const db = adapter === "pg" ? createPgDatabase(process.env.TEST_DATABASE_URL!) : await createPgliteDatabase();
@@ -36,7 +36,7 @@ export async function makeEnv(adapter: Adapter): Promise<Env> {
   const clock = new FakeClock(T0), notifier = new ConsoleNotifier(), otp = new EchoOtpSender(), signer = new HmacWebhookSigner("test-webhook-secret");
   const services = buildServices({
     uow, clock, ids: new UuidGenerator(), hasher: new ScryptPasswordHasher(), tokens: new HmacSessionTokens("test-session-secret"),
-    signer, gateway: new SimulatedQrisGateway(), notifier, allowPaymentSimulation: true, otpSender: otp, otpCodes: new CryptoOtpCodes(),
+    signer, gateway: new SimulatedQrisGateway(), notifier, allowPaymentSimulation: !opts.manualPayment, manualPayment: opts.manualPayment, otpSender: otp, otpCodes: new CryptoOtpCodes(),
   });
   return { adapter, services, clock, uow, notifier, otp, signer, close };
 }

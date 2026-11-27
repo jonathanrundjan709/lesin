@@ -43,10 +43,10 @@ export async function purchase(productKey, { title, onPaid } = {}) {
   const stop = () => { clearInterval(poll); clearInterval(tick); };
   const sheet = openSheet(`
     <h2>${esc(title || "Bayar dengan QRIS")}</h2>
-    <p class="sub" style="margin-top:4px">Pindai dengan aplikasi bank atau e-wallet apa pun. Kuota masuk otomatis setelah pembayaran terkonfirmasi.</p>
-    <div class="qr-box">${fakeQr(order.qrisPayload)}<div class="qr-meta"><span class="muted small">Total bayar</span><b>${rp(order.amount)}</b>
-      <span class="small muted">Berlaku <b id="ttl">${mmss(order.expiresAt - Date.now())}</b></span></div></div>
-    <p class="small muted" id="payState" aria-live="polite" style="text-align:center;margin-top:10px"><span class="spinner dark sm"></span>Menunggu pembayaran…</p>
+    <p class="sub" style="margin-top:4px">${order.manual ? "Pindai dengan aplikasi bank atau e-wallet apa pun. Bayar sesuai nominal persis di bawah, termasuk kode unik. Kuota masuk setelah admin mengonfirmasi." : "Pindai dengan aplikasi bank atau e-wallet apa pun. Kuota masuk otomatis setelah pembayaran terkonfirmasi."}</p>
+    <div class="qr-box">${order.manual ? `<img class="qr" src="${esc(order.qrisPayload)}" alt="Kode QRIS LesIn">` : fakeQr(order.qrisPayload)}<div class="qr-meta"><span class="muted small">Total bayar${order.manual ? " (persis)" : ""}</span><b>${rp(order.amount)}</b>
+      ${order.manual ? `<span class="small muted">Sudah termasuk kode unik ${order.uniqueCode} supaya pembayaranmu bisa dikenali.</span>` : `<span class="small muted">Berlaku <b id="ttl">${mmss(order.expiresAt - Date.now())}</b></span>`}</div></div>
+    <p class="small muted" id="payState" aria-live="polite" style="text-align:center;margin-top:10px"><span class="spinner dark sm"></span>${order.manual ? "Menunggu konfirmasi admin (biasanya kurang dari 1 jam). Kamu boleh menutup halaman ini, kuota masuk otomatis." : "Menunggu pembayaran…"}</p>
     ${session.meta.paymentSimulation ? `<button class="btn line" id="simPay" style="margin-top:14px">${ic("bolt")}Simulasikan pembayaran (demo)</button>
       <p class="demo-note">Mode demo — tidak ada uang sungguhan. Di produksi, status berubah dari webhook gateway.</p>` : ""}
     <button class="btn line" id="payCancel" style="margin-top:8px">Tutup</button>

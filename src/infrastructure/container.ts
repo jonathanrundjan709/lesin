@@ -4,6 +4,7 @@ import { buildServices, type Ports, type Services } from "@/application/services
 import { ConsoleNotifier } from "./notifications/console-notifier";
 import { EchoOtpSender } from "./notifications/echo-otp-sender";
 import { ResendOtpSender } from "./notifications/resend-otp-sender";
+import { ManualQrisGateway } from "./payment/manual-qris-gateway";
 import { SimulatedQrisGateway } from "./payment/simulated-qris-gateway";
 import { MemoryUnitOfWork } from "./persistence/memory/memory-unit-of-work";
 import { createPgDatabase } from "./persistence/postgres/drivers";
@@ -30,6 +31,8 @@ async function build(): Promise<Container> {
   const databaseUrl = env.DATABASE_URL || env.POSTGRES_URL || undefined;
   const clock = new SystemClock(), hasher = new ScryptPasswordHasher();
   const otpDemo = !env.RESEND_API_KEY;
+  // PAYMENT_MODE=manual: QRIS statis + konfirmasi admin (tanpa payment gateway). Default: simulasi.
+  const manualPayment = env.PAYMENT_MODE === "manual";
 
   let uow: UnitOfWork, mode: StorageMode;
   if (databaseUrl) {
@@ -44,9 +47,10 @@ async function build(): Promise<Container> {
     uow, clock, hasher, ids: new UuidGenerator(),
     tokens: new HmacSessionTokens(secret("SESSION_SECRET", databaseUrl)),
     signer: new HmacWebhookSigner(secret("PAYMENT_WEBHOOK_SECRET", databaseUrl)),
-    gateway: new SimulatedQrisGateway(), notifier: new ConsoleNotifier(),
+    gateway: manualPayment ? new ManualQrisGateway(env.QRIS_IMAGE_URL || "/assets/qris.png") : new SimulatedQrisGateway(), notifier: new ConsoleNotifier(),
+    manualPayment,
     // Selama gateway masih simulasi, tombol "bayar" demo harus tersedia. Matikan saat gateway sungguhan dipasang.
-    allowPaymentSimulation: env.ALLOW_PAYMENT_SIMULATION !== "false",
+    allowPaymentSimulation: !manualPayment && env.ALLOW_PAYMENT_SIMULATION !== "false",
     // Dengan RESEND_API_KEY email sungguhan dikirim. Tanpanya, kode OTP ditampilkan di layar (mode demo, bukan untuk peluncuran).
     otpSender: otpDemo ? new EchoOtpSender() : new ResendOtpSender(env.RESEND_API_KEY!, env.EMAIL_FROM || "LesIn <onboarding@resend.dev>"),
     otpCodes: new CryptoOtpCodes(),

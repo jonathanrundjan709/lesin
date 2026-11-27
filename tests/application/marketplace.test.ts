@@ -41,6 +41,33 @@ for (const adapter of ADAPTERS) {
       assert.equal((await auth.login({ id: "kunci@contoh.id", password: "rahasia1" }, "9.9.9.9")).user.id, u.id);
     });
 
+    test("pembayaran manual: kode unik, hanya admin yang melihat dan mengonfirmasi, kredit masuk sekali", async () => {
+      const env = await makeEnv(adapter, { manualPayment: true }); envs.push(env); const { billing, contacts } = env.services;
+      const a = await signup(env, "Ibu Satu"), b = await signup(env, "Ibu Dua"), admin = await signup(env, "Admin");
+      await env.uow.run(async (r) => { const u = await r.users.byId(admin.id); await r.users.update({ ...u!, isAdmin: true }); });
+      const o1 = await billing.createOrder(a.id, "contact5", "k1"), o2 = await billing.createOrder(b.id, "contact5", "k2");
+      assert.equal(o1.manual, true);
+      for (const o of [o1, o2]) { assert.ok(o.uniqueCode >= 1 && o.uniqueCode <= 99); assert.equal(o.amount, 30_000 + o.uniqueCode); }
+      assert.notEqual(o1.amount, o2.amount, "nominal pending tidak kembar");
+      assert.equal((await billing.createOrder(a.id, "contact5", "k1")).amount, o1.amount, "idempoten");
+      await rejects(billing.pendingPayments(a.id), "forbidden", /admin/);
+      await rejects(billing.confirmManual(a.id, o1.id), "forbidden", /admin/);
+      await rejects(billing.simulatePayment(a.id, o1.id), "forbidden");
+      assert.deepEqual((await billing.pendingPayments(admin.id)).map((p) => p.buyerName).sort(), ["Ibu Dua", "Ibu Satu"]);
+      const before = (await contacts.status(a.id)).credits;
+      assert.deepEqual(await billing.confirmManual(admin.id, o1.id), { ok: true });
+      assert.deepEqual(await billing.confirmManual(admin.id, o1.id), { duplicate: true });
+      assert.equal((await contacts.status(a.id)).credits, before + 5, "5 kuota, sekali saja");
+      assert.equal((await billing.pendingPayments(admin.id)).length, 1);
+      env.clock.advance(25 * 3_600_000);
+      await rejects(billing.confirmManual(admin.id, o2.id), "conflict", /kedaluwarsa/);
+      const plain = await makeEnv(adapter); envs.push(plain);
+      const t = await signup(plain);
+      const o = await plain.services.billing.createOrder(t.id, "contact5", "k");
+      assert.equal(o.uniqueCode, 0); assert.equal(o.manual, false);
+      await rejects(plain.services.billing.confirmManual(t.id, o.id), "forbidden", /tidak aktif/);
+    });
+
     test("OTP: kode salah dihitung dan terkunci, kedaluwarsa, kirim ulang ada jeda, batas per email", async () => {
       const env = await fresh(); const { auth } = env.services;
       const email = "otp@contoh.id";

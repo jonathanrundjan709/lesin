@@ -44,7 +44,7 @@ export class AuthService {
   private async assertNotThrottled(idKey: string, ipKey: string): Promise<void> {
     const since = this.d.clock.now() - LOGIN_WINDOW_MS;
     const [byId, byIp] = await this.d.uow.run(async (r) => [await r.loginFailures.countSince(idKey, since), await r.loginFailures.countSince(ipKey, since)]);
-    if (byId >= LOGIN_MAX_FAILS_PER_ID || byIp >= LOGIN_MAX_FAILS_PER_IP) fail("rate_limited", "Terlalu banyak percobaan masuk. Coba lagi dalam 15 menit.");
+    if (byId >= LOGIN_MAX_FAILS_PER_ID || byIp >= LOGIN_MAX_FAILS_PER_IP) fail("rate_limited", "Terlalu banyak percobaan masuk. Coba lagi dalam 5 menit.");
   }
 
   /** Langkah 2: kode benar -> email terverifikasi dan sesi terbit. */

@@ -14,13 +14,13 @@ import { TutorService } from "./tutor-service";
 /** Semua adapter yang dibutuhkan aplikasi. Diisi oleh composition root (produksi) atau tes. */
 export interface Ports {
   uow: UnitOfWork; clock: Clock; ids: IdGenerator; hasher: PasswordHasher; tokens: SessionTokens;
-  signer: WebhookSigner; gateway: PaymentGateway; notifier: Notifier; allowPaymentSimulation: boolean;
+  signer: WebhookSigner; gateway: PaymentGateway; notifier: Notifier; allowPaymentSimulation: boolean; manualPayment?: boolean;
   otpSender: OtpSender; otpCodes: OtpCodes;
 }
 
 export function buildServices(p: Ports) {
   const base = { uow: p.uow, clock: p.clock, ids: p.ids };
-  const billing = new BillingService({ ...base, gateway: p.gateway, signer: p.signer, allowSimulation: p.allowPaymentSimulation });
+  const billing = new BillingService({ ...base, gateway: p.gateway, signer: p.signer, allowSimulation: p.allowPaymentSimulation, manual: p.manualPayment });
   const lessons = new LessonService({ ...base, notifier: p.notifier });
   return {
     auth: new AuthService({ ...base, hasher: p.hasher, tokens: p.tokens, codes: p.otpCodes, otp: new OtpService({ ...base, sender: p.otpSender, codes: p.otpCodes }) }),

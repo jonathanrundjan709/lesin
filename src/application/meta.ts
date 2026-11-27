@@ -6,8 +6,8 @@ import { OTP_LENGTH, OTP_RESEND_COOLDOWN_MS, OTP_TTL_MS } from "@/domain/otp";
 import type { ProductKey } from "@/domain/types";
 
 /** Data referensi untuk UI: satu sumber kebenaran, jadi daftar di frontend tidak perlu disalin. */
-export const buildMeta = (opts: { paymentSimulation: boolean; storage: "postgres" | "memory"; otpDemo: boolean }) => ({
-  paymentSimulation: opts.paymentSimulation,
+export const buildMeta = (opts: { paymentSimulation: boolean; paymentMode: "simulated" | "manual"; storage: "postgres" | "memory"; otpDemo: boolean }) => ({
+  paymentSimulation: opts.paymentSimulation, paymentMode: opts.paymentMode,
   otp: { demo: opts.otpDemo, length: OTP_LENGTH, ttlMin: OTP_TTL_MS / 60_000, resendSec: OTP_RESEND_COOLDOWN_MS / 1000 },
   consent: { version: CONSENT_VERSION, points: CONSENT_POINTS },
   storage: opts.storage,

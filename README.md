@@ -54,6 +54,8 @@ Tanpa database, Vercel memakai memori per instance dan akun bisa hilang antar pe
 | `ALLOW_PAYMENT_SIMULATION` | `false` mematikan tombol bayar demo (saat gateway sungguhan dipasang) |
 | `SEED_DEMO_DATA` | `false` = jangan isi data contoh |
 | `RESEND_API_KEY`, `EMAIL_FROM` | Kirim OTP email lewat Resend. Kosong = mode demo (kode tampil di layar) |
+| `PAYMENT_MODE` | `manual` = QRIS statis dan konfirmasi admin di `/admin` (tanpa payment gateway, nominal diberi kode unik 1–99). Kosong = simulasi |
+| `QRIS_IMAGE_URL` | Gambar QRIS untuk mode manual. Default `/assets/qris.png` (taruh berkasnya di `public/assets/`) |
 | `ADMIN_PHONE`, `ADMIN_PASSWORD` | Membuat akun admin (masuk dengan nomor) |
 | `CRON_SECRET` | Melindungi `GET /api/cron` |
 

@@ -324,7 +324,7 @@ button.tc-link { width: 100%; text-align: left; background: none; border: 0; fon
 
 /* QRIS */
 .qr-box { display: flex; align-items: center; gap: 16px; margin-top: 16px; padding: 14px; border: 1px solid var(--line); border-radius: 16px; }
-.qr { width: 132px; height: 132px; flex: none; border-radius: 8px; fill: #17162B; }
+.qr { width: 132px; height: 132px; flex: none; border-radius: 8px; fill: #17162B; object-fit: contain; background: #fff; }
 .qr-meta { display: grid; gap: 4px; } .qr-meta b { font-size: 22px; letter-spacing: -.02em; }
 
 /* Lesson hub */

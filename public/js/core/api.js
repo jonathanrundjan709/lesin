@@ -84,6 +84,8 @@ export const api = {
   admin: {
     queue: () => request("GET", "/admin/queue"),
     decideVerification: (id, approve) => request("POST", `/admin/verifications/${encodeURIComponent(id)}`, { approve }),
+    payments: () => request("GET", "/admin/payments"),
+    confirmPayment: (id) => request("POST", `/admin/payments/${encodeURIComponent(id)}`, {}),
     resolveReport: (id, suspend) => request("POST", `/admin/reports/${encodeURIComponent(id)}`, { suspend }),
   },
 };

@@ -106,6 +106,7 @@ function buildRepos(db: SqlClient): Repositories {
       async byId(id) { return one(await q("SELECT * FROM orders WHERE id=$1", [id]), order); },
       async byKey(buyerId, key) { return one(await q("SELECT * FROM orders WHERE buyer_id=$1 AND idempotency_key=$2", [buyerId, key]), order); },
       async byBuyer(buyerId) { return list(await q("SELECT * FROM orders WHERE buyer_id=$1", [buyerId]), order); },
+      async pending(now) { return list(await q("SELECT * FROM orders WHERE status='pending' AND expires_at > $1 ORDER BY created_at", [now]), order); },
       async expirePending(now) { return (await q("UPDATE orders SET status='expired' WHERE status='pending' AND expires_at <= $1 RETURNING id", [now])).length; },
     },
     webhookEvents: {

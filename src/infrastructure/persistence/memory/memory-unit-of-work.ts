@@ -69,6 +69,7 @@ function buildRepos(db: MemoryData): Repositories {
       async byId(id) { return clone(db.orders.get(id) ?? null); },
       async byKey(buyerId, key) { return clone([...db.orders.values()].find((o) => o.buyerId === buyerId && o.idempotencyKey === key) ?? null); },
       async byBuyer(buyerId) { return [...db.orders.values()].filter((o) => o.buyerId === buyerId).map(clone); },
+      async pending(now) { return [...db.orders.values()].filter((o) => o.status === "pending" && o.expiresAt > now).map(clone); },
       async expirePending(now) {
         let n = 0;
         for (const o of db.orders.values()) if (o.status === "pending" && o.expiresAt <= now) { o.status = "expired"; n++; }

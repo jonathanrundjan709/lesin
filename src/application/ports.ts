@@ -55,6 +55,8 @@ export interface OrderRepo {
   byBuyer(buyerId: Id): Promise<Order[]>;
   /** Tandai kedaluwarsa semua order pending yang lewat batas. Mengembalikan jumlahnya. */
   expirePending(now: Millis): Promise<number>;
+  /** Order pending yang belum kedaluwarsa (antrean konfirmasi manual dan pengecekan kode unik). */
+  pending(now: Millis): Promise<Order[]>;
 }
 export interface WebhookEventRepo {
   /** true bila event baru (belum pernah diproses). Menjamin idempotensi. */

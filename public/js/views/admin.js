@@ -7,11 +7,14 @@ import { emptyBox } from "../components/contact.js";
 
 /** Konsol admin minimal: tinjau verifikasi dan laporan (PRD P0). Hanya untuk akun admin. */
 export const adminView = {
-  async load() { return api.admin.queue(); },
+  async load() { const [q, p] = await Promise.all([api.admin.queue(), api.admin.payments()]); return { ...q, payments: p.payments }; },
   render(q) {
     const kind = { id: "KTP/KTM", skill: "Bukti keahlian" };
     return `<div class="row" style="margin-bottom:12px">${back("/")}<h1 class="grow" style="margin:0">Admin</h1></div>
-    <div class="section-head"><h2>Verifikasi</h2><span class="small muted">${q.verifications.length} menunggu</span></div>
+    <div class="section-head"><h2>Pembayaran</h2><span class="small muted">${q.payments.length} menunggu</span></div>
+    <div class="stack">${q.payments.map((p) => `<div class="card"><b>${esc(p.label)} · Rp${p.amount.toLocaleString("id-ID")}</b><p class="small muted">${esc(p.buyerName)} · ${esc(p.buyerPhone ?? "-")} · ${new Date(p.createdAt).toLocaleString("id-ID")} · kode unik ${p.uniqueCode}</p>
+      <div class="row" style="margin-top:10px"><button class="btn sm" data-pay="${esc(p.id)}">Sudah masuk, konfirmasi</button></div></div>`).join("") || emptyBox("Tidak ada pembayaran menunggu.")}</div>
+    <div class="section-head section"><h2>Verifikasi</h2><span class="small muted">${q.verifications.length} menunggu</span></div>
     <div class="stack">${q.verifications.map((v) => `<div class="card"><b>${esc(v.tutorName)}</b><p class="small muted">${kind[v.kind]} · ${new Date(v.createdAt).toLocaleDateString("id-ID")}</p>
       <div class="row" style="margin-top:10px"><button class="btn sm" data-ver="${esc(v.id)}" data-ok="1">Setujui</button><button class="btn sm line" data-ver="${esc(v.id)}" data-ok="0">Tolak</button></div></div>`).join("") || emptyBox("Tidak ada antrean verifikasi.")}</div>
     <div class="section-head section"><h2>Laporan</h2><span class="small muted">${q.reports.length} terbuka</span></div>
@@ -20,6 +23,7 @@ export const adminView = {
   },
   mount() {
     const done = (msg) => () => { toast(msg); navigate("/admin"); };
+    $$("[data-pay]").forEach((b) => (b.onclick = () => { if (confirm("Pastikan nominal persis ini sudah masuk di mutasi. Lanjut konfirmasi?")) api.admin.confirmPayment(b.dataset.pay).then(done("Pembayaran dikonfirmasi, kuota masuk.")).catch((e) => toast(esc(e.message), "err")); }));
     $$("[data-ver]").forEach((b) => (b.onclick = () => api.admin.decideVerification(b.dataset.ver, b.dataset.ok === "1").then(done("Keputusan tersimpan.")).catch((e) => toast(esc(e.message), "err"))));
     $$("[data-rep]").forEach((b) => (b.onclick = () => api.admin.resolveReport(b.dataset.rep, b.dataset.suspend === "1").then(done("Laporan diselesaikan.")).catch((e) => toast(esc(e.message), "err"))));
   },
