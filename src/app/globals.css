@@ -1,14 +1,16 @@
+@import "./theme.css";
 @tailwind base; @tailwind components; @tailwind utilities;
-body { @apply bg-stone-50 text-stone-900 antialiased; }
+body { @apply bg-canvas text-ink antialiased; }
 @layer components {
-  .btn { @apply inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-not-allowed disabled:opacity-50; }
-  .btn-primary { @apply btn bg-teal-700 text-white hover:bg-teal-800; }
-  .btn-secondary { @apply btn border border-stone-300 bg-white hover:bg-stone-100; }
-  .panel { @apply rounded-lg border border-stone-200 bg-white; }
-  .tag { @apply rounded bg-stone-100 px-1.5 py-0.5 text-xs text-stone-600; }
-  .field { @apply h-10 w-full rounded-md border border-stone-300 bg-white px-3 text-sm focus:border-teal-700 focus:outline-none focus:ring-1 focus:ring-teal-700; }
-  textarea.field { @apply h-auto py-2; }
-  .label { @apply mb-1 block text-xs font-medium text-stone-600; }
+  .btn { @apply inline-flex min-h-target items-center justify-center rounded-md px-4 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply btn bg-accent text-accent-fg hover:bg-accent-strong; }
+  .btn-secondary { @apply btn border border-line-strong bg-surface hover:bg-sunken; }
+  .panel { @apply rounded-lg border border-line bg-surface; }
+  .tag { @apply rounded bg-sunken px-1.5 py-0.5 text-xs text-subtle; }
+  .field { @apply min-h-target w-full rounded-md border border-line-strong bg-surface px-3 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent; }
+  textarea.field { @apply py-2; }
+  .label { @apply mb-1 block text-xs font-medium text-subtle; }
   .h1 { @apply text-2xl font-semibold tracking-tight; }
-  .muted { @apply text-sm text-stone-500; }
+  .muted { @apply text-sm text-subtle; }
 }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
