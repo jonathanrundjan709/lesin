@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { TutorRow, TutorView } from "@/components/TutorCard";
+import { HandCoins, MessageCircle, ShieldCheck, SearchX, CheckCircle2 } from "lucide-react";
 const AREAS = ["Tebet", "Kebayoran Baru"]; const SUBJECTS = ["Matematika", "Fisika", "Kimia", "Biologi", "IPA", "Bahasa Inggris", "Bahasa Indonesia", "Calistung", "UTBK"]; const LEVELS = ["SD", "SMP", "SMA", "Umum"];
 export default function Home() {
   const [f, setF] = useState({ area: "", subject: "", level: "" });
@@ -11,16 +12,17 @@ export default function Home() {
   const Sel = ({ k, label, opts }: { k: keyof typeof f; label: string; opts: string[] }) => (
     <div><label className="label" htmlFor={k}>{label}</label><select id={k} className="field" value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })}><option value="">Semua</option>{opts.map((o) => <option key={o}>{o}</option>)}</select></div>);
   return (<>
-    <h1 className="h1">Cari guru les privat</h1>
-    <p className="muted mt-1">Gratis untuk orang tua. Pilih sampai 3 tutor, kirim satu permintaan, lanjut di WhatsApp.</p>
+    <h1 className="h1">Cari guru les privat dekat rumah</h1>
+    <p className="muted mt-1 text-base">Pilih sampai 3 tutor, kirim satu permintaan, lanjut di WhatsApp.</p>
+    <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">{[[HandCoins, "Gratis untuk orang tua"], [ShieldCheck, "Tutor terverifikasi"], [MessageCircle, "Tanpa komisi, chat di WhatsApp"]].map(([I, l]) => { const Icon = I as typeof HandCoins; return <li key={l as string} className="inline-flex items-center gap-1.5"><Icon size={18} className="text-accent" aria-hidden />{l as string}</li>; })}</ul>
     <div className="my-5 grid grid-cols-2 gap-3 sm:grid-cols-3 [&>*:first-child]:col-span-2 sm:[&>*:first-child]:col-span-1"><Sel k="area" label="Area" opts={AREAS} /><Sel k="subject" label="Mata pelajaran" opts={SUBJECTS} /><Sel k="level" label="Jenjang" opts={LEVELS} /></div>
     <p className="muted mb-3" aria-live="polite">{tutors ? `${tutors.length} tutor` : "Memuat…"} · nama, foto, dan nomor disembunyikan sampai tutor merespons</p>
-    {tutors?.length === 0 && <div className="panel p-6 text-center"><p className="font-medium">Belum ada tutor untuk filter ini</p><p className="muted mt-1">Coba pilih "Semua" pada mata pelajaran atau jenjang.</p><button className="btn-secondary mt-3" onClick={() => setF({ area: "", subject: "", level: "" })}>Reset filter</button></div>}
+    {tutors?.length === 0 && <div className="panel p-8 text-center"><SearchX size={32} className="mx-auto mb-2 text-subtle" aria-hidden /><p className="font-semibold">Belum ada tutor untuk filter ini</p><p className="muted mt-1">Coba pilih "Semua" pada mata pelajaran atau jenjang.</p><button className="btn-secondary mt-3" onClick={() => setF({ area: "", subject: "", level: "" })}>Reset filter</button></div>}
     <ul className="space-y-2">{tutors?.map((t) => <TutorRow key={t.id} t={t} selected={sel.includes(t.id)} onToggle={() => toggle(t.id)} disabled={sel.length >= 3} />)}</ul>
-    {sel.length > 0 && <div className="fixed inset-x-0 bottom-0 border-t border-line bg-surface p-3"><div className="mx-auto flex max-w-3xl items-center justify-between">
-      <span className="text-sm">{sel.length} dari 3 tutor dipilih</span><button className="btn-primary" onClick={() => setOpen(true)}>Kirim permintaan</button></div></div>}
+    {sel.length > 0 && <div className="fixed inset-x-0 bottom-[3.5rem] z-20 border-t border-line bg-surface p-3 shadow-sheet md:bottom-0"><div className="mx-auto flex max-w-3xl items-center justify-between">
+      <span className="text-sm font-medium">{sel.length} dari 3 tutor dipilih</span><button className="btn-primary" onClick={() => setOpen(true)}>Kirim permintaan</button></div></div>}
     {open && <RequestForm ids={sel} f={f} onClose={() => setOpen(false)} onDone={() => { setOpen(false); setDone(true); setSel([]); }} />}
-    {done && <p role="status" className="panel fixed inset-x-4 top-16 mx-auto max-w-md border-accent p-3 text-sm">Permintaan terkirim, aktif 14 hari. Tutor akan menghubungi lewat WhatsApp. <button className="ml-1 underline" onClick={() => setDone(false)}>Tutup</button></p>}
+    {done && <p role="status" className="panel fixed inset-x-4 top-4 z-40 mx-auto flex max-w-md items-start gap-2 border-accent p-3 text-sm shadow-sheet"><CheckCircle2 size={20} className="mt-0.5 shrink-0 text-accent" aria-hidden /><span>Permintaan terkirim, aktif 14 hari. Tutor akan menghubungi lewat WhatsApp.</span> <button className="ml-1 underline" onClick={() => setDone(false)}>Tutup</button></p>}
   </>);
 }
 function RequestForm({ ids, f, onClose, onDone }: { ids: string[]; f: { area: string; subject: string; level: string }; onClose: () => void; onDone: () => void }) {

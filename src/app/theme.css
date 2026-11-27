@@ -1,25 +1,22 @@
-/* Design tokens — single source of truth. Tailwind reads these via tailwind.config.ts */
+/* Design tokens (see design-system/lesin/MASTER.md). Semantic: accent = free/primary, cta = costs a lead or money. */
 :root {
-  /* colour */
-  --canvas: #faf9f7; --surface: #ffffff; --sunken: #f1efeb; --sunken-strong: #e4e1db;
-  --line: #e7e4de; --line-strong: #c9c5bc;
-  --ink: #1c1b19; --subtle: #6b675f;
+  --canvas: #f0fdfa; --surface: #ffffff; --sunken: #e6f4f1; --sunken-strong: #cfe8e3;
+  --line: #cfe8e3; --line-strong: #99c9c1;
+  --ink: #134e4a; --subtle: #475569;
   --accent: #0f766e; --accent-strong: #115e59; --accent-fg: #ffffff;
-  --danger: #b42318; --notice: #fff7e0;
-  /* type (rem) */
-  --text-xs: .75rem; --text-sm: .875rem; --text-base: 1rem; --text-lg: 1.25rem; --text-xl: 1.5rem;
-  /* spacing 4px grid */
-  --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem; --space-6: 1.5rem; --space-8: 2rem;
-  /* shape + elevation */
-  --radius-sm: .375rem; --radius-md: .5rem; --radius-lg: .75rem;
-  --shadow-sheet: 0 12px 32px rgb(0 0 0 / .18);
-  /* targets */
+  --cta: #d97706; --cta-strong: #f59e0b; --cta-fg: #1c1917;
+  --danger: #b42318; --notice: #fffbeb; --star: #d97706;
+  --radius-sm: .375rem; --radius-md: .625rem; --radius-lg: 1rem;
+  --shadow-card: 0 1px 2px rgb(19 78 74 / .06), 0 4px 12px -4px rgb(19 78 74 / .08);
+  --shadow-sheet: 0 12px 32px rgb(0 0 0 / .22);
   --target: 2.75rem;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --canvas: #141311; --surface: #1d1c19; --sunken: #26241f; --sunken-strong: #34312b;
-    --line: #2f2d28; --line-strong: #4a463e; --ink: #f2efe9; --subtle: #a29d92;
-    --accent: #2dd4bf; --accent-strong: #5eead4; --accent-fg: #06201c; --danger: #f97066; --notice: #2e2810;
+    --canvas: #0b1b1a; --surface: #102625; --sunken: #17302e; --sunken-strong: #234541;
+    --line: #234541; --line-strong: #2f5e58; --ink: #e6fbf8; --subtle: #9fb8b4;
+    --accent: #2dd4bf; --accent-strong: #5eead4; --accent-fg: #042f2b;
+    --cta: #f59e0b; --cta-strong: #fbbf24; --cta-fg: #1c1917; --danger: #f97066; --notice: #2e2810; --star: #fbbf24;
+    --shadow-card: none;
   }
 }
