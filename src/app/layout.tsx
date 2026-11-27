@@ -5,7 +5,7 @@ import Link from "next/link";
 import { TopNav, BottomNav } from "@/components/Nav";
 const font = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
 export const metadata: Metadata = { title: "Lesin — Guru les privat dekat rumah", description: "Orang tua cari guru gratis. Tutor bayar per lead. Tanpa komisi." };
-export const viewport: Viewport = { themeColor: "#0f766e", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#5b4bff", width: "device-width", initialScale: 1 };
 export default function Root({ children }: { children: React.ReactNode }) {
   return (<html lang="id" className={font.variable}><body className="font-sans">
     <header className="border-b border-line bg-surface"><div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-2">
