@@ -9,6 +9,7 @@ import { session } from "../core/session.js";
 import { toast } from "../core/toast.js";
 import { areaPicker, bindPickers, curriculumPicker, levelPicker, subjectPicker } from "../components/picker.js";
 import { emptyBox } from "../components/contact.js";
+import { loginPrompt } from "../components/login-prompt.js";
 import { tutorCard } from "../components/tutor-card.js";
 
 /** Halaman filter lengkap. */
@@ -59,7 +60,7 @@ export const resultsView = {
     return { s, tutors: (await api.tutors.search(s)).tutors };
   },
   render({ s, tutors }) {
-    const nf = activeFilters(s), max = session.meta.limits.maxTargets, picked = selection.list();
+    const nf = activeFilters(s), max = session.meta.limits.maxTargets, picked = selection.list(), guest = !session.user;
     const sum = [s.subject || "Semua pelajaran", s.level || "semua jenjang", s.curriculum, s.area,
       s.mode === "online" ? "online" : s.mode === "offline" ? "ke rumah" : null,
       nf && (s.budget !== DEFAULT_SEARCH.budget || s.durationMin !== DEFAULT_SEARCH.durationMin) ? `≤ ${rp(s.budget)} / ${durLabel(s.durationMin)}` : null,
@@ -68,11 +69,11 @@ export const resultsView = {
     <div class="row" style="margin-bottom:12px">${back("#/", "data-reset")}<h2 class="grow">Hasil pencarian</h2>
       <a href="#/search" class="btn sm ${nf ? "filter-on" : "line"}">${ic("filter")}Filter${nf ? `<span class="fcount">${nf}</span>` : ""}</a></div>
     <div class="result-head"><div class="row" style="gap:12px"><b class="big">${tutors.length}</b><div><b>tutor cocok dengan kriteriamu</b><p class="filters-sum">${esc(sum)}</p></div></div></div>
-    <div class="info" style="margin-top:10px">${ic("shield")}<span>Nama, foto, dan WhatsApp tutor tersamar. Pilih sampai ${max} tutor lalu kirim permintaan gratis. Identitas tutor terbuka setelah tutor merespons.</span></div>
+    <div class="info" style="margin-top:10px">${ic("shield")}<span>${guest ? "Masuk (gratis) untuk membuka CV lengkap dan memilih tutor." : `Nama, foto, dan WhatsApp tutor tersamar. Pilih sampai ${max} tutor lalu kirim permintaan gratis. Identitas tutor terbuka setelah tutor merespons.`}</span></div>
     <div class="hscroll" style="margin-top:12px">${[["match", "Paling cocok"], ["dist", "Terdekat"], ["price", "Termurah"], ["rating", "Rating"]].map(([v, l]) =>
       `<button class="chip ${s.sort === v ? "pri" : ""}" data-sort="${v}" style="padding:8px 12px">${l}</button>`).join("")}</div>
     <div class="stack" style="margin-top:12px">
-      ${tutors.map((t) => tutorCard(t, { selectable: true })).join("") || emptyBox(`Belum ada tutor yang cocok. Coba longgarkan filter,<br>atau <a href="#/post" class="link">kirim permintaan terbuka</a>.`)}
+      ${tutors.map((t) => tutorCard(t, { selectable: true, locked: guest })).join("") || emptyBox(`Belum ada tutor yang cocok. Coba longgarkan filter,<br>atau <a href="#/post" class="link">kirim permintaan terbuka</a>.`)}
     </div>
     ${picked.length ? `<div style="height:70px"></div><div class="sticky-cta"><a class="btn" href="#/post">Kirim permintaan ke ${picked.length} tutor ${ic("arrow")}</a></div>` : ""}`;
   },
@@ -80,6 +81,7 @@ export const resultsView = {
     document.querySelectorAll("[data-sort]").forEach((b) => (b.onclick = () => { searchPrefs.set({ ...searchPrefs.get(), sort: b.dataset.sort }); navigate("#/results"); }));
     // Kembali dari hasil = batal mencari: filter tambahan direset.
     $("[data-reset]").onclick = () => { searchPrefs.reset({ area: searchPrefs.get().area }); };
+    document.querySelectorAll("[data-login]").forEach((b) => (b.onclick = loginPrompt));
     const max = session.meta.limits.maxTargets;
     document.querySelectorAll("[data-pick]").forEach((b) => (b.onclick = () => {
       const t = tutors.find((x) => x.id === b.dataset.pick);

@@ -14,7 +14,7 @@ import { historyView, pricesView, walletView } from "./views/wallet.js";
 
 /** Tabel rute. auth = wajib masuk, tutorOnly = hanya mode tutor, guestOnly = hanya tamu. */
 const ROUTES = {
-  "": homeView, search: searchView, results: resultsView, tutor: tutorDetailView,
+  "": homeView, search: searchView, results: resultsView, tutor: { ...tutorDetailView, auth: true },
   masuk: { ...loginView, guestOnly: true }, daftar: { ...signupView, guestOnly: true },
   post: { ...postView, auth: true }, myposts: { ...myRequestsView, auth: true }, kontak: { ...contactsView, auth: true },
   les: { ...lessonsView, auth: true }, profile: { ...profileView, auth: true },

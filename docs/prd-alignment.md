@@ -28,6 +28,7 @@ Sumber: PRD "Lesin — Tutor Marketplace" (rev. 27 Nov 2026). Aturan prioritas d
 | 18 | Masuk | Nomor WhatsApp + password | WhatsApp OTP (§8) | **UI live.** Password (scrypt) dulu. OTP menunggu pilihan penyedia WhatsApp (PRD §15) |
 | 19 | Ulasan | Setelah kontak terbuka | P1: setelah 4 sesi (§5). §11: hanya dari pencari yang kontaknya terbuka | **UI live + §11.** Hanya dari pencari yang tutornya sudah merespons. Aturan "4 sesi" menyusul bersama pelacakan sesi |
 | 20 | Tambah mapel berbayar (permintaan feedback #10) | Paywall Rp10.000 | Tidak ada di PRD | **Belum ditagih.** Alur "Tambah" tetap ada tanpa biaya. Perlu keputusan harga sebelum dijadikan produk |
+| 21 | Tamu membuka CV tutor | CV bisa dibaca tamu | PRD: CV tersamar, nama dan kontak tidak dikirim (§5, §8). Tidak melarang tamu | **Permintaan produk (staging).** Tamu hanya melihat daftar hasil (tersamar). Membuka CV, memilih tutor, dan mengirim permintaan butuh akun. Dikunci di server (`GET /api/tutors/:id` mengembalikan 401) dan paywall "Masuk dulu yuk" di UI |
 
 ## 2. Cakupan PRD per tier
 

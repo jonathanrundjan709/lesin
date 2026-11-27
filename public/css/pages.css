@@ -126,3 +126,19 @@
 .auth-gate .btn { max-width: 320px; }
 .acc-row { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
 .acc-row b { font-size: 14px; display: block; } .acc-row small { font-size: 12px; color: var(--ink-3); }
+
+/* pilihan peran di depan halaman masuk/daftar */
+.role-pick { margin-top: 18px; }
+.role-pick > .lbl { display: block; font-size: 13px; font-weight: 700; color: var(--ink-2); margin-bottom: 8px; }
+.role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.role-opt { display: grid; gap: 2px; justify-items: start; text-align: left; padding: 12px; border-radius: 14px; background: #fff; border: 1px solid var(--line); }
+.role-opt .mi { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--pri-l); color: var(--pri-d); margin-bottom: 6px; }
+.role-opt .mi svg { width: 18px; height: 18px; }
+.role-opt b { font-size: 14px; }
+.role-opt small { font-size: 11.5px; color: var(--ink-3); line-height: 1.35; }
+.role-opt.on { border-color: var(--pri); background: #FAF9FF; box-shadow: 0 0 0 1px var(--pri) inset; }
+.sheet-gate { padding: 6px 0 4px; }
+.gate-perks { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 8px; text-align: left; align-self: stretch; }
+.gate-perks li { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink-2); }
+.gate-perks svg { width: 16px; height: 16px; color: var(--ok); flex: none; }
+.sheet-gate .btn { max-width: none; }

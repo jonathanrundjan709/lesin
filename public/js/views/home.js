@@ -96,7 +96,7 @@ function seekerHome({ all, count, s }) {
     <div class="section-head"><h2>Cara kerja</h2></div>
     <ol class="timeline card">
       <li><span class="tl-dot">${ic("search")}</span><div class="grow"><div class="row between"><b>Cari & bandingkan CV</b><span class="chip ok">Gratis</span></div>
-        <p>Filter daerah, mapel, kurikulum, budget. Pendidikan, pengalaman & rating bisa dibaca semua. Nama dan kontak tutor tersamar.</p></div></li>
+        <p>Filter daerah, mapel, kurikulum, budget. Daftar gratis untuk membuka CV lengkap: pendidikan, pengalaman, dan rating. Nama dan kontak tutor tersamar.</p></div></li>
       <li><span class="tl-dot">${ic("megaphone")}</span><div class="grow"><div class="row between"><b>Kirim permintaan</b><span class="chip ok">Gratis</span></div>
         <p>Pilih 1–3 tutor atau biarkan terbuka untuk tutor di daerahmu. Berlaku 14 hari. Kamu tidak pernah membayar LesIn.</p></div></li>
       <li><span class="tl-dot">${ic("wa")}</span><div class="grow"><div class="row between"><b>Tutor menghubungimu</b><span class="chip ok">Gratis</span></div>

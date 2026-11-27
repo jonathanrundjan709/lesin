@@ -17,7 +17,7 @@ export const nameRow = (t, size = "") => `<div class="row" style="gap:4px"><span
  * Kartu tutor untuk hasil pencarian. `selectable` menambah tombol "Pilih" untuk permintaan ke maksimal 3 tutor.
  * Untuk pratinjau CV sendiri, `preview` mematikan tautan.
  */
-export function tutorCard(t, { selectable = false, preview = false } = {}) {
+export function tutorCard(t, { selectable = false, preview = false, locked = false } = {}) {
   const picked = selection.has(t.id);
   const head = `<div class="row" style="align-items:flex-start;gap:12px">
       ${avatarHTML(t)}
@@ -34,6 +34,10 @@ export function tutorCard(t, { selectable = false, preview = false } = {}) {
   const foot = `<div class="divider"></div><div class="row between">
       <div class="chips">${t.subjects.slice(0, 2).map((s) => `<span class="chip">${esc(s)}</span>`).join("")}${t.subjects.length > 2 ? `<span class="chip">+${t.subjects.length - 2}</span>` : ""}</div>
       <div class="price">${rp(t.rate)}<small>/${durLabel(t.rateDurationMin)}</small></div></div>`;
-  const pick = selectable ? `<button type="button" class="btn sm ${picked ? "" : "line"} pick-tutor" data-pick="${esc(t.id)}" aria-pressed="${picked}">${ic(picked ? "check" : "plus")}${picked ? "Dipilih" : "Pilih tutor ini"}</button>` : "";
-  return `<div class="card tcard ${preview ? "" : "tap"}">${preview ? head : `<a class="tc-link" href="#/tutor/${encodeURIComponent(t.id)}">${head}</a>`}${foot}${pick}</div>`;
+  // Tamu belum boleh membuka CV atau memilih tutor: keduanya membuka paywall "Masuk dulu yuk".
+  const pick = !selectable ? "" : locked
+    ? `<button type="button" class="btn sm line pick-tutor" data-login>${ic("lock")}Masuk untuk memilih</button>`
+    : `<button type="button" class="btn sm ${picked ? "" : "line"} pick-tutor" data-pick="${esc(t.id)}" aria-pressed="${picked}">${ic(picked ? "check" : "plus")}${picked ? "Dipilih" : "Pilih tutor ini"}</button>`;
+  const link = preview ? head : locked ? `<button type="button" class="tc-link" data-login>${head}</button>` : `<a class="tc-link" href="#/tutor/${encodeURIComponent(t.id)}">${head}</a>`;
+  return `<div class="card tcard ${preview ? "" : "tap"}">${link}${foot}${pick}</div>`;
 }

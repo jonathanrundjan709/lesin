@@ -315,6 +315,7 @@
 .tcard:not(:has(.tc-link)) { padding: 16px; }
 .tcard:not(:has(.tc-link)) > .divider, .tcard:not(:has(.tc-link)) > .row { margin-left: 0; margin-right: 0; }
 .tcard .tc-link:active { opacity: .9; }
+button.tc-link { width: 100%; text-align: left; background: none; border: 0; font: inherit; color: inherit; cursor: pointer; }
 .pro-chip { padding: 2px 8px; font-size: 11px; }
 .target-chip button { width: 16px; height: 16px; display: grid; place-items: center; margin-left: 4px; color: var(--pri-d); }
 .target-chip button svg { width: 12px; height: 12px; }
