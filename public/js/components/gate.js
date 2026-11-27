@@ -1,6 +1,6 @@
 import { $ } from "../core/dom.js";
 import { ic } from "../core/icons.js";
-import { navigate, returnTo } from "../core/router.js";
+import { currentPath, navigate, returnTo } from "../core/router.js";
 import { closeSheet, openSheet } from "../core/sheet.js";
 import { esc } from "../core/dom.js";
 
@@ -26,18 +26,18 @@ const copyFor = (page) => GATE_COPY[page] ?? ((["wallet", "harga", "riwayat", "l
 /** Kartu gerbang: owl, judul, penjelasan, manfaat, lalu Daftar gratis (utama) dan Masuk (sekunder). Dipakai di sheet dan halaman. */
 export function gateCard({ page, asSheet }) {
   const c = copyFor(page);
-  return `<div class="auth-gate gate-owl ${asSheet ? "sheet-gate" : ""}"><img src="assets/mascot.svg" alt="" width="${asSheet ? 80 : 96}" height="${asSheet ? 80 : 96}">
+  return `<div class="auth-gate gate-owl ${asSheet ? "sheet-gate" : ""}"><img src="/assets/mascot.svg" alt="" width="${asSheet ? 80 : 96}" height="${asSheet ? 80 : 96}">
     <h2>${esc(c.title)}</h2><p class="sub">${esc(c.text)}</p>
     <ul class="gate-perks">${PERKS.map((p) => `<li>${ic("check")}${esc(p)}</li>`).join("")}</ul>
-    <button class="btn" data-gate="#/daftar">Daftar gratis</button>
-    <button class="btn line" data-gate="#/masuk">Sudah punya akun? Masuk</button>
+    <button class="btn" data-gate="/daftar">Daftar gratis</button>
+    <button class="btn line" data-gate="/masuk">Sudah punya akun? Masuk</button>
     ${asSheet ? `<button class="link gate-later" data-gate-close>Nanti saja</button>` : ""}</div>`;
 }
 
 /** Paywall untuk tamu di dalam sheet. Setelah masuk, pengguna kembali ke halaman ini. */
 export function loginPrompt(page = "tutor") {
   openSheet(gateCard({ page, asSheet: true }), (sh) => {
-    sh.querySelectorAll("[data-gate]").forEach((b) => (b.onclick = () => { returnTo.hash = location.hash || "#/"; closeSheet(); navigate(b.dataset.gate); }));
+    sh.querySelectorAll("[data-gate]").forEach((b) => (b.onclick = () => { returnTo.path = currentPath(); closeSheet(); navigate(b.dataset.gate); }));
     $("[data-gate-close]", sh).onclick = closeSheet;
   });
 }

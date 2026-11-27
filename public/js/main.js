@@ -1,6 +1,6 @@
 import { $ } from "./core/dom.js";
 import { applyUser, bootSession, session } from "./core/session.js";
-import { navigate, returnTo, startRouter } from "./core/router.js";
+import { currentPath, navigate, returnTo, startRouter } from "./core/router.js";
 import { toast } from "./core/toast.js";
 import { modeSheet } from "./components/mode-switch.js";
 import { registerRoutes } from "./routes.js";
@@ -11,10 +11,10 @@ let handlingLost = false;
 window.addEventListener("lesin:session-lost", async () => {
   if (!session.user || handlingLost) return;
   handlingLost = true;
-  returnTo.hash = location.hash || "#/";
+  returnTo.path = currentPath();
   await applyUser(null);
   toast("Sesi kamu berakhir. Silakan masuk lagi.", "info", 5000);
-  navigate("#/masuk");
+  navigate("/masuk");
   handlingLost = false;
 });
 

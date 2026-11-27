@@ -3,8 +3,13 @@ export default {
   reactStrictMode: true,
   // Driver Postgres memakai API Node, jadi jangan di-bundle oleh Next.
   serverExternalPackages: ["pg"],
+  // URL bersih tanpa "#": "/" dan semua path non-API (/results, /tutor/abc, ...) menyajikan aplikasi yang sama.
+  // "fallback" dijalankan setelah semua rute (termasuk /api/...) dan berkas public/ dicek, jadi tidak menimpa keduanya.
   async rewrites() {
-    return [{ source: "/", destination: "/index.html" }];
+    return {
+      afterFiles: [{ source: "/", destination: "/index.html" }],
+      fallback: [{ source: "/:path((?!api/|_next/).*)", destination: "/index.html" }],
+    };
   },
   async headers() {
     return [

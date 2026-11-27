@@ -30,4 +30,4 @@ export function bindCopy(root = document) {
   }));
 }
 
-export const emptyBox = (html) => `<div class="empty"><img class="empty-mascot" src="assets/mascot.svg" alt="" width="84" height="84">${html}</div>`;
+export const emptyBox = (html) => `<div class="empty"><img class="empty-mascot" src="/assets/mascot.svg" alt="" width="84" height="84">${html}</div>`;

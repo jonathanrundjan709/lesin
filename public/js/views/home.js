@@ -12,11 +12,11 @@ import { requestCard } from "../components/request-card.js";
 import { emptyBox } from "../components/contact.js";
 import { mono } from "../components/mono.js";
 
-export const cvGate = () => `<section class="card cv-gate"><img src="assets/mascot.svg" alt="" width="64" height="64"><div class="grow"><h3>Lengkapi CV untuk mulai</h3>
+export const cvGate = () => `<section class="card cv-gate"><img src="/assets/mascot.svg" alt="" width="64" height="64"><div class="grow"><h3>Lengkapi CV untuk mulai</h3>
   <p class="small" style="color:var(--ink-2);margin-top:2px;line-height:1.45">Nama, mapel, jenjang, pendidikan, dan tarif wajib diisi. “Tentang caramu mengajar” boleh dikosongkan.</p>
-  <a class="btn sm" href="#/profile" style="margin-top:10px">Isi CV sekarang ${ic("arrow")}</a></div></section>`;
+  <a class="btn sm" href="/profile" style="margin-top:10px">Isi CV sekarang ${ic("arrow")}</a></div></section>`;
 
-const lessonCard = () => `<a class="card tap link-row section" href="#/les"><span class="mi">${ic("calendar")}</span><span class="grow"><b>Lesson hub</b><small>Jadwal mingguan, pengingat WhatsApp, dan catatan sesi</small></span>${ic("chevR")}</a>`;
+const lessonCard = () => `<a class="card tap link-row section" href="/les"><span class="mi">${ic("calendar")}</span><span class="grow"><b>Lesson hub</b><small>Jadwal mingguan, pengingat WhatsApp, dan catatan sesi</small></span>${ic("chevR")}</a>`;
 
 /** Kelengkapan CV (persen), hanya untuk motivasi mengisi. */
 function profileCompletion(p, docs) {
@@ -45,7 +45,7 @@ export const homeView = {
     const read = () => { const fd = new FormData(f); return { ...data.s, area: fd.get("area"), subject: fd.get("subject"), level: fd.get("level"), curriculum: fd.get("curriculum") }; };
     const count = debounce(async () => { try { $("#qCount").textContent = (await api.tutors.search(read())).tutors.length; } catch { /* abaikan */ } }, 300);
     f.oninput = count;
-    f.onsubmit = (e) => { e.preventDefault(); searchPrefs.set(read()); navigate("#/results"); };
+    f.onsubmit = (e) => { e.preventDefault(); searchPrefs.set(read()); navigate("/results"); };
     $$("[data-subj]").forEach((a) => (a.onclick = () => searchPrefs.set({ ...searchPrefs.reset({ area: data.s.area }), subject: a.dataset.subj })));
   },
 };
@@ -58,7 +58,7 @@ function seekerHome({ all, count, s }) {
   const avg = rated.length ? (rated.reduce((a, t) => a + t.rating, 0) / rated.length).toFixed(1).replace(".", ",") : "—";
   return `${ui.sw === "1" ? modeSegment() : ""}
   <section class="hero">
-    <img class="hero-mascot" src="assets/mascot.svg" alt="" width="120" height="120">
+    <img class="hero-mascot" src="/assets/mascot.svg" alt="" width="120" height="120">
     <p class="eyebrow light">${esc(eyebrow)}</p>
     <h1 style="margin-top:6px">${esc(title)}</h1>
     <p style="margin-top:6px">${esc(sub)}</p>
@@ -76,8 +76,8 @@ function seekerHome({ all, count, s }) {
   </form>
 
   <div class="section">
-    <div class="section-head"><h2>Pelajaran populer</h2><a href="#/search">Semua</a></div>
-    <div class="subj-grid">${popular.map((x) => `<a class="subj-card" href="#/results" data-subj="${esc(x)}">${mono(x, "md")}<b>${esc(x)}</b><span>${all.filter((t) => t.subjects.includes(x)).length} tutor</span></a>`).join("")}</div>
+    <div class="section-head"><h2>Pelajaran populer</h2><a href="/search">Semua</a></div>
+    <div class="subj-grid">${popular.map((x) => `<a class="subj-card" href="/results" data-subj="${esc(x)}">${mono(x, "md")}<b>${esc(x)}</b><span>${all.filter((t) => t.subjects.includes(x)).length} tutor</span></a>`).join("")}</div>
   </div>
 
   <section class="cta-post section">
@@ -86,7 +86,7 @@ function seekerHome({ all, count, s }) {
       <p class="eyebrow">Permintaan les · gratis</p>
       <h3>Biar tutor yang menghubungimu</h3>
       <p class="small" style="color:var(--ink-2);margin-top:4px;line-height:1.5">Tulis kebutuhan les sekali, atau pilih 1–3 tutor. Tutor yang cocok langsung WhatsApp kamu.</p>
-      <a class="btn sm dark" href="#/post" style="margin-top:12px">Buat permintaan ${ic("arrow")}</a>
+      <a class="btn sm dark" href="/post" style="margin-top:12px">Buat permintaan ${ic("arrow")}</a>
     </div>
   </section>
 
@@ -127,21 +127,21 @@ function tutorHome({ board }) {
       ${l?.planActive ? `<span class="chip acc">${ic("bolt")}Pro</span>` : ""}
     </div>
     <div class="mini-stats">
-      <a href="#/board"><b>${fit.length}</b><span>Lowongan cocok</span></a>
-      <a href="#/kontak"><b>${unlocked}</b><span>Sudah dihubungi</span></a>
-      <a href="#/wallet"><b>${l ? l.leads : 0}</b><span>Lead</span></a>
+      <a href="/board"><b>${fit.length}</b><span>Lowongan cocok</span></a>
+      <a href="/kontak"><b>${unlocked}</b><span>Sudah dihubungi</span></a>
+      <a href="/wallet"><b>${l ? l.leads : 0}</b><span>Lead</span></a>
     </div>
-    ${cvReady() ? `<a href="#/board" class="btn" style="margin-top:14px">Lihat lowongan les ${ic("arrow")}</a>` : ""}
+    ${cvReady() ? `<a href="/board" class="btn" style="margin-top:14px">Lihat lowongan les ${ic("arrow")}</a>` : ""}
   </section>
 
-  <a class="card tap section" href="#/profile">
+  <a class="card tap section" href="/profile">
     <div class="row between"><h3>Kelengkapan CV</h3><b style="color:var(--pri)">${comp}%</b></div>
     <div class="progress" style="margin-top:10px"><i style="width:${comp}%"></i></div>
     <p class="small muted" style="margin-top:8px">${comp < 100 ? "CV lengkap muncul lebih tinggi di hasil pencarian orang tua." : "CV kamu sudah lengkap."}</p>
   </a>
 
   ${cvReady() ? `<div class="section">
-    <div class="section-head"><h2>Cocok untukmu</h2><a href="#/board">Semua</a></div>
+    <div class="section-head"><h2>Cocok untukmu</h2><a href="/board">Semua</a></div>
     <div class="stack">${fit.slice(0, 3).map((r) => requestCard(r)).join("") || emptyBox("Belum ada lowongan yang cocok di sekitarmu.")}</div>
   </div>` : ""}
 

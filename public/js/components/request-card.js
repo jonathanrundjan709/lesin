@@ -18,7 +18,7 @@ export function requestCard(r, kind = "board") {
   const footer = kind === "board"
     ? `<div class="row between" style="margin-top:10px"><span class="small muted">${r.contacted} tutor menghubungi · ${r.slotsLeft ? `sisa ${r.slotsLeft} slot` : "penuh"}</span>
         ${r.nearby && r.mode !== "online" ? `<span class="chip">${ic("pin")}Satu kota denganmu</span>` : ""}</div>` : "";
-  return `<${link ? "a" : "div"} class="card ${link ? "tap" : ""}" ${link ? `href="#/lowongan/${encodeURIComponent(r.id)}"` : ""}>
+  return `<${link ? "a" : "div"} class="card ${link ? "tap" : ""}" ${link ? `href="/lowongan/${encodeURIComponent(r.id)}"` : ""}>
     <div class="post-top">
       <div class="row" style="gap:12px;align-items:flex-start">${mono(r.subject, "md")}
         <div><h3>${esc(r.subject)} · ${esc(r.level)}</h3><p class="small muted" style="margin-top:2px">${esc(owner)} · ${agoText(r.createdAt)}</p></div></div>

@@ -50,6 +50,11 @@ Aturan impor: `domain` ← `application` ← `infrastructure`/`app`. Panah tidak
 4. Membuka permintaan atomik: kunci baris tutor dan permintaan, cek batas 10 tutor dan saldo, potong lead, catat unlock dalam satu transaksi.
 5. Info kontak dibuang dari teks bebas. Sesi memakai cookie `HttpOnly` + `SameSite=Lax`, ditambah pemeriksaan `Origin`.
 
+## Routing UI
+
+URL bersih tanpa `#` (History API): `/`, `/results`, `/tutor/:id`, `/post`, `/myposts`, `/kontak`, `/les`, `/profile`, `/board`, `/lowongan/:id`, `/wallet`, `/harga`, `/riwayat`, `/masuk`, `/daftar`, `/admin`.
+`next.config.mjs` menyajikan `public/index.html` untuk `/` dan untuk semua path non-API lewat rewrite `fallback` (dijalankan setelah rute `/api/*` dan berkas `public/`). Tautan lama `/#/results` dialihkan ke `/results` oleh router. Aset memakai path absolut (`/css/...`, `/js/...`, `/assets/...`) supaya tetap benar di URL bersarang.
+
 ## Model data
 
 Skema ada di `src/infrastructure/persistence/postgres/schema.ts` dan dijalankan otomatis saat start (idempoten).

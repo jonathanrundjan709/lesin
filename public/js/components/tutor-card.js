@@ -38,6 +38,6 @@ export function tutorCard(t, { selectable = false, preview = false, locked = fal
   const pick = !selectable ? "" : locked
     ? `<button type="button" class="btn sm line pick-tutor" data-login>${ic("lock")}Masuk untuk memilih</button>`
     : `<button type="button" class="btn sm ${picked ? "" : "line"} pick-tutor" data-pick="${esc(t.id)}" aria-pressed="${picked}">${ic(picked ? "check" : "plus")}${picked ? "Dipilih" : "Pilih tutor ini"}</button>`;
-  const link = preview ? head : locked ? `<button type="button" class="tc-link" data-login>${head}</button>` : `<a class="tc-link" href="#/tutor/${encodeURIComponent(t.id)}">${head}</a>`;
+  const link = preview ? head : locked ? `<button type="button" class="tc-link" data-login>${head}</button>` : `<a class="tc-link" href="/tutor/${encodeURIComponent(t.id)}">${head}</a>`;
   return `<div class="card tcard ${preview ? "" : "tap"}">${link}${foot}${pick}</div>`;
 }

@@ -5,7 +5,7 @@ import { ic } from "../core/icons.js";
 import { session } from "../core/session.js";
 import { closeSheet, openSheet } from "../core/sheet.js";
 import { toast } from "../core/toast.js";
-import { navigate } from "../core/router.js";
+import { currentPath, navigate } from "../core/router.js";
 import { purchase } from "./payment.js";
 
 /** Paywall Tutor Plan: jelaskan keuntungan dulu, baru bayar (PRD §6). Angka diambil dari katalog server. */
@@ -18,7 +18,7 @@ export async function planSheet() {
     ["shield", "Badge Pro", "Orang tua langsung melihat kamu tutor yang aktif dan serius."],
     ["calendar", "Lesson hub tanpa batas", "Jadwal mingguan, pengingat WhatsApp, dan catatan sesi untuk semua muridmu."],
   ];
-  openSheet(`<div class="pro-hero"><img src="assets/mascot.svg" alt="" width="72" height="72"><div><p class="eyebrow">Langganan bulanan</p><h2>Tutor Plan</h2></div></div>
+  openSheet(`<div class="pro-hero"><img src="/assets/mascot.svg" alt="" width="72" height="72"><div><p class="eyebrow">Langganan bulanan</p><h2>Tutor Plan</h2></div></div>
     <ul class="perks">${perks.map(([i, t, d]) => `<li><span class="pi">${ic(i)}</span><div><b>${esc(t)}</b><p>${esc(d)}</p></div></li>`).join("")}</ul>
     <div class="info" style="margin-bottom:12px">${ic("info")}<span>Lead dari Plan hangus di akhir bulan. Lead yang dibeli satuan tidak pernah hangus. Lead adalah kredit layanan, bukan uang tunai.</span></div>
     <div class="pro-price"><span class="muted small">Harga</span><b>${rp(plan.amount)}<small> / bulan</small></b></div>
@@ -26,6 +26,6 @@ export async function planSheet() {
     <button class="btn acc" id="proGo">${session.leads?.planActive ? "Perpanjang Tutor Plan" : "Langganan Tutor Plan"}</button>
     <button class="btn line" id="proLater" style="margin-top:8px">Nanti saja</button>`, (sh) => {
     $("#proLater", sh).onclick = closeSheet;
-    $("#proGo", sh).onclick = () => purchase("plan", { title: "Langganan Tutor Plan", onPaid: () => navigate(location.hash || "#/") });
+    $("#proGo", sh).onclick = () => purchase("plan", { title: "Langganan Tutor Plan", onPaid: () => navigate(currentPath()) });
   });
 }

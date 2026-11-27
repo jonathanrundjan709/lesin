@@ -4,7 +4,7 @@ import { back } from "../core/forms.js";
 import { DAYS_FULL, avColor, durLabel, rp, waLink } from "../core/format.js";
 import { ic } from "../core/icons.js";
 import { searchPrefs, selection } from "../core/prefs.js";
-import { navigate } from "../core/router.js";
+import { navigate, currentPath } from "../core/router.js";
 import { session } from "../core/session.js";
 import { closeSheet } from "../core/sheet.js";
 import { toast } from "../core/toast.js";
@@ -87,7 +87,7 @@ export const tutorDetailView = {
     bindCopy();
     const pick = $("#pickBtn");
     if (pick) pick.onclick = () => {
-      if (selection.has(t.id)) return navigate("#/post");
+      if (selection.has(t.id)) return navigate("/post");
       const max = session.meta.limits.maxTargets;
       confirmSheet({
         title: `Kirim permintaan ke ${t.name}?`,
@@ -95,11 +95,11 @@ export const tutorDetailView = {
         confirmLabel: "Lanjut isi permintaan", cancelLabel: "Batal",
         onConfirm: () => {
           if (!selection.toggle(t, max)) return toast(`Maksimal ${max} tutor per permintaan.`, "info");
-          closeSheet(); navigate("#/post");
+          closeSheet(); navigate("/post");
         },
       });
     };
-    const rev = $("#revBtn"); if (rev) rev.onclick = () => reviewSheet(t, reviews.find((r) => r.mine), () => navigate(location.hash));
+    const rev = $("#revBtn"); if (rev) rev.onclick = () => reviewSheet(t, reviews.find((r) => r.mine), () => navigate(currentPath()));
     const rep = $("#reportBtn"); if (rep) rep.onclick = () => reportSheet(t);
     const les = $("#lessonBtn"); if (les) les.onclick = () => lessonSheet({ tutorId: t.id, seekerId: session.user.id, defaultSubject: t.subjects[0] });
   },

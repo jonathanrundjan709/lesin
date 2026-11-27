@@ -26,14 +26,14 @@ const ROLES = {
 /** Urutan tampil: peran dulu, lalu tab Masuk/Daftar, lalu formulir. Tab adalah satu-satunya penukar Masuk/Daftar. */
 function head(mode) {
   const role = getRole();
-  return `<div class="auth-head"><img src="assets/mascot.svg" alt="" width="84" height="84">
+  return `<div class="auth-head"><img src="/assets/mascot.svg" alt="" width="84" height="84">
     <h1>${mode === "masuk" ? "Masuk ke LesIn" : "Buat akun LesIn"}</h1></div>
   <div class="role-pick" role="radiogroup" aria-label="${mode === "masuk" ? "Masuk sebagai" : "Daftar sebagai"}">
     <span class="lbl">${mode === "masuk" ? "Masuk sebagai" : "Daftar sebagai"}</span>
     <div class="role-grid">${Object.entries(ROLES).map(([k, r]) => `<button type="button" role="radio" aria-checked="${role === k}" class="role-opt ${role === k ? "on" : ""}" data-as="${k}">
       <span class="mi">${ic(r.icon)}</span><b>${r.title}</b><small>${r.desc}</small></button>`).join("")}</div>
   </div>
-  <div class="auth-tabs" role="tablist"><a href="#/masuk" role="tab" aria-selected="${mode === "masuk"}" class="${mode === "masuk" ? "on" : ""}">Masuk</a><a href="#/daftar" role="tab" aria-selected="${mode === "daftar"}" class="${mode === "daftar" ? "on" : ""}">Daftar</a></div>`;
+  <div class="auth-tabs" role="tablist"><a href="/masuk" role="tab" aria-selected="${mode === "masuk"}" class="${mode === "masuk" ? "on" : ""}">Masuk</a><a href="/daftar" role="tab" aria-selected="${mode === "daftar"}" class="${mode === "daftar" ? "on" : ""}">Daftar</a></div>`;
 }
 
 function bindHead(form) {
@@ -53,13 +53,13 @@ async function finish(user, welcome) {
   await applyUser(user);
   const role = getRole();
   setMode(role);
-  const to = returnTo.hash; returnTo.hash = "#/";
+  const to = returnTo.path; returnTo.path = "/";
   if (role === "tutor" && !cvReady()) {
     toast("Lengkapi <b>CV</b> untuk mulai jadi tutor. <b>Cara mengajar</b> boleh dikosongkan.", "info", 5000);
-    return navigate("#/profile");
+    return navigate("/profile");
   }
   toast(welcome);
-  navigate(role === "tutor" || to === "#/masuk" || to === "#/daftar" ? "#/" : to);
+  navigate(role === "tutor" || to === "/masuk" || to === "/daftar" ? "/" : to);
 }
 
 export const loginView = {
@@ -118,7 +118,7 @@ export const gateView = {
 
 export const tutorGateView = {
   render() {
-    return `<div class="auth-gate"><img src="assets/mascot.svg" alt="" width="96" height="96"><h2>Halaman untuk tutor</h2>
+    return `<div class="auth-gate"><img src="/assets/mascot.svg" alt="" width="96" height="96"><h2>Halaman untuk tutor</h2>
       <p class="sub">Beralih ke mode tutor untuk membuka halaman ini.</p><button class="btn" id="goTutor">Beralih ke mode tutor</button></div>`;
   },
   async mount() {
@@ -130,7 +130,7 @@ export const tutorGateView = {
 export const errorView = {
   render(e) {
     const offline = e?.code === "network";
-    return `<div class="auth-gate"><img src="assets/mascot.svg" alt="" width="96" height="96"><h2>${offline ? "Tidak ada koneksi" : "Ada yang tidak beres"}</h2>
+    return `<div class="auth-gate"><img src="/assets/mascot.svg" alt="" width="96" height="96"><h2>${offline ? "Tidak ada koneksi" : "Ada yang tidak beres"}</h2>
       <p class="sub">${esc(e?.message || "Coba muat ulang halaman.")}</p><button class="btn" onclick="location.reload()">Muat ulang</button></div>`;
   },
 };

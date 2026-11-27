@@ -3,32 +3,32 @@ import { $$, esc, $ } from "../core/dom.js";
 import { avColor, initials } from "../core/format.js";
 import { ic } from "../core/icons.js";
 import { cvReady, applyUser, session, setMode } from "../core/session.js";
-import { navigate, returnTo } from "../core/router.js";
+import { currentPath, navigate, returnTo } from "../core/router.js";
 import { closeSheet, openSheet } from "../core/sheet.js";
 import { toast } from "../core/toast.js";
 
 /** Pindah antara mode Pencari dan Tutor. Tutor wajib melengkapi CV dulu. Tamu diarahkan masuk. */
 export function switchMode(mode) {
   if (!session.user) {
-    returnTo.hash = location.hash || "#/";
+    returnTo.path = currentPath();
     toast(mode === "tutor" ? "Daftar atau masuk dulu untuk jadi tutor." : "Masuk dulu untuk melanjutkan.", "info");
-    return navigate("#/masuk");
+    return navigate("/masuk");
   }
   if (session.mode === mode) return;
   setMode(mode);
   if (mode === "tutor" && !cvReady()) {
     toast("Lengkapi <b>CV</b> dulu untuk jadi tutor. <b>Cara mengajar</b> boleh dikosongkan.", "info", 5200);
-    return navigate("#/profile");
+    return navigate("/profile");
   }
   toast(mode === "tutor" ? "Beralih ke <b>Mode Tutor</b>" : "Beralih ke <b>Mode Pencari</b>", "info");
-  navigate("#/");
+  navigate("/");
 }
 
 export async function logout() {
   await api.auth.logout().catch(() => {});
   await applyUser(null);
   toast("Kamu sudah keluar.", "info");
-  navigate("#/");
+  navigate("/");
 }
 
 /** Sheet pilih mode + akun + keluar (opsi 2: ikon kecil di topbar). */
@@ -52,8 +52,8 @@ export const modeSegment = () => `<div class="mode-seg" role="group" aria-label=
 
 /** Opsi 3: kartu di bawah beranda. */
 export const modeCard = () => session.mode === "pencari"
-  ? `<section class="card mode-card section"><img src="assets/mascot.svg" alt="" width="64" height="64"><div class="grow"><h3>Kamu guru les?</h3><p class="small muted">Pasang CV dan dapatkan murid baru.</p></div><button class="btn sm ghost" data-setrole="tutor">Jadi tutor</button></section>`
-  : `<section class="card mode-card section"><img src="assets/mascot.svg" alt="" width="64" height="64"><div class="grow"><h3>Cari guru les?</h3><p class="small muted">Beralih ke mode pencari.</p></div><button class="btn sm ghost" data-setrole="pencari">Mode pencari</button></section>`;
+  ? `<section class="card mode-card section"><img src="/assets/mascot.svg" alt="" width="64" height="64"><div class="grow"><h3>Kamu guru les?</h3><p class="small muted">Pasang CV dan dapatkan murid baru.</p></div><button class="btn sm ghost" data-setrole="tutor">Jadi tutor</button></section>`
+  : `<section class="card mode-card section"><img src="/assets/mascot.svg" alt="" width="64" height="64"><div class="grow"><h3>Cari guru les?</h3><p class="small muted">Beralih ke mode pencari.</p></div><button class="btn sm ghost" data-setrole="pencari">Mode pencari</button></section>`;
 
 /** Pasang klik pada tombol `data-setrole` di dalam `root`. */
 export const bindModeSwitch = (root = document) => $$("[data-setrole]", root).forEach((b) => (b.onclick = () => switchMode(b.dataset.setrole)));

@@ -19,12 +19,12 @@ export function renderChrome() {
   rb.setAttribute("aria-label", session.mode === "tutor" ? "Mode tutor, ganti mode" : "Mode pencari, ganti mode");
 
   const pill = $("#walletPill");
-  if (!session.user) { pill.hidden = false; pill.href = "#/masuk"; pill.innerHTML = `${ic("user")}Masuk`; }
-  else if (session.mode === "tutor" && cvReady() && session.leads) { pill.hidden = false; pill.href = "#/wallet"; pill.innerHTML = `${ic("ticket")}${session.leads.leads} lead`; }
+  if (!session.user) { pill.hidden = false; pill.href = "/masuk"; pill.innerHTML = `${ic("user")}Masuk`; }
+  else if (session.mode === "tutor" && cvReady() && session.leads) { pill.hidden = false; pill.href = "/wallet"; pill.innerHTML = `${ic("ticket")}${session.leads.leads} lead`; }
   else pill.hidden = true; // orang tua tidak punya saldo: semuanya gratis
 
   const { page } = currentRoute();
   const active = page in ACTIVE ? ACTIVE[page] : page;
   $("#nav").innerHTML = NAV[session.mode].map(([p, i, l, center]) => `
-    <a href="#/${p}" class="${active === p ? "on" : ""} ${center ? "center" : ""}">${center ? `<span class="ic">${ic(i)}</span>` : ic(i)}${l}</a>`).join("");
+    <a href="/${p}" class="${active === p ? "on" : ""} ${center ? "center" : ""}">${center ? `<span class="ic">${ic(i)}</span>` : ic(i)}${l}</a>`).join("");
 }

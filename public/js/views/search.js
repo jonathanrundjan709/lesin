@@ -47,9 +47,9 @@ export const searchView = {
     const live = debounce(async () => { try { $("#liveCount").textContent = (await api.tutors.search(read())).tutors.length; } catch { /* abaikan */ } }, 250);
     const upd = () => { $("#budgetVal").textContent = rp(+f.budget.value); live(); };
     f.oninput = upd; f.onchange = upd; upd();
-    f.onsubmit = (e) => { e.preventDefault(); searchPrefs.set(read()); navigate("#/results"); };
+    f.onsubmit = (e) => { e.preventDefault(); searchPrefs.set(read()); navigate("/results"); };
     const r = $("#resetF");
-    if (r) r.onclick = () => { const s = searchPrefs.get(); searchPrefs.reset({ area: s.area, subject: s.subject }); navigate("#/search"); toast("Filter direset", "info"); };
+    if (r) r.onclick = () => { const s = searchPrefs.get(); searchPrefs.reset({ area: s.area, subject: s.subject }); navigate("/search"); toast("Filter direset", "info"); };
   },
 };
 
@@ -66,19 +66,19 @@ export const resultsView = {
       nf && (s.budget !== DEFAULT_SEARCH.budget || s.durationMin !== DEFAULT_SEARCH.durationMin) ? `≤ ${rp(s.budget)} / ${durLabel(s.durationMin)}` : null,
       s.gender === "P" ? "tutor perempuan" : s.gender === "L" ? "tutor laki-laki" : null].filter(Boolean).join(" · ");
     return `
-    <div class="row" style="margin-bottom:12px">${back("#/", "data-reset")}<h2 class="grow">Hasil pencarian</h2>
-      <a href="#/search" class="btn sm ${nf ? "filter-on" : "line"}">${ic("filter")}Filter${nf ? `<span class="fcount">${nf}</span>` : ""}</a></div>
+    <div class="row" style="margin-bottom:12px">${back("/", "data-reset")}<h2 class="grow">Hasil pencarian</h2>
+      <a href="/search" class="btn sm ${nf ? "filter-on" : "line"}">${ic("filter")}Filter${nf ? `<span class="fcount">${nf}</span>` : ""}</a></div>
     <div class="result-head"><div class="row" style="gap:12px"><b class="big">${tutors.length}</b><div><b>tutor cocok dengan kriteriamu</b><p class="filters-sum">${esc(sum)}</p></div></div></div>
     <div class="info" style="margin-top:10px">${ic("shield")}<span>${guest ? "Masuk (gratis) untuk membuka CV lengkap dan memilih tutor." : `Nama, foto, dan WhatsApp tutor tersamar. Pilih sampai ${max} tutor lalu kirim permintaan gratis. Identitas tutor terbuka setelah tutor merespons.`}</span></div>
     <div class="hscroll" style="margin-top:12px">${[["match", "Paling cocok"], ["dist", "Terdekat"], ["price", "Termurah"], ["rating", "Rating"]].map(([v, l]) =>
       `<button class="chip ${s.sort === v ? "pri" : ""}" data-sort="${v}" style="padding:8px 12px">${l}</button>`).join("")}</div>
     <div class="stack" style="margin-top:12px">
-      ${tutors.map((t) => tutorCard(t, { selectable: true, locked: guest })).join("") || emptyBox(`Belum ada tutor yang cocok. Coba longgarkan filter,<br>atau <a href="#/post" class="link">kirim permintaan terbuka</a>.`)}
+      ${tutors.map((t) => tutorCard(t, { selectable: true, locked: guest })).join("") || emptyBox(`Belum ada tutor yang cocok. Coba longgarkan filter,<br>atau <a href="/post" class="link">kirim permintaan terbuka</a>.`)}
     </div>
-    ${picked.length ? `<div style="height:70px"></div><div class="sticky-cta"><a class="btn" href="#/post">Kirim permintaan ke ${picked.length} tutor ${ic("arrow")}</a></div>` : ""}`;
+    ${picked.length ? `<div style="height:70px"></div><div class="sticky-cta"><a class="btn" href="/post">Kirim permintaan ke ${picked.length} tutor ${ic("arrow")}</a></div>` : ""}`;
   },
   mount({ tutors }) {
-    document.querySelectorAll("[data-sort]").forEach((b) => (b.onclick = () => { searchPrefs.set({ ...searchPrefs.get(), sort: b.dataset.sort }); navigate("#/results"); }));
+    document.querySelectorAll("[data-sort]").forEach((b) => (b.onclick = () => { searchPrefs.set({ ...searchPrefs.get(), sort: b.dataset.sort }); navigate("/results"); }));
     // Kembali dari hasil = batal mencari: filter tambahan direset.
     $("[data-reset]").onclick = () => { searchPrefs.reset({ area: searchPrefs.get().area }); };
     document.querySelectorAll("[data-login]").forEach((b) => (b.onclick = loginPrompt));
@@ -86,7 +86,7 @@ export const resultsView = {
     document.querySelectorAll("[data-pick]").forEach((b) => (b.onclick = () => {
       const t = tutors.find((x) => x.id === b.dataset.pick);
       if (!selection.toggle(t, max)) return toast(`Maksimal ${max} tutor per permintaan.`, "info");
-      navigate("#/results");
+      navigate("/results");
     }));
   },
 };

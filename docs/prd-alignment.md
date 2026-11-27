@@ -19,8 +19,8 @@ Sumber: PRD "Lesin — Tutor Marketplace" (rev. 27 Nov 2026). Aturan prioritas d
 | 9 | Founding Tutor | Tidak ada | 2 lead gratis untuk tutor pertama (§5). Anggaran PRD §10 menyebut 200 tutor pertama | **PRD.** 200 tutor pertama mendapat 2 lead saat CV pertama lengkap |
 | 10 | Kontak tutor di pencarian | Disamarkan di UI | Nama, foto, WhatsApp tidak dikirim API sampai tutor merespons (§5, §8) | **PRD.** Penyamaran dilakukan di server. Payload tidak memuat nama asli maupun nomor (ada tes) |
 | 11 | Pembayaran | Simulasi di browser | Status berubah hanya dari webhook bertanda tangan. Idempoten. Nominal dicocokkan. Order kedaluwarsa 30 menit (§8, §9) | **PRD.** Ditegakkan server dan dites |
-| 12 | Lesson hub | Tidak ada | P0: jadwal mingguan, pengingat WhatsApp, catatan sesi tutor (§5) | **Ditambahkan** di UI gaya live (`#/les`) |
-| 13 | Laporan, verifikasi, admin | Verifikasi hanya tombol tiruan | P0: tombol laporkan, verifikasi manual, konsol admin (§2, §8) | **Ditambahkan** (laporan, antrean verifikasi, `#/admin`). Unggah berkas menyusul |
+| 12 | Lesson hub | Tidak ada | P0: jadwal mingguan, pengingat WhatsApp, catatan sesi tutor (§5) | **Ditambahkan** di UI gaya live (`/les`) |
+| 13 | Laporan, verifikasi, admin | Verifikasi hanya tombol tiruan | P0: tombol laporkan, verifikasi manual, konsol admin (§2, §8) | **Ditambahkan** (laporan, antrean verifikasi, `/admin`). Unggah berkas menyusul |
 | 14 | Filter info kontak di teks bebas | Tidak ada | P0 (§2, §8) | **PRD.** Nomor, tautan, dan @akun dibuang dari CV, catatan, dan permintaan |
 | 15 | Budget dan durasi | Tidak ada di PRD | PRD hanya menyebut `budget` | **UI live.** Budget maks Rp400.000 dengan durasi 60/90/120 menit. Tarif dinormalkan per jam |
 | 16 | Radius jarak | Dihapus di UI (feedback 11) | `radius_km` dengan PostGIS (§8) | **UI live.** Kecocokan memakai kecamatan (L3) dan kota/kabupaten. Tanpa PostGIS |

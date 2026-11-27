@@ -29,13 +29,13 @@ export const walletView = {
     </div>
     ${planCard()}
     <div class="section stack">
-      <a class="card tap link-row" href="#/harga"><span class="mi">${ic("tag")}</span><span class="grow"><b>Daftar harga</b><small>Lead, paket, dan Tutor Plan</small></span>${ic("chevR")}</a>
-      <a class="card tap link-row" href="#/riwayat"><span class="mi">${ic("list")}</span><span class="grow"><b>Riwayat</b><small>Pembelian dan pemakaian lead</small></span>${ic("chevR")}</a>
+      <a class="card tap link-row" href="/harga"><span class="mi">${ic("tag")}</span><span class="grow"><b>Daftar harga</b><small>Lead, paket, dan Tutor Plan</small></span>${ic("chevR")}</a>
+      <a class="card tap link-row" href="/riwayat"><span class="mi">${ic("list")}</span><span class="grow"><b>Riwayat</b><small>Pembelian dan pemakaian lead</small></span>${ic("chevR")}</a>
     </div>
     <button class="btn line section" id="logoutBtn2">Keluar dari akun</button>`;
   },
   mount() {
-    $$("[data-pack]").forEach((b) => (b.onclick = () => purchase(b.dataset.pack, { title: `Beli ${products().find((p) => p.key === b.dataset.pack).label}`, onPaid: () => navigate("#/wallet") })));
+    $$("[data-pack]").forEach((b) => (b.onclick = () => purchase(b.dataset.pack, { title: `Beli ${products().find((p) => p.key === b.dataset.pack).label}`, onPaid: () => navigate("/wallet") })));
     const plan = $("#goPlan"); if (plan) plan.onclick = planSheet;
     $("#logoutBtn2").onclick = logout;
   },
@@ -44,7 +44,7 @@ export const walletView = {
 export const pricesView = {
   render() {
     const rows = products().map((p) => `<dt>${esc(p.label)}</dt><dd>${rp(p.amount)}${p.plan ? " / bulan" : ""}<br><span class="muted small">${p.leads} lead · ${rp(p.perLead)} per lead${p.plan ? " · hangus akhir bulan" : " · tidak hangus"}</span></dd>`).join("");
-    return `<div class="row" style="margin-bottom:12px">${back("#/wallet")}<h1 class="grow" style="margin:0">Daftar harga</h1></div>
+    return `<div class="row" style="margin-bottom:12px">${back("/wallet")}<h1 class="grow" style="margin:0">Daftar harga</h1></div>
     <div class="card"><dl class="kv">${rows}</dl></div>
     <div class="info section">${ic("info")}<span>Orang tua dan murid <b>tidak membayar</b> untuk mencari tutor, mengirim permintaan, atau memakai Lesson hub. LesIn tidak memotong komisi dari tarif les. Lead adalah kredit layanan, bukan uang tunai, dan tidak bisa ditarik.</span></div>`;
   },
@@ -53,7 +53,7 @@ export const pricesView = {
 export const historyView = {
   async load() { return (await api.me.leads()).history; },
   render(items) {
-    return `<div class="row" style="margin-bottom:12px">${back("#/wallet")}<h1 class="grow" style="margin:0">Riwayat</h1></div>
+    return `<div class="row" style="margin-bottom:12px">${back("/wallet")}<h1 class="grow" style="margin:0">Riwayat</h1></div>
     <div class="card">${items.length ? items.map((x) => `<div class="tx"><span>${esc(x.label)}<br><span class="muted small">${new Date(x.at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}${x.amount ? ` · ${rp(Math.abs(x.amount))}` : ""}</span></span>
       <span class="${x.leadDelta < 0 ? "neg" : "pos"}">${x.leadDelta > 0 ? "+" : "−"}${Math.abs(x.leadDelta)} lead</span></div>`).join("") : `<p class="small muted">Belum ada transaksi.</p>`}</div>`;
   },

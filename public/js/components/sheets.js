@@ -71,7 +71,7 @@ export function lessonSheet({ tutorId, seekerId, defaultSubject = "", childHint 
       if (!showErrors(f, [{ f: "child", ok: child.length >= 2, msg: "Isi nama murid." }, { f: "subject", ok: subject.length >= 2, msg: "Isi mata pelajaran." }, { f: "days", ok: picked.length > 0, msg: "Pilih minimal satu hari." }])) return;
       try {
         await api.lessons.create({ tutorId, seekerId, child, subject, slots: picked.map((day) => ({ day, time: fd.get(`t_${day}`) })) });
-        closeSheet(); toast("Jadwal tersimpan."); navigate("#/les");
+        closeSheet(); toast("Jadwal tersimpan."); navigate("/les");
       } catch (err) { toast(esc(err.message), "err"); }
     });
   });

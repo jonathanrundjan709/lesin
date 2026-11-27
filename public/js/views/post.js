@@ -17,7 +17,7 @@ const chosenChips = () => {
   return `<div class="field" id="targets"><span class="lbl">Dikirim ke</span>
     ${l.length ? `<div class="chips">${l.map((t) => `<span class="chip pri target-chip">${esc(t.label)}<button type="button" data-unpick="${esc(t.id)}" aria-label="Hapus ${esc(t.label)}">${ic("close")}</button></span>`).join("")}</div>
       <span class="hint">${l.length} dari ${max} tutor pilihan. Tutor lain di daerahmu tetap bisa melihat permintaan ini.</span>`
-      : `<div class="info">${ic("info")}<span>Terbuka untuk tutor yang cocok di daerahmu. Mau pilih 1–${max} tutor tertentu? <a class="link" href="#/results">Pilih dari hasil pencarian</a>.</span></div>`}</div>`;
+      : `<div class="info">${ic("info")}<span>Terbuka untuk tutor yang cocok di daerahmu. Mau pilih 1–${max} tutor tertentu? <a class="link" href="/results">Pilih dari hasil pencarian</a>.</span></div>`}</div>`;
 };
 
 /** Boost orang tua ditunda (PRD §6: orang tua tidak membayar). Tampil hanya bila fitur dinyalakan di server. */
@@ -69,7 +69,7 @@ export const postView = {
     };
     const upd = () => { $("#pbVal").textContent = rp(+f.budget.value); updDays(); };
     f.addEventListener("input", upd); f.addEventListener("change", upd); updDays(); bindTimeFields(f);
-    $$("[data-unpick]").forEach((b) => (b.onclick = () => { selection.remove(b.dataset.unpick); $("#targets").outerHTML = chosenChips(); navigate("#/post"); }));
+    $$("[data-unpick]").forEach((b) => (b.onclick = () => { selection.remove(b.dataset.unpick); $("#targets").outerHTML = chosenChips(); navigate("/post"); }));
 
     f.onsubmit = (e) => { e.preventDefault(); withBusy($("#postSubmit"), async () => {
       const fd = new FormData(f), days = fd.getAll("days");
@@ -101,7 +101,7 @@ export const postView = {
             await api.requests.create(body);
             selection.clear(); closeSheet();
             toast("Permintaan terkirim. Tutor yang cocok akan menghubungimu.");
-            navigate("#/myposts");
+            navigate("/myposts");
           } catch (err) { toast(esc(err.message), "err"); }
         },
       });

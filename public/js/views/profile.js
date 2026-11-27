@@ -88,7 +88,7 @@ export const profileView = {
 
     $$("[data-doc]").forEach((b) => (b.onclick = async () => {
       if (!cvReady()) return toast("Simpan CV dulu, baru kirim dokumen verifikasi.", "info");
-      try { await api.me.verify(b.dataset.doc); await refreshProfile(); toast("Dokumen terkirim untuk ditinjau."); navigate("#/profile"); }
+      try { await api.me.verify(b.dataset.doc); await refreshProfile(); toast("Dokumen terkirim untuk ditinjau."); navigate("/profile"); }
       catch (e) { toast(esc(e.message), "err"); }
     }));
     const plan = $("#goPlan"); if (plan) plan.onclick = planSheet;
@@ -107,7 +107,7 @@ export const profileView = {
         const res = await api.me.saveProfile(v);
         await refreshProfile();
         toast(first ? (res.foundingGranted ? "CV tersimpan. Kamu dapat <b>2 lead gratis</b> (Founding Tutor)." : "CV tersimpan. Kamu siap jadi tutor.") : "CV tersimpan", "ok", 4500);
-        navigate(first && session.mode === "tutor" ? "#/" : "#/profile");
+        navigate(first && session.mode === "tutor" ? "/" : "/profile");
       } catch (err) { toast(esc(err.message), "err"); }
     }); };
   },

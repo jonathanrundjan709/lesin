@@ -29,7 +29,7 @@ export const boardView = {
   },
   mount(list) {
     if (!list) return;
-    $$("[data-bf]").forEach((b) => (b.onclick = () => { try { localStorage.setItem(BOARD_FILTER, b.dataset.bf); } catch { /* abaikan */ } navigate("#/board"); }));
+    $$("[data-bf]").forEach((b) => (b.onclick = () => { try { localStorage.setItem(BOARD_FILTER, b.dataset.bf); } catch { /* abaikan */ } navigate("/board"); }));
   },
 };
 
@@ -43,14 +43,14 @@ function unlockSheet(r, onDone) {
       <small>${empty ? `Beli lead mulai ${rp(15000)} atau Tutor Plan.` : `Sisa setelah ini: ${l.leads - 1} lead`}</small></span></div>
     <button class="btn" id="useLead" style="margin-top:16px">${empty ? "Beli lead" : "Buka kontak"}</button>`, (sh) => {
     $("#useLead", sh).onclick = async (e) => {
-      if (empty) { closeSheet(); return navigate("#/wallet"); }
+      if (empty) { closeSheet(); return navigate("/wallet"); }
       e.currentTarget.disabled = true;
       try {
         const res = await api.requests.unlock(r.id);
         await refreshLeads();
         successSheet(sh, { title: "Kontak terbuka", text: `Nama & WhatsApp ${esc(res.contact.name)} tersimpan di menu Kontak.`, cta: "Lihat kontak", onDone });
       } catch (err) {
-        if (err.code === "payment_required") { closeSheet(); toast("Lead habis. Beli lead dulu.", "info"); return navigate("#/wallet"); }
+        if (err.code === "payment_required") { closeSheet(); toast("Lead habis. Beli lead dulu.", "info"); return navigate("/wallet"); }
         e.currentTarget.disabled = false; toast(esc(err.message), "err");
       }
     };
@@ -80,7 +80,7 @@ export const lowonganView = {
   mount(r) {
     if (!r) return;
     bindCopy();
-    const b = $("#contactBtn"); if (b) b.onclick = () => unlockSheet(r, () => navigate("#/kontak"));
+    const b = $("#contactBtn"); if (b) b.onclick = () => unlockSheet(r, () => navigate("/kontak"));
     const les = $("#lessonBtn"); if (les) les.onclick = () => lessonSheet({ tutorId: session.user.id, seekerId: r.contact.seekerId, defaultSubject: r.subject });
   },
 };
