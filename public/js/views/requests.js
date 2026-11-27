@@ -34,10 +34,12 @@ export const myRequestsView = {
 export const contactsView = {
   async load() {
     if (session.mode === "tutor") return { board: (await api.requests.board()).requests.filter((r) => r.unlocked) };
-    const reqs = (await api.requests.mine()).requests;
-    const seen = new Map();
-    for (const r of reqs) for (const t of r.responders) if (!seen.has(t.id)) seen.set(t.id, { t, subject: r.subject });
-    return { tutors: [...seen.values()], reviews: await Promise.all([...seen.keys()].map((id) => api.tutors.reviews(id).then((x) => [id, x.reviews.find((v) => v.mine)]))) };
+    // Kontak terbuka dari dua jalur: kuota sendiri, atau tutor merespons permintaan.
+    const { tutors } = await api.me.contacts();
+    return {
+      tutors: tutors.map((t) => ({ t, subject: t.subjects[0] })),
+      reviews: await Promise.all(tutors.map((t) => api.tutors.reviews(t.id).then((x) => [t.id, x.reviews.find((v) => v.mine)]))),
+    };
   },
   render(data) {
     if (session.mode === "tutor") {
@@ -50,13 +52,13 @@ export const contactsView = {
       })).join("")}</div>` : emptyBox(`Belum ada kontak. Buka kontak calon murid dari <a href="/board" class="link">Lowongan</a>.`)}`;
     }
     const mineReview = new Map(data.reviews);
-    return `<h1>Kontak</h1><p class="sub">Tutor yang sudah merespons permintaanmu. Chat lewat WhatsApp, lalu beri ulasan setelah les.</p>
+    return `<h1>Kontak</h1><p class="sub">Tutor yang kontaknya sudah terbuka, dari kuotamu atau karena tutor merespons permintaanmu. Chat lewat WhatsApp, lalu beri ulasan setelah les.</p>
     ${data.tutors.length ? `<div class="card section" style="padding:4px 14px">${data.tutors.map(({ t, subject }) => contactRow({
       name: t.name, sub: `${t.subjects.slice(0, 2).join(", ")} · ${t.phone}`, colorKey: t.id, href: `/tutor/${encodeURIComponent(t.id)}`,
-      wa: waLink(t.waNumber, `Halo Kak ${t.name.split(" ")[0]}, terima kasih sudah merespons permintaan les ${subject} saya di LesIn. Apakah masih ada jadwal kosong?`),
+      wa: waLink(t.waNumber, `Halo Kak ${t.name.split(" ")[0]}, saya lihat profil Kakak di LesIn dan tertarik untuk les ${subject}. Apakah masih ada jadwal kosong?`),
       extra: `<button class="icon-btn" data-lesson="${esc(t.id)}" data-subject="${esc(subject)}" title="Atur jadwal" aria-label="Atur jadwal les">${ic("calendar")}</button>
         ${mineReview.get(t.id) ? `<span class="chip">${ic("star", "star")}${mineReview.get(t.id).stars}</span>` : `<button class="icon-btn" aria-label="Tulis ulasan" title="Tulis ulasan" data-review="${esc(t.id)}">${ic("starO")}</button>`}`,
-    })).join("")}</div>` : emptyBox(`Belum ada kontak. Kirim permintaan dari <a href="/search" class="link">pencarian</a>.`)}`;
+    })).join("")}</div>` : emptyBox(`Belum ada kontak. Buka kontak tutor atau kirim permintaan dari <a href="/search" class="link">pencarian</a>.`)}`;
   },
   mount(data) {
     document.querySelectorAll("[data-lesson]").forEach((b) => (b.onclick = () => lessonSheet({ tutorId: b.dataset.lesson, seekerId: session.user.id, defaultSubject: b.dataset.subject })));

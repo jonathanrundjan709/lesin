@@ -1,16 +1,16 @@
 import type { Repositories, UnitOfWork } from "@/application/ports";
 import type {
-  AppEvent, LedgerEntry, Lesson, LessonRequest, Order, Report, Review, SessionNote, TutorProfile, Unlock, User, VerificationDoc,
+  AppEvent, ContactUnlock, LedgerEntry, Lesson, LessonRequest, Order, Report, Review, SessionNote, TutorProfile, Unlock, User, VerificationDoc,
 } from "@/domain/types";
 
 /** Seluruh data dalam memori. Dipakai untuk tes, pengembangan lokal, dan mode demo tanpa DATABASE_URL. */
 export interface MemoryData {
-  users: Map<string, User>; tutors: Map<string, TutorProfile>; requests: Map<string, LessonRequest>; unlocks: Unlock[];
+  users: Map<string, User>; tutors: Map<string, TutorProfile>; requests: Map<string, LessonRequest>; unlocks: Unlock[]; contactUnlocks: ContactUnlock[];
   ledger: LedgerEntry[]; orders: Map<string, Order>; webhookEvents: Set<string>; lessons: Map<string, Lesson>; notes: SessionNote[];
   reviews: Review[]; reports: Map<string, Report>; verifications: Map<string, VerificationDoc>; events: AppEvent[]; eventKeys: Set<string>;
 }
 export const emptyData = (): MemoryData => ({
-  users: new Map(), tutors: new Map(), requests: new Map(), unlocks: [], ledger: [], orders: new Map(), webhookEvents: new Set(),
+  users: new Map(), tutors: new Map(), requests: new Map(), unlocks: [], contactUnlocks: [], ledger: [], orders: new Map(), webhookEvents: new Set(),
   lessons: new Map(), notes: [], reviews: [], reports: new Map(), verifications: new Map(), events: [], eventKeys: new Set(),
 });
 
@@ -22,6 +22,7 @@ function buildRepos(db: MemoryData): Repositories {
       async insert(u) { db.users.set(u.id, clone(u)); },
       async update(u) { db.users.set(u.id, clone(u)); },
       async byId(id) { return clone(db.users.get(id) ?? null); },
+      async lockById(id) { return clone(db.users.get(id) ?? null); }, // transaksi sudah serial
       async byIds(ids) { return ids.flatMap((id) => { const u = db.users.get(id); return u ? [clone(u)] : []; }); },
       async byPhone(phone) { return clone([...db.users.values()].find((u) => u.phone === phone) ?? null); },
     },
@@ -48,16 +49,25 @@ function buildRepos(db: MemoryData): Repositories {
       async byRequestIds(ids) { const s = new Set(ids); return db.unlocks.filter((u) => s.has(u.requestId)).map(clone); },
       async byTutor(tutorId) { return db.unlocks.filter((u) => u.tutorId === tutorId).map(clone); },
     },
+    contactUnlocks: {
+      async insert(u) {
+        if (db.contactUnlocks.some((x) => x.seekerId === u.seekerId && x.tutorId === u.tutorId)) throw new Error("kontak sudah terbuka");
+        db.contactUnlocks.push(clone(u));
+      },
+      async has(seekerId, tutorId) { return db.contactUnlocks.some((u) => u.seekerId === seekerId && u.tutorId === tutorId); },
+      async bySeeker(seekerId) { return db.contactUnlocks.filter((u) => u.seekerId === seekerId).map(clone); },
+    },
     ledger: {
       async insert(e) { db.ledger.push(clone(e)); },
-      async byTutor(tutorId) { return db.ledger.filter((e) => e.tutorId === tutorId).map(clone); },
+      async insertOnce(e) { if (db.ledger.some((x) => x.id === e.id)) return false; db.ledger.push(clone(e)); return true; },
+      async byUser(userId, kind) { return db.ledger.filter((e) => e.userId === userId && e.kind === kind).map(clone); },
     },
     orders: {
       async insert(o) { db.orders.set(o.id, clone(o)); },
       async update(o) { db.orders.set(o.id, clone(o)); },
       async byId(id) { return clone(db.orders.get(id) ?? null); },
-      async byKey(tutorId, key) { return clone([...db.orders.values()].find((o) => o.tutorId === tutorId && o.idempotencyKey === key) ?? null); },
-      async byTutor(tutorId) { return [...db.orders.values()].filter((o) => o.tutorId === tutorId).map(clone); },
+      async byKey(buyerId, key) { return clone([...db.orders.values()].find((o) => o.buyerId === buyerId && o.idempotencyKey === key) ?? null); },
+      async byBuyer(buyerId) { return [...db.orders.values()].filter((o) => o.buyerId === buyerId).map(clone); },
       async expirePending(now) {
         let n = 0;
         for (const o of db.orders.values()) if (o.status === "pending" && o.expiresAt <= now) { o.status = "expired"; n++; }

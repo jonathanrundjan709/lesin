@@ -4,6 +4,7 @@ import type { Id, Lesson, ScheduleSlot, SessionNote, User } from "@/domain/types
 import type { Notifier, Repositories } from "../ports";
 import { lessonInput, noteInput, parse } from "../validation";
 import { type BaseDeps } from "./context";
+import { TutorService } from "./tutor-service";
 
 export interface LessonView {
   id: Id; child: string; subject: string; slots: ScheduleSlot[]; createdAt: number;
@@ -19,10 +20,9 @@ const WIB_OFFSET_MS = 7 * 3_600_000;
 export class LessonService {
   constructor(private d: BaseDeps & { notifier: Notifier }) {}
 
-  /** Dua pihak boleh membuat jadwal hanya bila sudah terhubung: tutor sudah membuka permintaan si pencari. */
+  /** Dua pihak boleh membuat jadwal hanya bila sudah terhubung: tutor membuka permintaan si pencari, atau pencari membuka kontak tutor. */
   private async connected(r: Repositories, tutorId: Id, seekerId: Id): Promise<boolean> {
-    const reqs = await r.requests.bySeeker(seekerId);
-    return (await r.unlocks.byRequestIds(reqs.map((x) => x.id))).some((u) => u.tutorId === tutorId);
+    return (await TutorService.revealedTutorIds(r, seekerId)).has(tutorId);
   }
 
   async create(userId: Id, raw: unknown): Promise<LessonView> {
@@ -32,7 +32,7 @@ export class LessonService {
       const tutorId = input.tutorId;
       if (userId !== tutorId && userId !== seekerId) return fail("forbidden", "Kamu bukan pihak dalam jadwal ini.");
       if (tutorId === seekerId) return fail("validation", "Tutor dan pencari harus berbeda.");
-      if (!(await this.connected(r, tutorId, seekerId))) return fail("forbidden", "Jadwal hanya bisa dibuat setelah tutor membuka permintaan.");
+      if (!(await this.connected(r, tutorId, seekerId))) return fail("forbidden", "Jadwal hanya bisa dibuat setelah kontak tutor terbuka.");
       const lesson: Lesson = { id: this.d.ids.next(), tutorId, seekerId, child: sanitizeText(input.child), subject: input.subject, slots: input.slots as ScheduleSlot[], createdAt: this.d.clock.now() };
       await r.lessons.insert(lesson);
       return (await this.views(r, [lesson], userId))[0];

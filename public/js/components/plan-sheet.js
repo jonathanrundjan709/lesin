@@ -13,7 +13,7 @@ export async function planSheet() {
   let plan;
   try { plan = (await api.billing.products()).products.find((p) => p.key === "plan"); } catch (e) { return toast(esc(e.message), "err"); }
   const perks = [
-    ["ticket", `${plan.leads} lead per bulan`, `Setara ${rp(plan.listPrice)}, kamu bayar ${rp(plan.amount)} (${rp(Math.round(plan.amount / plan.leads))} per lead).`],
+    ["ticket", `${plan.units} lead per bulan`, `Setara ${rp(plan.listPrice)}, kamu bayar ${rp(plan.amount)} (${rp(Math.round(plan.amount / plan.units))} per lead).`],
     ["eye", "Prioritas di pencarian", "CV-mu muncul lebih tinggi di hasil pencarian orang tua."],
     ["shield", "Badge Pro", "Orang tua langsung melihat kamu tutor yang aktif dan serius."],
     ["calendar", "Lesson hub tanpa batas", "Jadwal mingguan, pengingat WhatsApp, dan catatan sesi untuk semua muridmu."],

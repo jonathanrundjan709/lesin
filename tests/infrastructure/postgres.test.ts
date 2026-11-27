@@ -28,3 +28,30 @@ test("migrasi idempoten, aman dijalankan bersamaan, dan RLS aktif di semua tabel
   assert.deepEqual(open, [], "tidak ada tabel tanpa RLS (Supabase membuka skema public lewat REST API)");
   await db.close();
 });
+
+test("migrasi dari skema lama (kolom tutor_id/leads) tanpa kehilangan data", async () => {
+  const db = await createPgliteDatabase();
+  // Skema versi pertama yang sudah hidup di database staging.
+  await db.query(`CREATE TABLE users (id TEXT PRIMARY KEY, name TEXT NOT NULL, phone TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, is_admin BOOLEAN NOT NULL DEFAULT FALSE, status TEXT NOT NULL DEFAULT 'active', created_at BIGINT NOT NULL)`);
+  await db.query(`CREATE TABLE ledger_entries (id TEXT PRIMARY KEY, tutor_id TEXT NOT NULL REFERENCES users(id), delta INTEGER NOT NULL, reason TEXT NOT NULL, ref_id TEXT NOT NULL, expires_at BIGINT, created_at BIGINT NOT NULL)`);
+  await db.query(`CREATE TABLE orders (id TEXT PRIMARY KEY, tutor_id TEXT NOT NULL REFERENCES users(id), product TEXT NOT NULL, amount INTEGER NOT NULL, leads INTEGER NOT NULL, is_plan BOOLEAN NOT NULL, status TEXT NOT NULL, idempotency_key TEXT NOT NULL, gateway_ref TEXT NOT NULL DEFAULT '', created_at BIGINT NOT NULL, expires_at BIGINT NOT NULL, UNIQUE (tutor_id, idempotency_key))`);
+  await db.query("INSERT INTO users VALUES ('u1','Budi','081200000001','x',false,'active',1)");
+  await db.query("INSERT INTO ledger_entries VALUES ('l1','u1',2,'founding','founding',NULL,1)");
+  await db.query("INSERT INTO orders VALUES ('o1','u1','lead5',65000,5,false,'paid','k','',1,2)");
+
+  const uow = new PostgresUnitOfWork(db);
+  await uow.migrate();
+  await uow.migrate();
+
+  const [l] = await db.query("SELECT user_id, kind, delta FROM ledger_entries WHERE id='l1'");
+  assert.deepEqual({ user: l.user_id, kind: l.kind, delta: Number(l.delta) }, { user: "u1", kind: "lead", delta: 2 }, "entri lama jadi kredit lead milik pengguna");
+  const [o] = await db.query("SELECT buyer_id, units FROM orders WHERE id='o1'");
+  assert.deepEqual({ buyer: o.buyer_id, units: Number(o.units) }, { buyer: "u1", units: 5 });
+  await uow.run(async (r) => {
+    assert.equal((await r.ledger.byUser("u1", "lead")).length, 1);
+    assert.equal((await r.orders.byBuyer("u1")).length, 1);
+    assert.equal(await r.ledger.insertOnce({ id: "trial:u1", userId: "u1", kind: "contact", delta: 10, reason: "trial", refId: "t", expiresAt: null, createdAt: 3 }), true);
+    assert.equal(await r.ledger.insertOnce({ id: "trial:u1", userId: "u1", kind: "contact", delta: 10, reason: "trial", refId: "t", expiresAt: null, createdAt: 3 }), false);
+  });
+  await db.close();
+});

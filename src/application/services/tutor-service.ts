@@ -15,11 +15,14 @@ export interface MyProfile { name: string; phone: string; profile: TutorProfile 
 export class TutorService {
   constructor(private d: BaseDeps) {}
 
-  /** Tutor yang kontaknya boleh dilihat pencari ini: tutor yang sudah membuka salah satu permintaannya. */
+  /**
+   * Tutor yang kontaknya boleh dilihat pencari ini: (a) tutor yang membuka salah satu permintaannya (tutor sudah bayar lead),
+   * atau (b) tutor yang kontaknya dibuka sendiri oleh pencari dengan kuota (trial atau paket).
+   */
   static async revealedTutorIds(r: Repositories, seekerId: Id): Promise<Set<Id>> {
     const reqs = await r.requests.bySeeker(seekerId);
-    const unlocks = await r.unlocks.byRequestIds(reqs.map((x) => x.id));
-    return new Set(unlocks.map((u) => u.tutorId));
+    const [unlocks, bought] = await Promise.all([r.unlocks.byRequestIds(reqs.map((x) => x.id)), r.contactUnlocks.bySeeker(seekerId)]);
+    return new Set([...unlocks.map((u) => u.tutorId), ...bought.map((u) => u.tutorId)]);
   }
 
   async search(viewerId: Id | null, raw: unknown): Promise<TutorListItem[]> {
@@ -82,7 +85,7 @@ export class TutorService {
       if (first) {
         // Hitung termasuk tutor ini (sudah di-upsert), jadi tutor ke-200 masih mendapat kredit.
         foundingGranted = (await r.tutors.countCompleted()) <= FOUNDING_SLOTS;
-        if (foundingGranted) await r.ledger.insert({ id: this.d.ids.next(), tutorId: userId, delta: FOUNDING_LEADS, reason: "founding", refId: "founding", expiresAt: null, createdAt: now });
+        if (foundingGranted) await r.ledger.insert({ id: this.d.ids.next(), userId, kind: "lead", delta: FOUNDING_LEADS, reason: "founding", refId: "founding", expiresAt: null, createdAt: now });
         await recordEvent(r, this.d, "tutor_registered", userId, { foundingGranted });
       }
       return { name: input.name, phone: user.phone, profile, foundingGranted };

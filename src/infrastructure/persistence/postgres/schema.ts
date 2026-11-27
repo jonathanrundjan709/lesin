@@ -3,6 +3,18 @@
  * Waktu disimpan sebagai epoch milidetik (BIGINT). Saldo lead TIDAK punya kolom: saldo = hasil hitung dari ledger_entries.
  */
 export const SCHEMA_SQL = `
+-- Peningkatan dari skema lama (aditif, aman diulang): kolom milik tutor menjadi milik pengguna mana pun.
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'ledger_entries' AND column_name = 'tutor_id') THEN
+    ALTER TABLE ledger_entries RENAME COLUMN tutor_id TO user_id;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'orders' AND column_name = 'tutor_id') THEN
+    ALTER TABLE orders RENAME COLUMN tutor_id TO buyer_id;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'orders' AND column_name = 'leads') THEN
+    ALTER TABLE orders RENAME COLUMN leads TO units;
+  END IF;
+END $$;
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY, name TEXT NOT NULL, phone TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL,
   is_admin BOOLEAN NOT NULL DEFAULT FALSE, status TEXT NOT NULL DEFAULT 'active', created_at BIGINT NOT NULL
@@ -27,14 +39,19 @@ CREATE TABLE IF NOT EXISTS unlocks (
   UNIQUE (tutor_id, request_id)
 );
 CREATE TABLE IF NOT EXISTS ledger_entries (
-  id TEXT PRIMARY KEY, tutor_id TEXT NOT NULL REFERENCES users(id), delta INTEGER NOT NULL, reason TEXT NOT NULL, ref_id TEXT NOT NULL,
-  expires_at BIGINT, created_at BIGINT NOT NULL
+  id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), kind TEXT NOT NULL DEFAULT 'lead', delta INTEGER NOT NULL, reason TEXT NOT NULL,
+  ref_id TEXT NOT NULL, expires_at BIGINT, created_at BIGINT NOT NULL
 );
-CREATE INDEX IF NOT EXISTS ledger_tutor_idx ON ledger_entries (tutor_id);
+ALTER TABLE ledger_entries ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'lead';
+CREATE INDEX IF NOT EXISTS ledger_user_idx ON ledger_entries (user_id, kind);
+CREATE TABLE IF NOT EXISTS contact_unlocks (
+  id TEXT PRIMARY KEY, seeker_id TEXT NOT NULL REFERENCES users(id), tutor_id TEXT NOT NULL REFERENCES users(id), created_at BIGINT NOT NULL,
+  UNIQUE (seeker_id, tutor_id)
+);
 CREATE TABLE IF NOT EXISTS orders (
-  id TEXT PRIMARY KEY, tutor_id TEXT NOT NULL REFERENCES users(id), product TEXT NOT NULL, amount INTEGER NOT NULL, leads INTEGER NOT NULL,
+  id TEXT PRIMARY KEY, buyer_id TEXT NOT NULL REFERENCES users(id), product TEXT NOT NULL, amount INTEGER NOT NULL, units INTEGER NOT NULL,
   is_plan BOOLEAN NOT NULL, status TEXT NOT NULL, idempotency_key TEXT NOT NULL, gateway_ref TEXT NOT NULL DEFAULT '',
-  created_at BIGINT NOT NULL, expires_at BIGINT NOT NULL, UNIQUE (tutor_id, idempotency_key)
+  created_at BIGINT NOT NULL, expires_at BIGINT NOT NULL, UNIQUE (buyer_id, idempotency_key)
 );
 CREATE TABLE IF NOT EXISTS webhook_events (event_id TEXT PRIMARY KEY, at BIGINT NOT NULL);
 CREATE TABLE IF NOT EXISTS lessons (
@@ -73,4 +90,5 @@ ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE verification_docs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contact_unlocks ENABLE ROW LEVEL SECURITY;
 `;

@@ -2,7 +2,7 @@ import { api } from "../core/api.js";
 import { $, esc } from "../core/dom.js";
 import { rp } from "../core/format.js";
 import { ic } from "../core/icons.js";
-import { refreshLeads, session } from "../core/session.js";
+import { refreshCredits, session } from "../core/session.js";
 import { closeSheet, openSheet, successSheet } from "../core/sheet.js";
 import { toast } from "../core/toast.js";
 
@@ -43,7 +43,7 @@ export async function purchase(productKey, { title, onPaid } = {}) {
   const stop = () => { clearInterval(poll); clearInterval(tick); };
   const sheet = openSheet(`
     <h2>${esc(title || "Bayar dengan QRIS")}</h2>
-    <p class="sub" style="margin-top:4px">Pindai dengan aplikasi bank atau e-wallet apa pun. Lead masuk otomatis setelah pembayaran terkonfirmasi.</p>
+    <p class="sub" style="margin-top:4px">Pindai dengan aplikasi bank atau e-wallet apa pun. Kuota masuk otomatis setelah pembayaran terkonfirmasi.</p>
     <div class="qr-box">${fakeQr(order.qrisPayload)}<div class="qr-meta"><span class="muted small">Total bayar</span><b>${rp(order.amount)}</b>
       <span class="small muted">Berlaku <b id="ttl">${mmss(order.expiresAt - Date.now())}</b></span></div></div>
     <p class="small muted" id="payState" aria-live="polite" style="text-align:center;margin-top:10px"><span class="spinner dark sm"></span>Menunggu pembayaran…</p>
@@ -53,8 +53,8 @@ export async function purchase(productKey, { title, onPaid } = {}) {
   `, (sh) => {
     const finish = async () => {
       stop();
-      await refreshLeads();
-      successSheet(sh, { title: "Pembayaran berhasil", text: `${esc(order.leads)} lead sudah masuk ke akunmu.`, cta: "Selesai", onDone: onPaid });
+      await refreshCredits();
+      successSheet(sh, { title: "Pembayaran berhasil", text: `${esc(order.units)} ${order.audience === "seeker" ? "kuota kontak" : "lead"} sudah masuk ke akunmu.`, cta: "Selesai", onDone: onPaid });
     };
     const check = async () => {
       try {

@@ -1,6 +1,7 @@
 import type { Clock, IdGenerator, Notifier, PasswordHasher, PaymentGateway, SessionTokens, UnitOfWork, WebhookSigner } from "../ports";
 import { AuthService } from "./auth-service";
 import { BillingService } from "./billing-service";
+import { ContactService } from "./contact-service";
 import { JobsService } from "./jobs-service";
 import { LeadService } from "./lead-service";
 import { LessonService } from "./lesson-service";
@@ -24,6 +25,7 @@ export function buildServices(p: Ports) {
     tutors: new TutorService(base),
     requests: new RequestService(base),
     leads: new LeadService(base),
+    contacts: new ContactService(base),
     billing, lessons,
     reviews: new ReviewService(base),
     trust: new TrustService(base),

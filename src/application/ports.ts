@@ -1,5 +1,5 @@
 import type {
-  AppEvent, Id, LedgerEntry, Lesson, LessonRequest, Millis, Order, Report, Review, SessionNote,
+  AppEvent, ContactUnlock, CreditKind, Id, LedgerEntry, Lesson, LessonRequest, Millis, Order, Report, Review, SessionNote,
   TutorProfile, Unlock, User, VerificationDoc,
 } from "@/domain/types";
 
@@ -8,6 +8,8 @@ export interface UserRepo {
   insert(u: User): Promise<void>;
   update(u: User): Promise<void>;
   byId(id: Id): Promise<User | null>;
+  /** Kunci baris pengguna sampai transaksi selesai (serialisasi pemakaian kuota kontak). */
+  lockById(id: Id): Promise<User | null>;
   byIds(ids: readonly Id[]): Promise<User[]>;
   byPhone(phone: string): Promise<User | null>;
 }
@@ -35,14 +37,21 @@ export interface UnlockRepo {
 }
 export interface LedgerRepo {
   insert(e: LedgerEntry): Promise<void>;
-  byTutor(tutorId: Id): Promise<LedgerEntry[]>;
+  /** Simpan hanya bila id belum ada (mis. kredit trial). true bila tersimpan. */
+  insertOnce(e: LedgerEntry): Promise<boolean>;
+  byUser(userId: Id, kind: CreditKind): Promise<LedgerEntry[]>;
+}
+export interface ContactUnlockRepo {
+  insert(u: ContactUnlock): Promise<void>;
+  has(seekerId: Id, tutorId: Id): Promise<boolean>;
+  bySeeker(seekerId: Id): Promise<ContactUnlock[]>;
 }
 export interface OrderRepo {
   insert(o: Order): Promise<void>;
   update(o: Order): Promise<void>;
   byId(id: Id): Promise<Order | null>;
-  byKey(tutorId: Id, key: string): Promise<Order | null>;
-  byTutor(tutorId: Id): Promise<Order[]>;
+  byKey(buyerId: Id, key: string): Promise<Order | null>;
+  byBuyer(buyerId: Id): Promise<Order[]>;
   /** Tandai kedaluwarsa semua order pending yang lewat batas. Mengembalikan jumlahnya. */
   expirePending(now: Millis): Promise<number>;
 }
@@ -84,7 +93,7 @@ export interface EventRepo {
 }
 
 export interface Repositories {
-  users: UserRepo; tutors: TutorRepo; requests: RequestRepo; unlocks: UnlockRepo; ledger: LedgerRepo;
+  users: UserRepo; tutors: TutorRepo; requests: RequestRepo; unlocks: UnlockRepo; contactUnlocks: ContactUnlockRepo; ledger: LedgerRepo;
   orders: OrderRepo; webhookEvents: WebhookEventRepo; lessons: LessonRepo; reviews: ReviewRepo;
   reports: ReportRepo; verifications: VerificationRepo; events: EventRepo;
 }

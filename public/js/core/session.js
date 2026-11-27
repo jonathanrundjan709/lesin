@@ -11,6 +11,7 @@ export const session = {
   profile: null,     // CV tutor atau null
   docs: [],          // dokumen verifikasi yang sudah dikirim
   leads: null,       // { leads, planActive, planUntil, leadPrice } (hanya bila CV lengkap)
+  contact: null,     // { credits, trialActive, trialEndsAt, trialLimit, contactPrice }: kuota buka kontak pencari
   mode: "pencari",
 };
 
@@ -30,7 +31,7 @@ export async function bootSession() {
 /** Setel pengguna aktif (setelah masuk/daftar/keluar) dan muat CV serta saldo lead-nya. */
 export async function applyUser(user) {
   session.user = user;
-  session.profile = null; session.docs = []; session.leads = null;
+  session.profile = null; session.docs = []; session.leads = null; session.contact = null;
   if (!user) { session.mode = "pencari"; return; }
   session.mode = read(modeKey(user.id)) === "tutor" ? "tutor" : "pencari";
   await refreshProfile();
@@ -41,12 +42,19 @@ export async function refreshProfile() {
   const p = await api.me.profile();
   session.profile = p.profile; session.docs = p.docs ?? [];
   session.user = { ...session.user, name: p.name };
-  await refreshLeads();
+  await Promise.all([refreshLeads(), refreshContact()]);
 }
 
 export async function refreshLeads() {
   session.leads = cvReady() ? (await api.me.leads()).status : null;
 }
+
+export async function refreshContact() {
+  session.contact = session.user ? (await api.me.credits()).status : null;
+}
+
+/** Perbarui saldo kedua sisi (lead tutor dan kuota kontak pencari), mis. setelah pembayaran. */
+export const refreshCredits = () => Promise.all([refreshLeads(), refreshContact()]);
 
 export function setMode(mode) {
   session.mode = mode;

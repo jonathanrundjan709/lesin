@@ -369,3 +369,16 @@ button.tc-link { width: 100%; text-align: left; background: none; border: 0; fon
 .time-chip { flex: none; scroll-snap-align: center; min-width: 58px; height: 38px; padding: 0 12px; border-radius: 12px; background: #fff; border: 1px solid var(--line); font-size: 13px; font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; transition: background .12s, color .12s, border-color .12s; }
 .time-chip.on { background: var(--pri); border-color: var(--pri); color: #fff; box-shadow: 0 4px 10px rgba(91, 75, 255, .28); }
 .time-chip:active { transform: scale(.96); }
+
+/* banner masa percobaan pencari */
+.trial-banner { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 16px; background: linear-gradient(135deg, #FFF4DC, #FFE9B8); border: 1px solid #FFD88A; color: #5C3B00; }
+.trial-banner.active { background: linear-gradient(135deg, #EEECFF, #E3DFFF); border-color: #CFC9FF; color: var(--pri-d); }
+.trial-banner.ended { background: linear-gradient(135deg, #FFF1F1, #FDE3E3); border-color: #F6C3C3; color: #8A2323; }
+.trial-banner .tb-ic { flex: none; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: #fff; }
+.trial-banner .tb-ic svg { width: 19px; height: 19px; }
+.trial-banner b { display: block; font-size: 14px; }
+.trial-banner p { font-size: 12.5px; line-height: 1.4; margin-top: 2px; opacity: .9; }
+.trial-banner .btn { flex: none; }
+.tb-bar { margin-top: 8px; background: rgba(255, 255, 255, .7); }
+.lockbox .btn.line { color: var(--ink); }
+.lockbox li > span { flex: 1; }

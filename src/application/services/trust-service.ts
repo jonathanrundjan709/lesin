@@ -15,12 +15,12 @@ export interface AdminQueue { verifications: (VerificationDoc & { tutorName: str
 export class TrustService {
   constructor(private d: BaseDeps) {}
 
-  /** Hanya pencari yang kontak tutornya sudah terbuka (tutor merespons permintaannya) yang boleh melapor: mencegah laporan fiktif. */
+  /** Hanya pencari yang kontak tutornya sudah terbuka yang boleh melapor: mencegah laporan fiktif. */
   async report(reporterId: Id, tutorId: Id, raw: unknown): Promise<void> {
     const input = parse(reportInput, raw);
     await this.d.uow.run(async (r) => {
       if (!(await r.tutors.byUserId(tutorId))) return fail("not_found", "Tutor tidak ditemukan.");
-      if (!(await TutorService.revealedTutorIds(r, reporterId)).has(tutorId)) return fail("forbidden", "Laporan hanya bisa dikirim setelah tutor merespons permintaanmu.");
+      if (!(await TutorService.revealedTutorIds(r, reporterId)).has(tutorId)) return fail("forbidden", "Laporan hanya bisa dikirim setelah kontak tutor terbuka.");
       await r.reports.insert({ id: this.d.ids.next(), reporterId, tutorId, reason: sanitizeText(input.reason), status: "open", createdAt: this.d.clock.now() });
       await recordEvent(r, this.d, "report", reporterId, { tutorId });
     });

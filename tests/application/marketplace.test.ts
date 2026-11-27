@@ -82,11 +82,11 @@ for (const adapter of ADAPTERS) {
       assert.equal((await requests.board(tutor.user.id))[0].contact?.name, "Ibu Ratna");
     });
 
-    test("permintaan: maksimal 3 tutor, budget maks Rp400rb, boost ditunda, kedaluwarsa 14 hari", async () => {
+    test("permintaan: maksimal 10 tutor, budget maks Rp400rb, boost ditunda, kedaluwarsa 14 hari", async () => {
       const env = await fresh(); const { requests } = env.services;
       const parent = await signup(env);
-      const ts = [await makeTutor(env), await makeTutor(env), await makeTutor(env), await makeTutor(env)];
-      await rejects(requests.create(parent.id, validRequest({ targetTutorIds: ts.map((t) => t.user.id) })), "validation", /maksimal 3/);
+      const ts = []; for (let i = 0; i < 11; i++) ts.push(await makeTutor(env));
+      await rejects(requests.create(parent.id, validRequest({ targetTutorIds: ts.map((t) => t.user.id) })), "validation", /maksimal 10/);
       await rejects(requests.create(parent.id, validRequest({ budget: 450_000 })), "validation", /400.000/);
       await rejects(requests.create(parent.id, validRequest({ boostDays: 7 })), "validation", /Boost/);
       await rejects(requests.create(parent.id, validRequest({ schedule: [] })), "validation", /hari/);
@@ -105,7 +105,7 @@ for (const adapter of ADAPTERS) {
       const parent = await signup(env);
       const req = await requests.create(parent.id, validRequest());
       const broke = await makeTutor(env);
-      await env.uow.run(async (r) => { await r.ledger.insert({ id: "burn", tutorId: broke.user.id, delta: -2, reason: "unlock", refId: "x", expiresAt: null, createdAt: env.clock.now() + 1 }); });
+      await env.uow.run(async (r) => { await r.ledger.insert({ id: "burn", userId: broke.user.id, kind: "lead", delta: -2, reason: "unlock", refId: "x", expiresAt: null, createdAt: env.clock.now() + 1 }); });
       await rejects(leads.unlock(broke.user.id, req.id), "payment_required", /Lead habis/);
       await rejects(leads.unlock(parent.id, req.id), "forbidden", /CV/);
 
@@ -120,7 +120,7 @@ for (const adapter of ADAPTERS) {
     test("dua pembukaan bersamaan dengan 1 lead: hanya satu yang berhasil", async () => {
       const env = await fresh(); const { requests, leads } = env.services;
       const parent = await signup(env), tutor = await makeTutor(env);
-      await env.uow.run(async (r) => { await r.ledger.insert({ id: "spend1", tutorId: tutor.user.id, delta: -1, reason: "unlock", refId: "x", expiresAt: null, createdAt: env.clock.now() + 1 }); });
+      await env.uow.run(async (r) => { await r.ledger.insert({ id: "spend1", userId: tutor.user.id, kind: "lead", delta: -1, reason: "unlock", refId: "x", expiresAt: null, createdAt: env.clock.now() + 1 }); });
       const a = await requests.create(parent.id, validRequest()), b = await requests.create(parent.id, validRequest());
       const results = await Promise.allSettled([leads.unlock(tutor.user.id, a.id), leads.unlock(tutor.user.id, b.id)]);
       assert.equal(results.filter((x) => x.status === "fulfilled").length, 1);
@@ -130,7 +130,8 @@ for (const adapter of ADAPTERS) {
     test("pembayaran: order idempoten; webhook hanya sah bila bertanda tangan, nominal cocok; tidak dobel", async () => {
       const env = await fresh(); const { billing, leads } = env.services;
       const tutor = await makeTutor(env);
-      assert.deepEqual(billing.catalog().map((p) => [p.key, p.amount, p.leads, p.listPrice]), [["lead1", 15_000, 1, 15_000], ["lead5", 65_000, 5, 75_000], ["lead10", 125_000, 10, 150_000], ["plan", 99_000, 8, 120_000]]);
+      assert.deepEqual(billing.catalog().map((p) => [p.key, p.amount, p.units, p.listPrice]), [["lead1", 15_000, 1, 15_000], ["lead5", 65_000, 5, 75_000], ["lead10", 125_000, 10, 150_000], ["plan", 99_000, 8, 120_000],
+        ["contact1", 8_000, 1, 8_000], ["contact5", 30_000, 5, 40_000], ["contact15", 75_000, 15, 120_000]]);
       await rejects(billing.createOrder(tutor.user.id, "lead99", "k"), "validation");
       const o = await billing.createOrder(tutor.user.id, "lead5", "kunci-1");
       assert.equal((await billing.createOrder(tutor.user.id, "lead5", "kunci-1")).id, o.id, "kunci sama → order sama");
@@ -180,7 +181,7 @@ for (const adapter of ADAPTERS) {
       const env = await fresh(); const { requests, leads, lessons } = env.services;
       const tutor = await makeTutor(env, { name: "Rizky Pratama" }), parent = await signup(env, "Ibu Ratna"), stranger = await signup(env);
       const input = { tutorId: tutor.user.id, child: "Aksa", subject: "Matematika", slots: [{ day: "Sel", time: "15:00" }] };
-      await rejects(lessons.create(parent.id, input), "forbidden", /membuka permintaan/);
+      await rejects(lessons.create(parent.id, input), "forbidden", /kontak tutor terbuka/);
       const req = await requests.create(parent.id, validRequest());
       await leads.unlock(tutor.user.id, req.id);
       await rejects(lessons.create(stranger.id, { ...input, seekerId: parent.id }), "forbidden");
@@ -217,6 +218,100 @@ for (const adapter of ADAPTERS) {
       await rejects(reviews.submit(parent.id, tutor.user.id, { stars: 5, text: "x" }), "validation");
     });
 
+    test("pencari baru: trial 7 hari berisi 10 kuota buka kontak, kedaluwarsa setelah 7 hari", async () => {
+      const env = await fresh(); const { contacts } = env.services;
+      const parent = await signup(env);
+      const s = await contacts.status(parent.id);
+      assert.equal(s.credits, 10); assert.equal(s.trialActive, true); assert.equal(s.trialLimit, 10);
+      assert.equal(s.trialEndsAt, env.clock.now() + 7 * DAY);
+      env.clock.advance(7 * DAY + 1000);
+      const after = await contacts.status(parent.id);
+      assert.equal(after.credits, 0); assert.equal(after.trialActive, false);
+    });
+
+    test("akun lama (dibuat sebelum fitur trial) mendapat trial sekali saat pertama dicek, tidak dobel", async () => {
+      const env = await fresh(); const { contacts } = env.services;
+      await env.uow.run(async (r) => { await r.users.insert({ id: "legacy", name: "Akun Lama", phone: "081200009999", passwordHash: "x", isAdmin: false, status: "active", createdAt: 1 }); });
+      const first = await contacts.status("legacy");
+      assert.equal(first.credits, 10); assert.equal(first.trialEndsAt, env.clock.now() + 7 * DAY);
+      env.clock.advance(3 * DAY);
+      const second = await contacts.status("legacy");
+      assert.equal(second.credits, 10, "dipanggil lagi tidak menambah");
+      assert.equal(second.trialEndsAt, first.trialEndsAt, "masa trial tidak diperpanjang");
+    });
+
+    test("pencari membuka kontak tutor dengan kuota: identitas terbuka, tutor tidak membayar, idempoten", async () => {
+      const env = await fresh(); const { contacts, tutors, leads } = env.services;
+      const tutor = await makeTutor(env, { name: "Rizky Pratama" }), parent = await signup(env, "Ibu Ratna");
+      assert.equal((await tutors.get(parent.id, tutor.user.id)).masked, true);
+      const before = (await leads.status(tutor.user.id)).leads;
+      const r1 = await contacts.unlockTutor(parent.id, tutor.user.id);
+      assert.equal(r1.charged, true); assert.equal(r1.status.credits, 9);
+      assert.equal(r1.tutor.name, "Rizky Pratama"); assert.ok(r1.tutor.waNumber);
+      const again = await contacts.unlockTutor(parent.id, tutor.user.id);
+      assert.equal(again.charged, false); assert.equal(again.status.credits, 9, "buka ulang gratis");
+      assert.equal((await tutors.get(parent.id, tutor.user.id)).masked, false);
+      assert.equal((await leads.status(tutor.user.id)).leads, before, "lead tutor tidak terpakai");
+      await rejects(contacts.unlockTutor(tutor.user.id, tutor.user.id), "validation", /sendiri/);
+      await rejects(contacts.unlockTutor(parent.id, "tidak-ada"), "not_found");
+    });
+
+    test("trial: maksimal 10 kontak; setelah habis atau lewat 7 hari harus beli paket", async () => {
+      const env = await fresh(); const { contacts, billing } = env.services;
+      const parent = await signup(env), ts = [];
+      for (let i = 0; i < 11; i++) ts.push(await makeTutor(env));
+      for (let i = 0; i < 10; i++) await contacts.unlockTutor(parent.id, ts[i].user.id);
+      await rejects(contacts.unlockTutor(parent.id, ts[10].user.id), "payment_required", /Kuota/);
+      // beli paket 5 kontak lewat webhook bertanda tangan
+      await buyAndPay(env, parent.id, "contact5");
+      assert.equal((await contacts.status(parent.id)).credits, 5);
+      const ok = await contacts.unlockTutor(parent.id, ts[10].user.id);
+      assert.equal(ok.charged, true); assert.equal(ok.status.credits, 4);
+      // seluruh kuota trial hangus setelah 7 hari, kuota beli tidak
+      env.clock.advance(8 * DAY);
+      assert.equal((await contacts.status(parent.id)).credits, 4);
+      const fresh2 = await signup(env);
+      env.clock.advance(8 * DAY);
+      await rejects(contacts.unlockTutor(fresh2.id, ts[0].user.id), "payment_required", /Masa percobaan gratis sudah selesai/);
+      void billing;
+    });
+
+    test("dua buka kontak bersamaan dengan 1 kuota: hanya satu yang berhasil", async () => {
+      const env = await fresh(); const { contacts } = env.services;
+      const parent = await signup(env), a = await makeTutor(env), b = await makeTutor(env);
+      env.clock.advance(1);
+      await env.uow.run(async (r) => { await r.ledger.insert({ id: "burn9", userId: parent.id, kind: "contact", delta: -9, reason: "unlock", refId: "x", expiresAt: null, createdAt: env.clock.now() }); });
+      const res = await Promise.allSettled([contacts.unlockTutor(parent.id, a.user.id), contacts.unlockTutor(parent.id, b.user.id)]);
+      assert.equal(res.filter((x) => x.status === "fulfilled").length, 1);
+      assert.equal((await contacts.status(parent.id)).credits, 0);
+    });
+
+    test("pencari yang sudah membuka kontak boleh membuat jadwal, mengulas, dan melapor; paket kontak tidak butuh CV", async () => {
+      const env = await fresh(); const { contacts, lessons, reviews, trust, billing } = env.services;
+      const tutor = await makeTutor(env), parent = await signup(env, "Ibu Ratna");
+      const slots = [{ day: "Sab", time: "09:00" }];
+      await rejects(lessons.create(parent.id, { tutorId: tutor.user.id, child: "Aksa", subject: "Matematika", slots }), "forbidden", /kontak tutor terbuka/);
+      await rejects(reviews.submit(parent.id, tutor.user.id, { stars: 5, text: "Bagus sekali" }), "forbidden");
+      await rejects(trust.report(parent.id, tutor.user.id, { reason: "Meminta bayar di luar aplikasi" }), "forbidden");
+      await contacts.unlockTutor(parent.id, tutor.user.id);
+      await lessons.create(parent.id, { tutorId: tutor.user.id, child: "Aksa", subject: "Matematika", slots });
+      await reviews.submit(parent.id, tutor.user.id, { stars: 5, text: "Bagus sekali" });
+      await trust.report(parent.id, tutor.user.id, { reason: "Meminta bayar di luar aplikasi" });
+      // pencari tanpa CV bisa beli paket kontak, tapi tidak bisa beli lead
+      await billing.createOrder(parent.id, "contact1", "k-seeker");
+      await rejects(billing.createOrder(parent.id, "lead1", "k-lead"), "forbidden", /CV/);
+    });
+
+    test("riwayat kuota pencari memuat trial, pembelian, dan pemakaian; riwayat lead tutor tidak tercampur", async () => {
+      const env = await fresh(); const { contacts, leads } = env.services;
+      const tutor = await makeTutor(env), parent = await signup(env);
+      await contacts.unlockTutor(parent.id, tutor.user.id);
+      await buyAndPay(env, parent.id, "contact1");
+      const h = await contacts.history(parent.id);
+      assert.deepEqual(h.map((x) => x.label).sort(), ["Beli paket 1 kontak", "Buka kontak tutor", "Kuota gratis 7 hari pertama"].sort());
+      assert.ok(!(await leads.history(tutor.user.id)).some((x) => /kontak/i.test(x.label)), "riwayat tutor tidak memuat kuota pencari");
+    });
+
     test("trust & safety: laporan, verifikasi manual oleh admin, tutor ditangguhkan hilang dari pencarian", async () => {
       const env = await fresh(); const { trust, tutors } = env.services;
       const tutor = await makeTutor(env), parent = await signup(env);
@@ -233,7 +328,7 @@ for (const adapter of ADAPTERS) {
       await trust.decideVerification(admin.id, q.verifications[0].id, true);
       assert.equal((await tutors.get(null, tutor.user.id)).verified, true);
 
-      await rejects(trust.report(parent.id, tutor.user.id, { reason: "Meminta pembayaran di luar aplikasi" }), "forbidden", /merespons/);
+      await rejects(trust.report(parent.id, tutor.user.id, { reason: "Meminta pembayaran di luar aplikasi" }), "forbidden", /kontak tutor terbuka/);
       const req = await requests.create(parent.id, validRequest());
       await leads.unlock(tutor.user.id, req.id);
       await trust.report(parent.id, tutor.user.id, { reason: "Meminta pembayaran di luar aplikasi" });

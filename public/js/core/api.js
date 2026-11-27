@@ -44,6 +44,7 @@ export const api = {
   tutors: {
     search: (filter) => request("GET", `/tutors${qs(filter)}`),
     get: (id, ctx = {}) => request("GET", `/tutors/${encodeURIComponent(id)}${qs(ctx)}`),
+    unlock: (id) => request("POST", `/tutors/${encodeURIComponent(id)}/unlock`, {}),
     reviews: (id) => request("GET", `/tutors/${encodeURIComponent(id)}/reviews`),
     review: (id, b) => request("POST", `/tutors/${encodeURIComponent(id)}/reviews`, b),
     report: (id, b) => request("POST", `/tutors/${encodeURIComponent(id)}/report`, b),
@@ -52,6 +53,8 @@ export const api = {
     profile: () => request("GET", "/me/profile"),
     saveProfile: (b) => request("PUT", "/me/profile", b),
     leads: () => request("GET", "/me/leads"),
+    credits: () => request("GET", "/me/credits"),
+    contacts: () => request("GET", "/me/contacts"),
     verify: (kind) => request("POST", "/me/verification", { kind }),
   },
   requests: {

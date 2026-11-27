@@ -10,6 +10,7 @@ import { toast } from "../core/toast.js";
 import { areaPicker, bindPickers, curriculumPicker, levelPicker, subjectPicker } from "../components/picker.js";
 import { emptyBox } from "../components/contact.js";
 import { loginPrompt } from "../components/gate.js";
+import { trialBanner } from "../components/trial-banner.js";
 import { tutorCard } from "../components/tutor-card.js";
 
 /** Halaman filter lengkap. */
@@ -32,7 +33,7 @@ export const searchView = {
       <div class="field"><span class="lbl">Budget maks per sesi: <span class="range-val" id="budgetVal">${rp(s.budget)}</span></span>
         <input type="range" name="budget" min="${L.minBudget}" max="${L.maxBudget}" step="10000" value="${s.budget}"><span class="hint">Maksimal ${rp(L.maxBudget)} untuk durasi yang dipilih.</span></div>
       <div class="field"><span class="lbl">Preferensi tutor</span>${seg("gender", [["any", "Bebas"], ["P", "Perempuan"], ["L", "Laki-laki"]], s.gender)}</div>
-      <div class="info" style="margin-bottom:14px">${ic("info")}<span><b id="liveCount">…</b> tutor cocok dengan kriteria ini. CV bisa dilihat gratis, dan kamu tidak membayar apa pun.</span></div>
+      <div class="info" style="margin-bottom:14px">${ic("info")}<span><b id="liveCount">…</b> tutor cocok dengan kriteria ini. Daftar gratis untuk membuka CV, 7 hari pertama bebas buka kontak tutor.</span></div>
       <button class="btn">${ic("search")} Tampilkan tutor</button>
     </form>`;
   },
@@ -69,7 +70,8 @@ export const resultsView = {
     <div class="row" style="margin-bottom:12px">${back("/", "data-reset")}<h2 class="grow">Hasil pencarian</h2>
       <a href="/search" class="btn sm ${nf ? "filter-on" : "line"}">${ic("filter")}Filter${nf ? `<span class="fcount">${nf}</span>` : ""}</a></div>
     <div class="result-head"><div class="row" style="gap:12px"><b class="big">${tutors.length}</b><div><b>tutor cocok dengan kriteriamu</b><p class="filters-sum">${esc(sum)}</p></div></div></div>
-    <div class="info" style="margin-top:10px">${ic("shield")}<span>${guest ? "Masuk (gratis) untuk membuka CV lengkap dan memilih tutor." : `Nama, foto, dan WhatsApp tutor tersamar. Pilih sampai ${max} tutor lalu kirim permintaan gratis. Identitas tutor terbuka setelah tutor merespons.`}</span></div>
+    <div style="margin-top:10px">${trialBanner()}</div>
+    <div class="info" style="margin-top:10px">${ic("shield")}<span>${guest ? "Masuk (gratis) untuk membuka CV lengkap dan memilih tutor." : `Nama, foto, dan WhatsApp tutor tersamar. Buka kontak dengan kuota, atau pilih sampai ${max} tutor dan kirim permintaan gratis.`}</span></div>
     <div class="hscroll" style="margin-top:12px">${[["match", "Paling cocok"], ["dist", "Terdekat"], ["price", "Termurah"], ["rating", "Rating"]].map(([v, l]) =>
       `<button class="chip ${s.sort === v ? "pri" : ""}" data-sort="${v}" style="padding:8px 12px">${l}</button>`).join("")}</div>
     <div class="stack" style="margin-top:12px">

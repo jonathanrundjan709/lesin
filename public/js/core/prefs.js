@@ -18,10 +18,10 @@ export const ui = (() => {
 })();
 
 export const HERO_COPY = {
-  A: ["Cari guru les", "Temukan guru les yang pas untuk anakmu.", "Lihat tutor yang cocok dulu. Daftar gratis untuk membuka CV dan kirim permintaan, tanpa biaya."],
+  A: ["Cari guru les", "Temukan guru les yang pas untuk anakmu.", "Lihat tutor yang cocok dulu. Daftar gratis dan buka sampai 10 kontak tutor selama 7 hari pertama."],
   B: ["Les di rumah", "Les di rumah, tanpa ribet.", "Pilih tutor terverifikasi di sekitarmu, lalu lanjut chat lewat WhatsApp."],
-  C: ["Cari guru les", "Cari guru les yang cocok, bukan asal dekat.", "Bandingkan tutor di sekitarmu, lalu buka CV lengkap dan rating setelah masuk. Gratis untuk orang tua dan murid."],
-  D: ["Guru les terpercaya", "Guru les terpercaya, dekat dari rumah.", "Daftar gratis untuk membuka CV tutor. Kamu tidak pernah bayar, tutor yang membayar untuk menghubungimu."],
+  C: ["Cari guru les", "Cari guru les yang cocok, bukan asal dekat.", "Bandingkan tutor di sekitarmu, lalu buka CV lengkap dan kontaknya setelah masuk. 7 hari pertama gratis."],
+  D: ["Guru les terpercaya", "Guru les terpercaya, dekat dari rumah.", "Daftar gratis, 7 hari pertama bebas buka kontak tutor (maks. 10). Kirim permintaan selalu gratis."],
 };
 
 export const DEFAULT_SEARCH = { area: "Tebet", subject: "Matematika", level: "", curriculum: "", mode: "any", budget: 150000, durationMin: 90, gender: "any", sort: "match" };

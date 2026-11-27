@@ -9,7 +9,7 @@ const NAV = {
   tutor: [["", "home", "Beranda"], ["board", "board", "Lowongan"], ["profile", "user", "CV Saya"], ["kontak", "users", "Kontak"], ["wallet", "wallet", "Lead"]],
 };
 /** Halaman anak yang menyorot tab induknya. */
-const ACTIVE = { tutor: "search", results: "search", lowongan: "board", harga: "wallet", riwayat: "wallet", les: "" };
+const ACTIVE = { tutor: "search", results: "search", lowongan: "board", les: "" };
 
 /** Topbar (tombol mode, pil lead/masuk) dan navigasi bawah. Dipanggil setiap selesai render. */
 export function renderChrome() {
@@ -21,7 +21,8 @@ export function renderChrome() {
   const pill = $("#walletPill");
   if (!session.user) { pill.hidden = false; pill.href = "/masuk"; pill.innerHTML = `${ic("user")}Masuk`; }
   else if (session.mode === "tutor" && cvReady() && session.leads) { pill.hidden = false; pill.href = "/wallet"; pill.innerHTML = `${ic("ticket")}${session.leads.leads} lead`; }
-  else pill.hidden = true; // orang tua tidak punya saldo: semuanya gratis
+  else if (session.mode === "pencari" && session.contact) { pill.hidden = false; pill.href = "/kuota"; pill.innerHTML = `${ic("ticket")}${session.contact.credits} kuota`; }
+  else pill.hidden = true;
 
   const { page } = currentRoute();
   const active = page in ACTIVE ? ACTIVE[page] : page;

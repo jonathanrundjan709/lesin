@@ -19,7 +19,7 @@ const passwordField = (autocomplete) => `<label class="field" data-f="pw"><span 
   <span class="pw"><input class="input" type="password" name="pw" autocomplete="${autocomplete}" placeholder="Minimal 6 karakter"><button type="button" class="pw-eye" data-eye aria-label="Lihat password">${ic("eye")}</button></span></label>`;
 
 const ROLES = {
-  pencari: { icon: "search", title: "Cari guru les", desc: "Gratis untuk orang tua dan murid" },
+  pencari: { icon: "search", title: "Cari guru les", desc: "Daftar gratis, 7 hari pertama bebas buka kontak" },
   tutor: { icon: "cap", title: "Jadi tutor", desc: "Dapatkan murid baru di sekitarmu" },
 };
 

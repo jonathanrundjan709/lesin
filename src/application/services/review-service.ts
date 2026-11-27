@@ -7,7 +7,7 @@ import { TutorService } from "./tutor-service";
 
 export interface ReviewView { author: string; stars: number; text: string; createdAt: number; mine: boolean }
 
-/** Ulasan hanya dari pencari yang kontak tutornya sudah terbuka (tutor membuka permintaannya). */
+/** Ulasan hanya dari pencari yang kontak tutornya sudah terbuka (tutor merespons permintaannya, atau pencari membuka kontaknya). */
 export class ReviewService {
   constructor(private d: BaseDeps) {}
 
@@ -15,7 +15,7 @@ export class ReviewService {
     const input = parse(reviewInput, raw);
     const now = this.d.clock.now();
     return this.d.uow.run(async (r) => {
-      if (!(await TutorService.revealedTutorIds(r, seekerId)).has(tutorId)) return fail("forbidden", "Ulasan hanya bisa ditulis setelah tutor merespons permintaanmu.");
+      if (!(await TutorService.revealedTutorIds(r, seekerId)).has(tutorId)) return fail("forbidden", "Ulasan hanya bisa ditulis setelah kontak tutor terbuka.");
       const profile = (await r.tutors.lockByUserId(tutorId)) ?? fail("not_found", "Tutor tidak ditemukan.");
       const prev = await r.reviews.get(tutorId, seekerId);
       const review: Review = { id: prev?.id ?? this.d.ids.next(), tutorId, seekerId, stars: input.stars as Review["stars"], text: sanitizeText(input.text), createdAt: now };

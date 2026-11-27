@@ -1,5 +1,7 @@
 import type { LedgerEntry, Millis } from "./types";
 
+type Movement = Pick<LedgerEntry, "delta" | "expiresAt" | "createdAt">;
+
 const WIB_OFFSET_MS = 7 * 3_600_000;
 
 /** Awal bulan berikutnya menurut WIB: batas kedaluwarsa lead dari Tutor Plan. */
@@ -9,11 +11,11 @@ export function monthEnd(now: Millis): Millis {
 }
 
 /**
- * Saldo lead = jumlah lead yang belum kedaluwarsa pada `now`.
+ * Saldo kredit (lead tutor atau kuota kontak pencari) = jumlah yang belum kedaluwarsa pada `now`.
  * Setiap kredit adalah "lot"; setiap pemakaian mengambil dari lot yang masih berlaku dan paling cepat
  * kedaluwarsa (lead Plan dipakai lebih dulu daripada lead beli). Ledger tidak pernah diubah, hanya ditambah.
  */
-export function leadBalance(entries: readonly LedgerEntry[], now: Millis): number {
+export function creditBalance(entries: readonly Movement[], now: Millis): number {
   const lots = entries.filter((e) => e.delta > 0)
     .map((e) => ({ at: e.createdAt, exp: e.expiresAt, left: e.delta }))
     .sort((a, b) => (a.exp ?? Infinity) - (b.exp ?? Infinity) || a.at - b.at);
@@ -30,3 +32,6 @@ export function leadBalance(entries: readonly LedgerEntry[], now: Millis): numbe
   }
   return lots.filter((l) => l.exp === null || l.exp > now).reduce((s, l) => s + l.left, 0);
 }
+
+/** Nama lama untuk saldo lead tutor. */
+export const leadBalance = creditBalance;

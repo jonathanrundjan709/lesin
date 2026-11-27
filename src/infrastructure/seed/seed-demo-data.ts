@@ -41,15 +41,15 @@ export async function seedDemoData(d: { uow: UnitOfWork; clock: Clock; hasher: P
       // Tutor yang "sudah menghubungi": utamakan yang mengajar mapel itu. Lead-nya dibuatkan dulu agar ledger tetap konsisten.
       const pool = [...SEED_TUTORS].sort((a, b) => Number(b.subjects.includes(post.subject)) - Number(a.subjects.includes(post.subject)));
       for (const t of pool.slice(0, post.contacted)) {
-        const grant: LedgerEntry = { id: `seed-grant-${post.id}-${t.id}`, tutorId: t.id, delta: 1, reason: "pack", refId: "seed", expiresAt: null, createdAt };
-        const spend: LedgerEntry = { id: `seed-spend-${post.id}-${t.id}`, tutorId: t.id, delta: -1, reason: "unlock", refId: post.id, expiresAt: null, createdAt: createdAt + 1 };
+        const grant: LedgerEntry = { id: `seed-grant-${post.id}-${t.id}`, userId: t.id, kind: "lead", delta: 1, reason: "pack", refId: "seed", expiresAt: null, createdAt };
+        const spend: LedgerEntry = { id: `seed-spend-${post.id}-${t.id}`, userId: t.id, kind: "lead", delta: -1, reason: "unlock", refId: post.id, expiresAt: null, createdAt: createdAt + 1 };
         const unlock: Unlock = { id: `seed-unlock-${post.id}-${t.id}`, tutorId: t.id, requestId: post.id, createdAt: createdAt + 1 };
         await r.ledger.insert(grant); await r.ledger.insert(spend); await r.unlocks.insert(unlock);
       }
     }
     // Founding Tutor: 4 tutor pertama mendapat 2 lead gratis.
     for (const t of SEED_TUTORS.slice(0, 4)) {
-      await r.ledger.insert({ id: `seed-founding-${t.id}`, tutorId: t.id, delta: 2, reason: "founding", refId: "founding", expiresAt: null, createdAt: now });
+      await r.ledger.insert({ id: `seed-founding-${t.id}`, userId: t.id, kind: "lead", delta: 2, reason: "founding", refId: "founding", expiresAt: null, createdAt: now });
     }
 
     for (const [i, v] of SEED_REVIEWS.entries()) {

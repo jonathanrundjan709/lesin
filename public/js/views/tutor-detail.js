@@ -5,12 +5,13 @@ import { DAYS_FULL, avColor, durLabel, rp, waLink } from "../core/format.js";
 import { ic } from "../core/icons.js";
 import { searchPrefs, selection } from "../core/prefs.js";
 import { navigate, currentPath } from "../core/router.js";
-import { session } from "../core/session.js";
+import { refreshContact, session } from "../core/session.js";
 import { closeSheet } from "../core/sheet.js";
 import { toast } from "../core/toast.js";
 import { avatarHTML, nameRow } from "../components/tutor-card.js";
 import { bindCopy, contactCard } from "../components/contact.js";
 import { confirmSheet } from "../components/confirm.js";
+import { trialBanner } from "../components/trial-banner.js";
 import { lessonSheet, reportSheet, reviewSheet } from "../components/sheets.js";
 
 const stars = (n) => `<span class="stars">${[1, 2, 3, 4, 5].map((i) => ic(i <= n ? "star" : "starO")).join("")}</span>`;
@@ -32,13 +33,14 @@ export const tutorDetailView = {
     const mine = reviews.find((r) => r.mine);
     const days = Object.keys(DAYS_FULL);
 
-    const cta = me ? `<div class="info">${ic("info")}<span>Ini tampilan CV-mu di mata orang tua. Nama dan kontakmu tersamar sampai kamu merespons permintaan mereka.</span></div>`
+    const cta = me ? `<div class="info">${ic("info")}<span>Ini tampilan CV-mu di mata orang tua. Nama dan kontakmu tersamar sampai pencari membuka kontakmu atau kamu merespons permintaannya.</span></div>`
       : open ? contactCard({ color: avColor(t.id), name: t.name, note: `${t.age ? `${t.age} tahun · ` : ""}${esc(t.area)}`, rows: [["WhatsApp", t.phone, true], ["Domisili", `Kec. ${t.area}`]], wa: waLink(t.waNumber, msg) })
-      : `<div class="lockbox">
+      : `${trialBanner()}<div class="lockbox" style="margin-top:12px">
           <div class="row"><span style="display:inline-flex;width:20px;color:var(--acc)">${ic("lock")}</span><h3>Identitas & kontak tersamar</h3></div>
-          <ul><li>${ic("check")}Kirim permintaan gratis ke tutor ini</li><li>${ic("check")}Tutor yang tertarik akan menghubungimu</li><li>${ic("check")}Nama, foto, dan WhatsApp terbuka setelah tutor merespons</li></ul>
-          <button class="btn acc" id="pickBtn">${picked ? `${ic("check")}Dipilih. Lanjut kirim permintaan` : "Pilih tutor ini & kirim permintaan"}</button>
-          <p class="small" style="text-align:center;margin-top:8px;color:rgba(255,255,255,.7)">Gratis. Kamu tidak membayar apa pun.</p></div>`;
+          <ul><li>${ic("check")}<span><b>Buka kontak</b> untuk melihat nama asli dan WhatsApp tutor (1 kuota)</span></li>
+            <li>${ic("check")}<span>Atau <b>kirim permintaan gratis</b>: tutor yang tertarik akan menghubungimu</span></li></ul>
+          <button class="btn acc" id="unlockBtn">${ic("unlock")}Buka kontak · 1 kuota</button>
+          <button class="btn line" id="pickBtn" style="margin-top:8px">${picked ? `${ic("check")}Dipilih. Lanjut kirim permintaan` : "Kirim permintaan gratis"}</button></div>`;
 
     return `
     <div class="row" style="margin-bottom:12px">${back()}<h2 class="grow">CV Tutor</h2></div>
@@ -72,7 +74,7 @@ export const tutorDetailView = {
       <div class="row between" style="margin-bottom:6px"><h3 class="cap-title">Ulasan</h3><span class="small muted">${t.rating ? `${String(t.rating).replace(".", ",")} dari ${t.reviewCount} ulasan` : "Belum ada ulasan"}</span></div>
       ${reviews.map((v) => `<div class="review"><div class="row between"><b class="small">${esc(v.author)}</b>${stars(v.stars)}</div><p class="sub" style="font-size:13px;margin-top:4px">${esc(v.text)}</p></div>`).join("") || `<p class="small muted">Belum ada ulasan tertulis.</p>`}
       ${open ? `<button class="btn line" id="revBtn" style="margin-top:12px">${ic("starO")}${mine ? "Ubah ulasanmu" : "Tulis ulasan"}</button>`
-        : !me ? `<p class="hint" style="margin-top:10px">Ulasan hanya bisa ditulis setelah tutor merespons permintaanmu.</p>` : ""}
+        : !me ? `<p class="hint" style="margin-top:10px">Ulasan hanya bisa ditulis setelah kontak tutor terbuka.</p>` : ""}
     </div>
 
     <div class="card section row between">
@@ -85,13 +87,40 @@ export const tutorDetailView = {
   },
   mount({ t, reviews }) {
     bindCopy();
+    const unlock = $("#unlockBtn");
+    if (unlock) unlock.onclick = () => {
+      const c = session.contact;
+      if (!c || c.credits < 1) {
+        return confirmSheet({
+          title: c?.trialEndsAt && !c.trialActive ? "Masa percobaan gratis sudah selesai" : "Kuota kontak habis",
+          body: `Beli paket kontak mulai ${rp(session.meta.limits.contactPrice)} untuk membuka ${esc(t.name)}. Atau kirim permintaan gratis dan tunggu tutor menghubungimu.`,
+          confirmLabel: "Lihat paket kontak", cancelLabel: "Nanti saja",
+          onConfirm: () => { closeSheet(); navigate("/kuota"); },
+        });
+      }
+      confirmSheet({
+        title: `Buka kontak ${t.name}?`,
+        body: c.trialActive ? "Memakai kuota gratis masa percobaanmu. Nama asli dan WhatsApp tutor terbuka selamanya." : "Nama asli dan WhatsApp tutor terbuka selamanya.",
+        lines: [["Biaya", "1 kuota"], ["Sisa setelah ini", `${c.credits - 1} kuota`]],
+        confirmLabel: "Ya, buka kontak", cancelLabel: "Batal",
+        onConfirm: async () => {
+          try {
+            await api.tutors.unlock(t.id); await refreshContact();
+            closeSheet(); toast("Kontak terbuka. Kamu bisa langsung chat lewat WhatsApp."); navigate(currentPath());
+          } catch (err) {
+            if (err.code === "payment_required") { closeSheet(); toast(esc(err.message), "info"); return navigate("/kuota"); }
+            toast(esc(err.message), "err");
+          }
+        },
+      });
+    };
     const pick = $("#pickBtn");
     if (pick) pick.onclick = () => {
       if (selection.has(t.id)) return navigate("/post");
       const max = session.meta.limits.maxTargets;
       confirmSheet({
         title: `Kirim permintaan ke ${t.name}?`,
-        body: "Kamu akan mengisi detail les di langkah berikutnya. Belum ada yang terkirim dan kamu tidak membayar apa pun.",
+        body: "Kamu akan mengisi detail les di langkah berikutnya. Belum ada yang terkirim, dan mengirim permintaan selalu gratis.",
         confirmLabel: "Lanjut isi permintaan", cancelLabel: "Batal",
         onConfirm: () => {
           if (!selection.toggle(t, max)) return toast(`Maksimal ${max} tutor per permintaan.`, "info");

@@ -1,6 +1,6 @@
 import type { Repositories, UnitOfWork } from "@/application/ports";
 import type {
-  AppEvent, LedgerEntry, Lesson, LessonRequest, Order, Report, Review, ScheduleSlot, SessionNote, TutorProfile, Unlock, User, VerificationDoc,
+  AppEvent, ContactUnlock, LedgerEntry, Lesson, LessonRequest, Order, Report, Review, ScheduleSlot, SessionNote, TutorProfile, Unlock, User, VerificationDoc,
 } from "@/domain/types";
 import { SCHEMA_SQL } from "./schema";
 import type { Row, SqlClient, SqlDatabase } from "./sql-database";
@@ -26,9 +26,10 @@ const request = (r: Row): LessonRequest => ({
   notes: String(r.notes), targetTutorIds: r.target_tutor_ids as string[], boostDays: n(r.boost_days), createdAt: n(r.created_at), expiresAt: n(r.expires_at),
 });
 const unlock = (r: Row): Unlock => ({ id: String(r.id), tutorId: String(r.tutor_id), requestId: String(r.request_id), createdAt: n(r.created_at) });
-const ledger = (r: Row): LedgerEntry => ({ id: String(r.id), tutorId: String(r.tutor_id), delta: n(r.delta), reason: r.reason as LedgerEntry["reason"], refId: String(r.ref_id), expiresAt: nn(r.expires_at), createdAt: n(r.created_at) });
+const contactUnlock = (r: Row): ContactUnlock => ({ id: String(r.id), seekerId: String(r.seeker_id), tutorId: String(r.tutor_id), createdAt: n(r.created_at) });
+const ledger = (r: Row): LedgerEntry => ({ id: String(r.id), userId: String(r.user_id), kind: r.kind as LedgerEntry["kind"], delta: n(r.delta), reason: r.reason as LedgerEntry["reason"], refId: String(r.ref_id), expiresAt: nn(r.expires_at), createdAt: n(r.created_at) });
 const order = (r: Row): Order => ({
-  id: String(r.id), tutorId: String(r.tutor_id), product: r.product as Order["product"], amount: n(r.amount), leads: n(r.leads), isPlan: Boolean(r.is_plan),
+  id: String(r.id), buyerId: String(r.buyer_id), product: r.product as Order["product"], amount: n(r.amount), units: n(r.units), isPlan: Boolean(r.is_plan),
   status: r.status as Order["status"], idempotencyKey: String(r.idempotency_key), gatewayRef: String(r.gateway_ref), createdAt: n(r.created_at), expiresAt: n(r.expires_at),
 });
 const lesson = (r: Row): Lesson => ({ id: String(r.id), tutorId: String(r.tutor_id), seekerId: String(r.seeker_id), child: String(r.child), subject: String(r.subject), slots: r.slots as ScheduleSlot[], createdAt: n(r.created_at) });
@@ -45,6 +46,7 @@ function buildRepos(db: SqlClient): Repositories {
       async insert(u) { await q("INSERT INTO users (id,name,phone,password_hash,is_admin,status,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)", [u.id, u.name, u.phone, u.passwordHash, u.isAdmin, u.status, u.createdAt]); },
       async update(u) { await q("UPDATE users SET name=$2, phone=$3, password_hash=$4, is_admin=$5, status=$6 WHERE id=$1", [u.id, u.name, u.phone, u.passwordHash, u.isAdmin, u.status]); },
       async byId(id) { return one(await q("SELECT * FROM users WHERE id=$1", [id]), user); },
+      async lockById(id) { return one(await q("SELECT * FROM users WHERE id=$1 FOR UPDATE", [id]), user); },
       async byIds(ids) { return ids.length ? list(await q("SELECT * FROM users WHERE id = ANY($1::text[])", ANY(ids)), user) : []; },
       async byPhone(phone) { return one(await q("SELECT * FROM users WHERE phone=$1", [phone]), user); },
     },
@@ -79,16 +81,22 @@ function buildRepos(db: SqlClient): Repositories {
       async byRequestIds(ids) { return ids.length ? list(await q("SELECT * FROM unlocks WHERE request_id = ANY($1::text[])", ANY(ids)), unlock) : []; },
       async byTutor(tutorId) { return list(await q("SELECT * FROM unlocks WHERE tutor_id=$1", [tutorId]), unlock); },
     },
+    contactUnlocks: {
+      async insert(u) { await q("INSERT INTO contact_unlocks (id,seeker_id,tutor_id,created_at) VALUES ($1,$2,$3,$4)", [u.id, u.seekerId, u.tutorId, u.createdAt]); },
+      async has(seekerId, tutorId) { return (await q("SELECT 1 AS x FROM contact_unlocks WHERE seeker_id=$1 AND tutor_id=$2", [seekerId, tutorId])).length > 0; },
+      async bySeeker(seekerId) { return list(await q("SELECT * FROM contact_unlocks WHERE seeker_id=$1", [seekerId]), contactUnlock); },
+    },
     ledger: {
-      async insert(e) { await q("INSERT INTO ledger_entries (id,tutor_id,delta,reason,ref_id,expires_at,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)", [e.id, e.tutorId, e.delta, e.reason, e.refId, e.expiresAt, e.createdAt]); },
-      async byTutor(tutorId) { return list(await q("SELECT * FROM ledger_entries WHERE tutor_id=$1 ORDER BY created_at", [tutorId]), ledger); },
+      async insert(e) { await q("INSERT INTO ledger_entries (id,user_id,kind,delta,reason,ref_id,expires_at,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)", [e.id, e.userId, e.kind, e.delta, e.reason, e.refId, e.expiresAt, e.createdAt]); },
+      async insertOnce(e) { return (await q("INSERT INTO ledger_entries (id,user_id,kind,delta,reason,ref_id,expires_at,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING RETURNING id", [e.id, e.userId, e.kind, e.delta, e.reason, e.refId, e.expiresAt, e.createdAt])).length > 0; },
+      async byUser(userId, kind) { return list(await q("SELECT * FROM ledger_entries WHERE user_id=$1 AND kind=$2 ORDER BY created_at", [userId, kind]), ledger); },
     },
     orders: {
-      async insert(o) { await q("INSERT INTO orders (id,tutor_id,product,amount,leads,is_plan,status,idempotency_key,gateway_ref,created_at,expires_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)", [o.id, o.tutorId, o.product, o.amount, o.leads, o.isPlan, o.status, o.idempotencyKey, o.gatewayRef, o.createdAt, o.expiresAt]); },
+      async insert(o) { await q("INSERT INTO orders (id,buyer_id,product,amount,units,is_plan,status,idempotency_key,gateway_ref,created_at,expires_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)", [o.id, o.buyerId, o.product, o.amount, o.units, o.isPlan, o.status, o.idempotencyKey, o.gatewayRef, o.createdAt, o.expiresAt]); },
       async update(o) { await q("UPDATE orders SET status=$2, gateway_ref=$3 WHERE id=$1", [o.id, o.status, o.gatewayRef]); },
       async byId(id) { return one(await q("SELECT * FROM orders WHERE id=$1", [id]), order); },
-      async byKey(tutorId, key) { return one(await q("SELECT * FROM orders WHERE tutor_id=$1 AND idempotency_key=$2", [tutorId, key]), order); },
-      async byTutor(tutorId) { return list(await q("SELECT * FROM orders WHERE tutor_id=$1", [tutorId]), order); },
+      async byKey(buyerId, key) { return one(await q("SELECT * FROM orders WHERE buyer_id=$1 AND idempotency_key=$2", [buyerId, key]), order); },
+      async byBuyer(buyerId) { return list(await q("SELECT * FROM orders WHERE buyer_id=$1", [buyerId]), order); },
       async expirePending(now) { return (await q("UPDATE orders SET status='expired' WHERE status='pending' AND expires_at <= $1 RETURNING id", [now])).length; },
     },
     webhookEvents: {

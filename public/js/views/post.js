@@ -20,7 +20,7 @@ const chosenChips = () => {
       : `<div class="info">${ic("info")}<span>Terbuka untuk tutor yang cocok di daerahmu. Mau pilih 1–${max} tutor tertentu? <a class="link" href="/results">Pilih dari hasil pencarian</a>.</span></div>`}</div>`;
 };
 
-/** Boost orang tua ditunda (PRD §6: orang tua tidak membayar). Tampil hanya bila fitur dinyalakan di server. */
+/** Boost postingan ditunda ke P1/P2. Tampil hanya bila fitur dinyalakan di server. */
 const boostCard = () => `<section class="card boost-card"><div class="row" style="gap:10px"><span class="boost-ic">${ic("bolt")}</span><div><h3>Boost postingan</h3><p class="small">Belum tersedia.</p></div></div></section>`;
 
 export const postView = {
@@ -28,7 +28,7 @@ export const postView = {
     const s = searchPrefs.get(), L = session.meta.limits;
     const days = Object.entries(DAYS_FULL);
     return `
-    <h1>Kirim permintaan les</h1><p class="sub">Gratis. Tutor yang cocok akan menghubungimu lewat WhatsApp. Berlaku ${L.requestDays} hari.</p>
+    <h1>Kirim permintaan les</h1><p class="sub">Selalu gratis. Tutor yang cocok akan menghubungimu lewat WhatsApp. Berlaku ${L.requestDays} hari.</p>
     <form id="postForm" class="section" novalidate>
       ${chosenChips()}
       ${subjectPicker("subject", "Mata pelajaran", s.subject || "Matematika")}

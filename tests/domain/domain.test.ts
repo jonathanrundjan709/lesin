@@ -8,11 +8,13 @@ import { LEAD_PRICE, listPrice, PRODUCTS } from "@/domain/pricing";
 import type { LedgerEntry, TutorProfile } from "@/domain/types";
 
 const T = Date.UTC(2026, 10, 30, 3, 0, 0); // Senin 30 Nov 2026 10:00 WIB
-const entry = (over: Partial<LedgerEntry>): LedgerEntry => ({ id: Math.random().toString(), tutorId: "t", delta: 1, reason: "pack", refId: "r", expiresAt: null, createdAt: T, ...over });
+const entry = (over: Partial<LedgerEntry>): LedgerEntry => ({ id: Math.random().toString(), userId: "t", kind: "lead", delta: 1, reason: "pack", refId: "r", expiresAt: null, createdAt: T, ...over });
 
 test("harga mengikuti PRD §6", () => {
   assert.equal(LEAD_PRICE, 15_000);
-  assert.deepEqual(Object.entries(PRODUCTS).map(([k, p]) => [k, p.amount, p.leads]), [["lead1", 15_000, 1], ["lead5", 65_000, 5], ["lead10", 125_000, 10], ["plan", 99_000, 8]]);
+  assert.deepEqual(Object.entries(PRODUCTS).filter(([, p]) => p.audience === "tutor").map(([k, p]) => [k, p.amount, p.units]), [["lead1", 15_000, 1], ["lead5", 65_000, 5], ["lead10", 125_000, 10], ["plan", 99_000, 8]]);
+  assert.deepEqual(Object.entries(PRODUCTS).filter(([, p]) => p.audience === "seeker").map(([k, p]) => [k, p.amount, p.units]), [["contact1", 8_000, 1], ["contact5", 30_000, 5], ["contact15", 75_000, 15]]);
+  assert.equal(listPrice(PRODUCTS.contact5), 40_000, "harga coret paket kontak = jumlah × Rp8.000");
   assert.equal(listPrice(PRODUCTS.lead5), 75_000); // harga coret
   assert.equal(PRODUCTS.plan.plan, true);
 });

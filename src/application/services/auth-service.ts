@@ -2,6 +2,7 @@ import { fail } from "@/domain/errors";
 import type { User } from "@/domain/types";
 import type { PasswordHasher, SessionTokens } from "../ports";
 import { loginInput, parse, signupInput } from "../validation";
+import { trialEntry } from "./contact-service";
 import { type BaseDeps, type PublicUser, toPublicUser } from "./context";
 
 export interface AuthResult { user: PublicUser; token: string }
@@ -17,6 +18,7 @@ export class AuthService {
       if (await r.users.byPhone(input.phone)) fail("conflict", "Nomor ini sudah terdaftar. Silakan masuk.");
       const u: User = { id: this.d.ids.next(), name: input.name, phone: input.phone, passwordHash, isAdmin: false, status: "active", createdAt: this.d.clock.now() };
       await r.users.insert(u);
+      await r.ledger.insertOnce(trialEntry(u.id, u.createdAt)); // 7 hari gratis, maks. 10 buka kontak
       return u;
     });
     return { user: toPublicUser(user), token: this.d.tokens.issue(user.id, this.d.clock.now()) };

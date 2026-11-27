@@ -10,6 +10,7 @@ import { profileView } from "./views/profile.js";
 import { contactsView, myRequestsView } from "./views/requests.js";
 import { resultsView, searchView } from "./views/search.js";
 import { tutorDetailView } from "./views/tutor-detail.js";
+import { quotaView } from "./views/quota.js";
 import { historyView, pricesView, walletView } from "./views/wallet.js";
 
 /** Tabel rute. auth = wajib masuk, tutorOnly = hanya mode tutor, guestOnly = hanya tamu. */
@@ -19,7 +20,8 @@ const ROUTES = {
   post: { ...postView, auth: true }, myposts: { ...myRequestsView, auth: true }, kontak: { ...contactsView, auth: true },
   les: { ...lessonsView, auth: true }, profile: { ...profileView, auth: true },
   board: { ...boardView, auth: true, tutorOnly: true }, lowongan: { ...lowonganView, auth: true, tutorOnly: true },
-  wallet: { ...walletView, auth: true, tutorOnly: true }, harga: { ...pricesView, auth: true, tutorOnly: true }, riwayat: { ...historyView, auth: true, tutorOnly: true },
+  wallet: { ...walletView, auth: true, tutorOnly: true }, kuota: { ...quotaView, auth: true },
+  harga: { ...pricesView, auth: true }, riwayat: { ...historyView, auth: true },
   admin: { ...adminView, auth: true },
 };
 

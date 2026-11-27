@@ -6,15 +6,15 @@ import { esc } from "../core/dom.js";
 
 const PERKS = [
   "Baca CV lengkap, pendidikan, dan ulasan tutor",
-  "Kirim permintaan gratis ke 1–3 tutor",
-  "Tutor yang tertarik menghubungimu lewat WhatsApp",
+  "7 hari gratis: buka sampai 10 kontak tutor",
+  "Kirim permintaan gratis, tutor yang menghubungimu",
 ];
 
 /** Copy per halaman yang butuh akun: judul + satu kalimat yang menjelaskan apa yang didapat setelah masuk. */
 export const GATE_COPY = {
   default: { title: "Masuk dulu yuk", text: "Simpan permintaan, kontak tutor, dan jadwal lesmu di satu tempat. Daftar gratis, kurang dari satu menit." },
-  tutor: { title: "Buka CV lengkap tutor", text: "Lihat pendidikan, pengalaman, dan ulasan orang tua lain. Daftar gratis untuk membukanya." },
-  post: { title: "Siap cari guru les?", text: "Buat akun dulu supaya tutor yang cocok bisa menghubungimu lewat WhatsApp. Gratis untuk orang tua dan murid." },
+  tutor: { title: "Buka CV lengkap tutor", text: "Lihat pendidikan, pengalaman, dan ulasan orang tua lain. Daftar gratis, 7 hari pertama bebas buka kontak." },
+  post: { title: "Siap cari guru les?", text: "Buat akun dulu supaya tutor yang cocok bisa menghubungimu lewat WhatsApp. Kirim permintaan selalu gratis." },
   myposts: { title: "Pantau permintaanmu", text: "Masuk untuk melihat permintaan les dan tutor yang sudah merespons." },
   kontak: { title: "Kontak tutormu", text: "Masuk untuk melihat tutor yang sudah merespons dan lanjut ngobrol lewat WhatsApp." },
   les: { title: "Lesson hub", text: "Masuk untuk mengatur jadwal mingguan, pengingat WhatsApp, dan catatan sesi les." },

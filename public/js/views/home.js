@@ -8,6 +8,7 @@ import { navigate } from "../core/router.js";
 import { areaPicker, curriculumPicker, levelPicker, subjectPicker, bindPickers } from "../components/picker.js";
 import { bindModeSwitch, modeCard, modeSegment } from "../components/mode-switch.js";
 import { planSheet } from "../components/plan-sheet.js";
+import { trialBanner } from "../components/trial-banner.js";
 import { requestCard } from "../components/request-card.js";
 import { emptyBox } from "../components/contact.js";
 import { mono } from "../components/mono.js";
@@ -75,6 +76,8 @@ function seekerHome({ all, count, s }) {
     <p class="small muted" style="text-align:center;margin-top:8px"><b id="qCount">${count}</b> tutor cocok dengan pilihan ini</p>
   </form>
 
+  <div class="section">${trialBanner()}</div>
+
   <div class="section">
     <div class="section-head"><h2>Pelajaran populer</h2><a href="/search">Semua</a></div>
     <div class="subj-grid">${popular.map((x) => `<a class="subj-card" href="/results" data-subj="${esc(x)}">${mono(x, "md")}<b>${esc(x)}</b><span>${all.filter((t) => t.subjects.includes(x)).length} tutor</span></a>`).join("")}</div>
@@ -97,10 +100,12 @@ function seekerHome({ all, count, s }) {
     <ol class="timeline card">
       <li><span class="tl-dot">${ic("search")}</span><div class="grow"><div class="row between"><b>Cari & bandingkan CV</b><span class="chip ok">Gratis</span></div>
         <p>Filter daerah, mapel, kurikulum, budget. Daftar gratis untuk membuka CV lengkap: pendidikan, pengalaman, dan rating. Nama dan kontak tutor tersamar.</p></div></li>
-      <li><span class="tl-dot">${ic("megaphone")}</span><div class="grow"><div class="row between"><b>Kirim permintaan</b><span class="chip ok">Gratis</span></div>
-        <p>Pilih 1–3 tutor atau biarkan terbuka untuk tutor di daerahmu. Berlaku 14 hari. Kamu tidak pernah membayar LesIn.</p></div></li>
-      <li><span class="tl-dot">${ic("wa")}</span><div class="grow"><div class="row between"><b>Tutor menghubungimu</b><span class="chip ok">Gratis</span></div>
-        <p>Tutor yang tertarik membuka kontakmu. Identitas dan WhatsApp-nya terbuka untukmu. Atur trial lewat WhatsApp, lalu pakai Lesson hub.</p></div></li>
+      <li><span class="tl-dot">${ic("unlock")}</span><div class="grow"><div class="row between"><b>Buka kontak tutor</b><span class="chip pri">7 hari gratis</span></div>
+        <p>Buka nama dan WhatsApp tutor dengan kuota: sampai ${session.meta.trial.contacts} kontak gratis di ${session.meta.trial.days} hari pertama, lalu paket mulai ${rp(session.meta.limits.contactPrice)}.</p></div></li>
+      <li><span class="tl-dot">${ic("megaphone")}</span><div class="grow"><div class="row between"><b>Atau kirim permintaan</b><span class="chip ok">Selalu gratis</span></div>
+        <p>Pilih sampai ${session.meta.limits.maxTargets} tutor atau biarkan terbuka untuk tutor di daerahmu. Berlaku 14 hari. Tutor yang tertarik menghubungimu.</p></div></li>
+      <li><span class="tl-dot">${ic("wa")}</span><div class="grow"><div class="row between"><b>Chat di WhatsApp</b><span class="chip ok">Gratis</span></div>
+        <p>Atur trial les langsung dengan tutor, lalu pakai Lesson hub untuk jadwal, pengingat, dan catatan sesi.</p></div></li>
     </ol>
   </div>
 
@@ -156,6 +161,6 @@ export function planCard() {
   const plan = session.meta.products.find((p) => p.plan);
   return `<div class="pro-card section">
     <div class="row" style="align-items:flex-start"><span class="pro-ic">${ic("bolt")}</span><div class="grow"><h3>Tutor Plan — ${rp(plan.amount)}/bulan</h3>
-    <p class="small" style="color:#7A4E00;margin-top:4px;line-height:1.5">${plan.leads} lead per bulan, prioritas di pencarian, dan badge Pro.</p></div></div>
+    <p class="small" style="color:#7A4E00;margin-top:4px;line-height:1.5">${plan.units} lead per bulan, prioritas di pencarian, dan badge Pro.</p></div></div>
     <button class="btn acc" id="goPlan" style="margin-top:12px">Lihat keuntungan Tutor Plan</button></div>`;
 }

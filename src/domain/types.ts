@@ -46,17 +46,23 @@ export interface LessonRequest {
 /** Tutor membayar 1 lead untuk membuka satu permintaan. */
 export interface Unlock { id: Id; tutorId: Id; requestId: Id; createdAt: Millis }
 
-export type LedgerReason = "founding" | "pack" | "plan" | "unlock" | "refund";
+/** lead = kredit tutor untuk membuka permintaan. contact = kuota pencari untuk membuka kontak tutor. */
+export type CreditKind = "lead" | "contact";
+export type LedgerReason = "founding" | "trial" | "pack" | "plan" | "unlock" | "refund";
 export interface LedgerEntry {
-  id: Id; tutorId: Id; delta: number; reason: LedgerReason; refId: Id;
-  /** Hanya lead dari Tutor Plan yang kedaluwarsa (akhir bulan). */
+  id: Id; userId: Id; kind: CreditKind; delta: number; reason: LedgerReason; refId: Id;
+  /** Kedaluwarsa: lead dari Tutor Plan (akhir bulan) dan kuota trial pencari (7 hari). */
   expiresAt: Millis | null; createdAt: Millis;
 }
 
-export type ProductKey = "lead1" | "lead5" | "lead10" | "plan";
+/** Pencari membayar 1 kuota untuk membuka kontak satu tutor. Unik per pasangan. */
+export interface ContactUnlock { id: Id; seekerId: Id; tutorId: Id; createdAt: Millis }
+
+export type ProductKey = "lead1" | "lead5" | "lead10" | "plan" | "contact1" | "contact5" | "contact15";
 export type OrderStatus = "pending" | "paid" | "expired";
 export interface Order {
-  id: Id; tutorId: Id; product: ProductKey; amount: number; leads: number; isPlan: boolean;
+  /** Pembeli: tutor (lead/Plan) atau pencari (kuota kontak). */
+  id: Id; buyerId: Id; product: ProductKey; amount: number; units: number; isPlan: boolean;
   status: OrderStatus; idempotencyKey: string; gatewayRef: string;
   createdAt: Millis; expiresAt: Millis;
 }

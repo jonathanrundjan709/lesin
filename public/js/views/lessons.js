@@ -15,7 +15,7 @@ export const lessonsView = {
   async load() { return (await api.lessons.list()).lessons; },
   render(lessons) {
     const head = `<div class="row" style="margin-bottom:6px">${back("/")}<h1 class="grow" style="margin:0">Lesson hub</h1></div>
-      <p class="sub">Jadwal mingguan, pengingat WhatsApp sebelum sesi, dan catatan sesi dari tutor. Gratis untuk orang tua dan tutor.</p>`;
+      <p class="sub">Jadwal mingguan, pengingat WhatsApp sebelum sesi, dan catatan sesi dari tutor. Gratis untuk kedua pihak.</p>`;
     if (!lessons.length) return `${head}${emptyBox(session.mode === "tutor"
       ? `Belum ada jadwal. Buka kontak calon murid lalu atur jadwal dari menu <a href="/kontak" class="link">Kontak</a>.`
       : `Belum ada jadwal. Setelah tutor merespons, atur jadwal dari menu <a href="/kontak" class="link">Kontak</a>.`)}`;
