@@ -138,6 +138,10 @@ function buildRepos(db: SqlClient): Repositories {
       async byTutor(tutorId) { return list(await q("SELECT * FROM verification_docs WHERE tutor_id=$1", [tutorId]), doc); },
       async pending() { return list(await q("SELECT * FROM verification_docs WHERE status='pending'"), doc); },
     },
+    loginFailures: {
+      async insert(id, key, at) { await q("INSERT INTO login_failures (id,key,created_at) VALUES ($1,$2,$3)", [id, key, at]); },
+      async countSince(key, since) { return n((await q("SELECT COUNT(*) AS c FROM login_failures WHERE key=$1 AND created_at>=$2", [key, since]))[0].c); },
+    },
     otp: {
       async insert(c) { await q("INSERT INTO otp_challenges (id,email,code_hash,expires_at,attempts,consumed_at,ip_hash,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)", [c.id, c.email, c.codeHash, c.expiresAt, c.attempts, c.consumedAt, c.ipHash, c.createdAt]); },
       async update(c) { await q("UPDATE otp_challenges SET attempts=$2, consumed_at=$3 WHERE id=$1", [c.id, c.attempts, c.consumedAt]); },

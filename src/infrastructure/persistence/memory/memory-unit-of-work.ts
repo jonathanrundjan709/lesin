@@ -7,11 +7,11 @@ import type {
 export interface MemoryData {
   users: Map<string, User>; tutors: Map<string, TutorProfile>; requests: Map<string, LessonRequest>; unlocks: Unlock[]; contactUnlocks: ContactUnlock[];
   ledger: LedgerEntry[]; orders: Map<string, Order>; webhookEvents: Set<string>; lessons: Map<string, Lesson>; notes: SessionNote[];
-  reviews: Review[]; reports: Map<string, Report>; verifications: Map<string, VerificationDoc>; events: AppEvent[]; eventKeys: Set<string>; otp: OtpChallenge[];
+  reviews: Review[]; reports: Map<string, Report>; verifications: Map<string, VerificationDoc>; events: AppEvent[]; eventKeys: Set<string>; otp: OtpChallenge[]; loginFailures: { key: string; at: number }[];
 }
 export const emptyData = (): MemoryData => ({
   users: new Map(), tutors: new Map(), requests: new Map(), unlocks: [], contactUnlocks: [], ledger: [], orders: new Map(), webhookEvents: new Set(),
-  lessons: new Map(), notes: [], reviews: [], reports: new Map(), verifications: new Map(), events: [], eventKeys: new Set(), otp: [],
+  lessons: new Map(), notes: [], reviews: [], reports: new Map(), verifications: new Map(), events: [], eventKeys: new Set(), otp: [], loginFailures: [],
 });
 
 const clone = <T>(v: T): T => structuredClone(v);
@@ -107,6 +107,10 @@ function buildRepos(db: MemoryData): Repositories {
       async byId(id) { return clone(db.verifications.get(id) ?? null); },
       async byTutor(tutorId) { return [...db.verifications.values()].filter((d) => d.tutorId === tutorId).map(clone); },
       async pending() { return [...db.verifications.values()].filter((d) => d.status === "pending").map(clone); },
+    },
+    loginFailures: {
+      async insert(_id, key, at) { db.loginFailures.push({ key, at }); },
+      async countSince(key, since) { return db.loginFailures.filter((f) => f.key === key && f.at >= since).length; },
     },
     otp: {
       async insert(c) { db.otp.push(clone(c)); },

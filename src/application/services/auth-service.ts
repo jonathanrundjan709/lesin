@@ -1,7 +1,8 @@
 import { fail } from "@/domain/errors";
+import { LOGIN_MAX_FAILS_PER_ID, LOGIN_MAX_FAILS_PER_IP, LOGIN_WINDOW_MS } from "@/domain/login-limits";
 import { normalizeEmail } from "@/domain/otp";
 import type { User } from "@/domain/types";
-import type { PasswordHasher, SessionTokens } from "../ports";
+import type { OtpCodes, PasswordHasher, SessionTokens } from "../ports";
 import { emailInput, loginInput, normalizePhone, parse, phoneInput, signupInput, verifyInput } from "../validation";
 import { trialEntry } from "./contact-service";
 import { type BaseDeps, type PublicUser, toPublicUser } from "./context";
@@ -15,7 +16,7 @@ export interface PendingEmail { email: string; echo?: string }
  * masa percobaan diberikan saat nomor ditambahkan, sekali per nomor, sehingga akun kedua tidak mendapat trial lagi.
  */
 export class AuthService {
-  constructor(private d: BaseDeps & { hasher: PasswordHasher; tokens: SessionTokens; otp: OtpService }) {}
+  constructor(private d: BaseDeps & { hasher: PasswordHasher; tokens: SessionTokens; codes: OtpCodes; otp: OtpService }) {}
 
   private session(user: User): AuthResult {
     return { user: toPublicUser(user), token: this.d.tokens.issue(user.id, this.d.clock.now()) };
@@ -37,6 +38,13 @@ export class AuthService {
       await r.users.insert(u);
     });
     return { email: input.email, ...(await this.d.otp.issue(input.email, ip)) };
+  }
+
+  /** Tolak sebelum menghitung hash bila akun atau jaringan ini sudah terlalu sering gagal. */
+  private async assertNotThrottled(idKey: string, ipKey: string): Promise<void> {
+    const since = this.d.clock.now() - LOGIN_WINDOW_MS;
+    const [byId, byIp] = await this.d.uow.run(async (r) => [await r.loginFailures.countSince(idKey, since), await r.loginFailures.countSince(ipKey, since)]);
+    if (byId >= LOGIN_MAX_FAILS_PER_ID || byIp >= LOGIN_MAX_FAILS_PER_IP) fail("rate_limited", "Terlalu banyak percobaan masuk. Coba lagi dalam 15 menit.");
   }
 
   /** Langkah 2: kode benar -> email terverifikasi dan sesi terbit. */
@@ -63,13 +71,18 @@ export class AuthService {
     return this.d.otp.issue(email, ip);
   }
 
-  async login(raw: unknown): Promise<AuthResult> {
+  async login(raw: unknown, ip: string): Promise<AuthResult> {
     const input = parse(loginInput, raw);
+    const idKey = `id:${this.d.codes.hash("login", input.id.toLowerCase())}`, ipKey = `ip:${this.d.codes.hash("login", ip || "-")}`;
+    await this.assertNotThrottled(idKey, ipKey);
     const byEmail = input.id.includes("@");
     const user = await this.d.uow.run((r) => (byEmail ? r.users.byEmail(normalizeEmail(input.id)) : r.users.byPhone(normalizePhone(input.id))));
     // Selalu menghitung hash agar waktu respons tidak membocorkan apakah akun terdaftar.
     const ok = await this.d.hasher.verify(input.password, user?.passwordHash ?? "scrypt$00$00");
-    if (!user || !ok) return fail("unauthorized", "Email, nomor, atau password salah.");
+    if (!user || !ok) {
+      await this.d.uow.run(async (r) => { const at = this.d.clock.now(); await r.loginFailures.insert(this.d.ids.next(), idKey, at); await r.loginFailures.insert(this.d.ids.next(), ipKey, at); });
+      return fail("unauthorized", "Email, nomor, atau password salah.");
+    }
     if (user.status !== "active") return fail("forbidden", "Akun ini dinonaktifkan.");
     // Password benar tetapi email belum diverifikasi: klien lanjut ke langkah kode (meminta kode lewat resend).
     if (user.email && !user.emailVerifiedAt) return fail("unverified", "Email belum diverifikasi. Verifikasi dulu lewat kode yang dikirim ke emailmu.");

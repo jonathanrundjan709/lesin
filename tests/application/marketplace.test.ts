@@ -17,18 +17,28 @@ for (const adapter of ADAPTERS) {
       const p = await auth.signup({ name: "Ibu Ratna", email: "  Ratna@Contoh.ID ", password: "rahasia1" }, "1.1.1.1");
       assert.equal(p.email, "ratna@contoh.id", "email dinormalkan");
       assert.match(p.echo ?? "", /^\d{6}$/, "mode demo mengembalikan kode");
-      await rejects(auth.login({ id: "ratna@contoh.id", password: "rahasia1" }), "unverified", /belum diverifikasi/);
+      await rejects(auth.login({ id: "ratna@contoh.id", password: "rahasia1" }, "1.1.1.1"), "unverified", /belum diverifikasi/);
       const a = await auth.verify({ email: "ratna@contoh.id", code: lastCode(env, "ratna@contoh.id") });
       assert.equal(a.user.email, "ratna@contoh.id"); assert.equal(a.user.phone, null); assert.equal(a.user.needsPhone, true);
       await rejects(auth.signup({ name: "Orang Lain", email: "RATNA@contoh.id", password: "abcdef" }, "1.1.1.1"), "conflict", /sudah terdaftar/);
       await rejects(auth.signup({ name: "Ab", email: "bukan-email", password: "1" }, "1.1.1.1"), "validation");
-      await rejects(auth.login({ id: "ratna@contoh.id", password: "salah" }), "unauthorized", /salah/);
-      await rejects(auth.login({ id: "tidak@ada.id", password: "rahasia1" }), "unauthorized");
-      const l = await auth.login({ id: "RATNA@contoh.id", password: "rahasia1" });
+      await rejects(auth.login({ id: "ratna@contoh.id", password: "salah" }, "1.1.1.1"), "unauthorized", /salah/);
+      await rejects(auth.login({ id: "tidak@ada.id", password: "rahasia1" }, "1.1.1.1"), "unauthorized");
+      const l = await auth.login({ id: "RATNA@contoh.id", password: "rahasia1" }, "1.1.1.1");
       assert.equal((await auth.authenticate(l.token))?.id, a.user.id);
       assert.equal(await auth.authenticate(l.token + "x"), null);
       env.clock.advance(31 * DAY);
       assert.equal(await auth.authenticate(l.token), null, "sesi kedaluwarsa 30 hari");
+    });
+
+    test("login: 5 kali salah mengunci akun itu 15 menit, akun lain dan login benar tidak terpengaruh", async () => {
+      const env = await fresh(); const { auth } = env.services;
+      const u = await signup(env, "Ibu Kunci", { email: "kunci@contoh.id" });
+      for (let i = 0; i < 5; i++) await rejects(auth.login({ id: "kunci@contoh.id", password: "salah" }, "9.9.9.9"), "unauthorized");
+      await rejects(auth.login({ id: "kunci@contoh.id", password: "rahasia1" }, "9.9.9.9"), "rate_limited", /Terlalu banyak/);
+      await rejects(auth.login({ id: "KUNCI@contoh.id", password: "rahasia1" }, "8.8.8.8"), "rate_limited", /Terlalu banyak/);
+      env.clock.advance(16 * 60_000);
+      assert.equal((await auth.login({ id: "kunci@contoh.id", password: "rahasia1" }, "9.9.9.9")).user.id, u.id);
     });
 
     test("OTP: kode salah dihitung dan terkunci, kedaluwarsa, kirim ulang ada jeda, batas per email", async () => {

@@ -23,7 +23,7 @@ export function buildServices(p: Ports) {
   const billing = new BillingService({ ...base, gateway: p.gateway, signer: p.signer, allowSimulation: p.allowPaymentSimulation });
   const lessons = new LessonService({ ...base, notifier: p.notifier });
   return {
-    auth: new AuthService({ ...base, hasher: p.hasher, tokens: p.tokens, otp: new OtpService({ ...base, sender: p.otpSender, codes: p.otpCodes }) }),
+    auth: new AuthService({ ...base, hasher: p.hasher, tokens: p.tokens, codes: p.otpCodes, otp: new OtpService({ ...base, sender: p.otpSender, codes: p.otpCodes }) }),
     tutors: new TutorService(base),
     requests: new RequestService(base),
     leads: new LeadService(base),

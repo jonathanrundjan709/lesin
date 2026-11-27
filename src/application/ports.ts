@@ -95,6 +95,11 @@ export interface OtpRepo {
   countByEmailSince(email: string, since: Millis): Promise<number>;
   countByIpSince(ipHash: string, since: Millis): Promise<number>;
 }
+/** Catatan login gagal untuk membatasi tebak password. Kunci = akun atau jaringan (sudah di-hash). */
+export interface LoginFailureRepo {
+  insert(id: Id, key: string, at: Millis): Promise<void>;
+  countSince(key: string, since: Millis): Promise<number>;
+}
 export interface EventRepo {
   insert(e: AppEvent): Promise<void>;
   /** Simpan hanya jika `key` belum ada. true bila tersimpan. */
@@ -104,7 +109,7 @@ export interface EventRepo {
 export interface Repositories {
   users: UserRepo; tutors: TutorRepo; requests: RequestRepo; unlocks: UnlockRepo; contactUnlocks: ContactUnlockRepo; ledger: LedgerRepo;
   orders: OrderRepo; webhookEvents: WebhookEventRepo; lessons: LessonRepo; reviews: ReviewRepo;
-  reports: ReportRepo; verifications: VerificationRepo; events: EventRepo; otp: OtpRepo;
+  reports: ReportRepo; verifications: VerificationRepo; events: EventRepo; otp: OtpRepo; loginFailures: LoginFailureRepo;
 }
 /** Menjalankan `fn` secara atomik: semua perubahan berhasil bersama atau dibatalkan bersama. */
 export interface UnitOfWork { run<T>(fn: (repos: Repositories) => Promise<T>): Promise<T> }

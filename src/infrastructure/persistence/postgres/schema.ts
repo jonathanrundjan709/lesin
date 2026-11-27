@@ -30,6 +30,8 @@ CREATE TABLE IF NOT EXISTS otp_challenges (
 );
 CREATE INDEX IF NOT EXISTS otp_email_idx ON otp_challenges (email, created_at);
 CREATE INDEX IF NOT EXISTS otp_ip_idx ON otp_challenges (ip_hash, created_at);
+CREATE TABLE IF NOT EXISTS login_failures (id TEXT PRIMARY KEY, key TEXT NOT NULL, created_at BIGINT NOT NULL);
+CREATE INDEX IF NOT EXISTS login_failures_idx ON login_failures (key, created_at);
 CREATE TABLE IF NOT EXISTS tutor_profiles (
   user_id TEXT PRIMARY KEY REFERENCES users(id), headline TEXT NOT NULL, subjects JSONB NOT NULL, levels JSONB NOT NULL, curricula JSONB NOT NULL,
   area TEXT NOT NULL, rate INTEGER NOT NULL, rate_duration_min INTEGER NOT NULL, experience_years INTEGER NOT NULL, education TEXT NOT NULL,
@@ -107,4 +109,5 @@ ALTER TABLE verification_docs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contact_unlocks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE otp_challenges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE login_failures ENABLE ROW LEVEL SECURITY;
 `;
