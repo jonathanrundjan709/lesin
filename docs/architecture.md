@@ -44,9 +44,9 @@ Aturan impor: `domain` ← `application` ← `infrastructure`/`app`. Panah tidak
 
 ## Aturan keamanan yang ditegakkan server (PRD §8)
 
-1. Nama asli, foto, dan WhatsApp tutor tidak ada di payload sampai tutor membuka permintaan si pencari (`toTutorView` di `domain/views.ts`).
+1. Nama asli, foto, dan WhatsApp tutor tidak ada di payload sampai terbuka untuk pencari itu: tutor membuka permintaannya, atau pencari memakai 1 kuota (`toTutorView` dan `TutorService.revealedTutorIds`).
 2. Order menjadi lunas hanya dari webhook dengan tanda tangan HMAC valid, nominal cocok, dan event belum pernah diproses.
-3. Saldo lead tidak punya kolom. Saldo dihitung dari `ledger_entries` (hanya ditambah, tidak diubah). Lead Plan dipakai lebih dulu dan hangus akhir bulan.
+3. Saldo lead dan kuota kontak tidak punya kolom. Saldo dihitung dari `ledger_entries` (hanya ditambah, tidak diubah). Lead Plan dan kuota trial dipakai lebih dulu dan hangus (akhir bulan / hari ke-7).
 4. Membuka permintaan atomik: kunci baris tutor dan permintaan, cek batas 10 tutor dan saldo, potong lead, catat unlock dalam satu transaksi.
 5. Info kontak dibuang dari teks bebas. Sesi memakai cookie `HttpOnly` + `SameSite=Lax`, ditambah pemeriksaan `Origin`.
 
@@ -58,7 +58,11 @@ URL bersih tanpa `#` (History API): `/`, `/results`, `/tutor/:id`, `/post`, `/my
 ## Model data
 
 Skema ada di `src/infrastructure/persistence/postgres/schema.ts` dan dijalankan otomatis saat start (idempoten).
-`users`, `tutor_profiles`, `requests`, `unlocks` (unik per tutor+permintaan), `ledger_entries`, `orders` (unik per tutor+kunci idempotensi), `webhook_events`, `lessons`, `session_notes`, `reviews`, `reports`, `verification_docs`, `events`.
+`users`, `tutor_profiles`, `requests`, `unlocks` (tutor membuka permintaan, unik per tutor+permintaan), `contact_unlocks` (pencari membuka tutor, unik per pasangan), `ledger_entries` (satu tabel, kolom `kind` = `lead` atau `contact`), `orders` (unik per pembeli+kunci idempotensi), `webhook_events`, `lessons`, `session_notes`, `reviews`, `reports`, `verification_docs`, `events`.
+
+## Migrasi skema
+
+`SCHEMA_SQL` dijalankan saat start di bawah advisory lock dan **harus tetap aditif dan idempoten**: `CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, dan blok `DO` yang mengganti nama kolom lama hanya bila kolom itu masih ada (mis. `ledger_entries.tutor_id` → `user_id`, `orders.tutor_id` → `buyer_id`, `orders.leads` → `units`). Setiap perubahan skema wajib punya tes di `tests/infrastructure/postgres.test.ts` yang membuat skema versi sebelumnya lalu memigrasikannya.
 
 ## API
 
@@ -70,6 +74,7 @@ Semua di bawah `/api`. Galat berbentuk `{ error, code }` dengan kode HTTP yang s
 | Akun | `POST /auth/signup`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` |
 | Tutor | `GET /tutors`, `GET /tutors/:id`, `GET/POST /tutors/:id/reviews`, `POST /tutors/:id/report` |
 | CV saya | `GET/PUT /me/profile`, `GET /me/leads`, `POST /me/verification` |
+| Kuota pencari | `GET /me/credits` (saldo, trial, riwayat), `GET /me/contacts` (tutor yang kontaknya terbuka), `POST /tutors/:id/unlock` (pakai 1 kuota) |
 | Permintaan | `POST /requests`, `GET /requests/mine`, `GET /requests/board`, `GET /requests/:id`, `POST /requests/:id/unlock` |
 | Pembayaran | `GET /billing/products`, `POST /orders`, `GET /orders/:id`, `POST /orders/:id/simulate-payment` (demo), `POST /webhooks/payment` |
 | Lesson hub | `GET/POST /lessons`, `POST /lessons/:id/notes` |

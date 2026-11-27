@@ -1,6 +1,7 @@
 # Dokumen
 
 - [`prd-alignment.md`](prd-alignment.md): selisih PRD vs implementasi dan keputusannya. **Mulai dari sini.**
+- [`monetization-plan.md`](monetization-plan.md): model dua sisi (trial 7 hari + paket kontak untuk pencari, lead untuk tutor), dampak pendapatan, risiko, metrik, jadwal.
 - [`architecture.md`](architecture.md): struktur kode, prinsip SOLID, keamanan, model data, API, cara memasang gateway.
 - [`design/design-system.md`](design/design-system.md): token, tipografi, ikon, maskot.
 - `design/01–07`: riset dan tinjauan desain tahap awal (versi Next.js bertema teal). Berguna sebagai latar, bukan acuan UI saat ini.

@@ -1,5 +1,7 @@
 # Keselarasan PRD dan implementasi
 
+> **Revisi 28 Nov 2026: kedua sisi membayar.** Model "orang tua gratis" di bawah diganti oleh PRD bagian 6A: pencari mendapat trial 7 hari / 10 kontak lalu membeli paket kontak. Baris 1, 2, 3 dan 20 dibaca bersama [`monetization-plan.md`](monetization-plan.md). Selebihnya tidak berubah.
+
 Sumber: PRD "Lesin — Tutor Marketplace" (rev. 27 Nov 2026). Aturan prioritas di PRD: bagian 5, 6, 7, 12, 13, 14 adalah model terbaru dan mengalahkan bagian 2, 3, 4, 9, 10, 11 yang masih model lama.
 
 **Aturan rekonsiliasi.** Selisih tampilan atau alur: ikut UI yang sudah live. Selisih harga atau logika bisnis: ikut PRD.
@@ -8,8 +10,8 @@ Sumber: PRD "Lesin — Tutor Marketplace" (rev. 27 Nov 2026). Aturan prioritas d
 
 | # | Area | UI live sebelumnya | PRD (menang bila harga/logika) | Hasil sekarang |
 |---|---|---|---|---|
-| 1 | Siapa yang membayar | Orang tua beli kuota kontak (Rp8.000 / 30.000 / 75.000), 1 kuota gratis | Orang tua gratis. Hanya tutor membayar (§1, §6) | **PRD.** Semua kuota, saldo, dan paket orang tua dihapus. Orang tua tidak pernah membayar |
-| 2 | Cara orang tua terhubung ke tutor | Tombol "Buka kontak tutor" memakai kuota | Kirim permintaan gratis ke 1–3 tutor. Identitas tutor terbuka setelah tutor merespons (§5, §8) | **PRD untuk logika, UI live untuk tampilan.** Tombol menjadi "Pilih tutor ini & kirim permintaan". Tutor tersamar sampai merespons. Layar hasil, CV, dan form tetap gaya live |
+| 1 | Siapa yang membayar | Orang tua beli kuota kontak (Rp8.000 / 30.000 / 75.000), 1 kuota gratis | Awalnya orang tua gratis (§6). **Direvisi 28 Nov (§6A): kedua sisi membayar** | **PRD 6A.** Pencari: trial 7 hari dengan maks. 10 buka kontak, lalu paket 1 / 5 / 15 kontak = Rp8.000 / 30.000 / 75.000. Kirim permintaan tetap gratis |
+| 2 | Cara pencari terhubung ke tutor | Tombol "Buka kontak tutor" memakai kuota | Dua jalur: buka langsung (pencari membayar) atau permintaan (tutor membayar lead). Identitas tutor terbuka di kedua jalur | **Dua jalur didukung.** CV tutor punya "Buka kontak · 1 kuota" dan "Kirim permintaan gratis". Jumlah tutor per permintaan naik dari 3 ke 10 |
 | 3 | Harga lead tutor | Rp10.000 per lowongan | Rp15.000 per lead (§6) | **PRD.** Rp15.000 |
 | 4 | Paket tutor | Top-up saldo Rp50/100/200rb dengan bonus | Paket 1/5/10 lead = Rp15.000 / 65.000 / 125.000. Top-up saldo dan bonus dihapus dari pilot (§6) | **PRD.** Tiga kartu ke samping dengan harga coret (coret = jumlah lead × Rp15.000: Rp75.000 dan Rp150.000). Layout kartu tetap gaya live |
 | 5 | Langganan tutor | "Tutor Pro" Rp49.000/bulan | "Tutor Plan" Rp99.000/bulan: 8 lead, prioritas pencarian, badge Pro. Lead Plan hangus akhir bulan (§6) | **PRD.** Paywall tetap sama gaya, isi dan harga ikut PRD |

@@ -1,8 +1,8 @@
 # LesIn
 
-Marketplace tutor privat: orang tua dan murid mencari guru les dekat rumah **gratis**. Tutor membayar **Rp15.000 per lead** (atau Tutor Plan Rp99.000/bulan untuk 8 lead) untuk membuka WhatsApp calon murid. Tanpa komisi atas biaya les.
+Marketplace tutor privat. **Kedua sisi membayar:** pencari mendapat **trial 7 hari (maks. 10 buka kontak)** lalu membeli paket kontak (Rp8.000 / 30.000 / 75.000), sedangkan tutor membayar **Rp15.000 per lead** (atau Tutor Plan Rp99.000/bulan untuk 8 lead). Kirim permintaan selalu gratis. Tanpa komisi atas biaya les.
 
-Semua keputusan produk ada di PRD. Selisih PRD dan implementasi dicatat di [`docs/prd-alignment.md`](docs/prd-alignment.md). Struktur kode dan alasan desainnya di [`docs/architecture.md`](docs/architecture.md).
+Semua keputusan produk ada di PRD. Rencana monetisasi dua sisi di [`docs/monetization-plan.md`](docs/monetization-plan.md). Selisih PRD dan implementasi dicatat di [`docs/prd-alignment.md`](docs/prd-alignment.md). Struktur kode dan alasan desainnya di [`docs/architecture.md`](docs/architecture.md).
 
 ## Menjalankan
 
