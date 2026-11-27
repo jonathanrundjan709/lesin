@@ -12,7 +12,7 @@ import { navigate } from "../core/router.js";
 export const myRequestsView = {
   async load() { return (await api.requests.mine()).requests; },
   render(reqs) {
-    if (!reqs.length) return `<h1>Postinganku</h1>${emptyBox(`Belum ada permintaan.<br><a class="btn" href="#/post" style="margin-top:14px">Kirim permintaan les</a>`)}`;
+    if (!reqs.length) return `<h1>Postinganku</h1>${emptyBox(`Belum ada permintaan.<br>Cari tutor yang cocok, lalu kirim permintaan gratis.<br><a class="btn" href="#/search" style="margin-top:14px">Cari Tutor Sekarang</a>`)}`;
     return `<h1>Postinganku</h1><p class="sub">Tutor yang tertarik akan menghubungimu lewat WhatsApp. Identitas dan kontak mereka terbuka di sini. Gratis untukmu.</p>
     <div class="stack section">${reqs.map((r) => `<div class="post-group">
       ${requestCard(r, "own")}

@@ -5,6 +5,7 @@ import { ic } from "../core/icons.js";
 import { navigate, returnTo } from "../core/router.js";
 import { applyUser, cvReady, setMode } from "../core/session.js";
 import { toast } from "../core/toast.js";
+import { bindGatePage, gateCard } from "../components/gate.js";
 
 const normPhone = (p) => { const d = String(p).replace(/\D/g, ""); return d.startsWith("62") ? "0" + d.slice(2) : d; };
 const validPhone = (p) => /^08\d{8,12}$/.test(normPhone(p));
@@ -111,11 +112,8 @@ export const signupView = {
 
 /** Ditampilkan menggantikan halaman yang butuh akun. */
 export const gateView = {
-  render() {
-    return `<div class="gate-sheet gate-page"><span class="gate-ic">${ic("lock")}</span><h2>Masuk dulu untuk lanjut</h2>
-      <p class="sub">Halaman ini khusus pengguna LesIn. Daftar gratis, tidak sampai satu menit.</p>
-      <div class="gate-actions"><a class="btn line" href="#/masuk">Masuk</a><a class="btn" href="#/daftar">Daftar gratis</a></div></div>`;
-  },
+  render(ctx) { return gateCard({ page: ctx?.page, asSheet: false }); },
+  mount() { bindGatePage(); },
 };
 
 export const tutorGateView = {

@@ -9,7 +9,7 @@ import { session } from "../core/session.js";
 import { toast } from "../core/toast.js";
 import { areaPicker, bindPickers, curriculumPicker, levelPicker, subjectPicker } from "../components/picker.js";
 import { emptyBox } from "../components/contact.js";
-import { loginPrompt } from "../components/login-prompt.js";
+import { loginPrompt } from "../components/gate.js";
 import { tutorCard } from "../components/tutor-card.js";
 
 /** Halaman filter lengkap. */

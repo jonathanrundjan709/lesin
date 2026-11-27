@@ -5,6 +5,7 @@ import { DAYS_FULL, addMin, fmtTime } from "../core/format.js";
 import { ic } from "../core/icons.js";
 import { closeSheet, openSheet } from "../core/sheet.js";
 import { navigate } from "../core/router.js";
+import { bindTimeFields, timeField } from "./time-picker.js";
 import { toast } from "../core/toast.js";
 
 /** Ulasan: bintang 1–5 + teks. `existing` = ulasan milik sendiri (untuk ubah). */
@@ -53,16 +54,16 @@ export function lessonSheet({ tutorId, seekerId, defaultSubject = "", childHint 
       <label class="field" data-f="subject"><span class="lbl">Mata pelajaran</span><input class="input" name="subject" maxlength="40" value="${esc(defaultSubject)}"></label>
       <div class="field" data-f="days"><span class="lbl">Hari & jam</span><div class="daylist">${days.map(([d, full]) => `
         <div class="dayrow" data-day="${d}"><label class="daytoggle"><input type="checkbox" name="days" value="${d}"><span class="dn">${full}</span><span class="dsum"></span><span class="dchk">${ic("check")}</span></label>
-        <div class="daytime"><span class="small muted">Jam mulai</span><input class="input" type="time" name="t_${d}" value="16:00" step="900"></div></div>`).join("")}</div></div>
+        <div class="daytime"><span class="small muted">Jam mulai</span>${timeField(`t_${d}`, "16:00")}</div></div>`).join("")}</div></div>
       <button class="btn" id="lessonSave">Simpan jadwal</button>
     </form>`, (sh) => {
     const f = $("#lessonForm", sh);
     autoClearErrors(f);
     const upd = () => $$(".dayrow", f).forEach((r) => {
-      const on = r.querySelector("input[type=checkbox]").checked, t = r.querySelector("input[type=time]").value;
+      const on = r.querySelector("input[type=checkbox]").checked, t = r.querySelector("input[name^=t_]").value;
       r.classList.toggle("on", on); r.querySelector(".dsum").textContent = on && t ? `${fmtTime(t)} – ${addMin(t, 60)}` : "";
     });
-    f.addEventListener("change", upd); f.addEventListener("input", upd);
+    f.addEventListener("change", upd); f.addEventListener("input", upd); bindTimeFields(f);
     f.onsubmit = (e) => e.preventDefault();
     $("#lessonSave", sh).onclick = (e) => withBusy(e.currentTarget, async () => {
       const fd = new FormData(f), picked = fd.getAll("days");

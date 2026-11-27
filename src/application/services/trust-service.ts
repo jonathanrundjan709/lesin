@@ -4,6 +4,7 @@ import type { DocKind, Id, Report, VerificationDoc } from "@/domain/types";
 import type { Repositories } from "../ports";
 import { parse, reportInput } from "../validation";
 import { type BaseDeps, recordEvent } from "./context";
+import { TutorService } from "./tutor-service";
 
 export interface AdminQueue { verifications: (VerificationDoc & { tutorName: string })[]; reports: (Report & { tutorName: string; reporterName: string })[] }
 
@@ -14,10 +15,12 @@ export interface AdminQueue { verifications: (VerificationDoc & { tutorName: str
 export class TrustService {
   constructor(private d: BaseDeps) {}
 
+  /** Hanya pencari yang kontak tutornya sudah terbuka (tutor merespons permintaannya) yang boleh melapor: mencegah laporan fiktif. */
   async report(reporterId: Id, tutorId: Id, raw: unknown): Promise<void> {
     const input = parse(reportInput, raw);
     await this.d.uow.run(async (r) => {
       if (!(await r.tutors.byUserId(tutorId))) return fail("not_found", "Tutor tidak ditemukan.");
+      if (!(await TutorService.revealedTutorIds(r, reporterId)).has(tutorId)) return fail("forbidden", "Laporan hanya bisa dikirim setelah tutor merespons permintaanmu.");
       await r.reports.insert({ id: this.d.ids.next(), reporterId, tutorId, reason: sanitizeText(input.reason), status: "open", createdAt: this.d.clock.now() });
       await recordEvent(r, this.d, "report", reporterId, { tutorId });
     });

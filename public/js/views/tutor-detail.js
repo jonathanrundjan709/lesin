@@ -79,8 +79,8 @@ export const tutorDetailView = {
       <div><span class="small muted">Tarif tutor (dibayar langsung ke tutor)</span><div class="price" style="font-size:20px">${rp(t.rate)}<small> / ${durLabel(t.rateDurationMin)}</small></div></div>
       ${t.match ? `<div class="match"><b>${t.match}%</b><span>cocok</span></div>` : ""}
     </div>
-    ${me ? "" : `<button class="link report-link" id="reportBtn">${ic("flag")}Laporkan tutor ini</button>
-    <p class="hint" style="text-align:center">Percobaan pertama sebaiknya didampingi orang tua.</p>`}
+    ${open ? `<button class="link report-link" id="reportBtn">${ic("flag")}Laporkan tutor ini</button>` : ""}
+    ${me ? "" : `<p class="hint" style="text-align:center">Percobaan pertama sebaiknya didampingi orang tua.</p>`}
     ${t.masked && !me ? `<div style="height:20px"></div>` : ""}`;
   },
   mount({ t, reviews }) {
@@ -100,7 +100,7 @@ export const tutorDetailView = {
       });
     };
     const rev = $("#revBtn"); if (rev) rev.onclick = () => reviewSheet(t, reviews.find((r) => r.mine), () => navigate(location.hash));
-    const rep = $("#reportBtn"); if (rep) rep.onclick = () => (session.user ? reportSheet(t) : (toast("Masuk dulu untuk melapor.", "info"), navigate("#/masuk")));
+    const rep = $("#reportBtn"); if (rep) rep.onclick = () => reportSheet(t);
     const les = $("#lessonBtn"); if (les) les.onclick = () => lessonSheet({ tutorId: t.id, seekerId: session.user.id, defaultSubject: t.subjects[0] });
   },
 };

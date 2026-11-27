@@ -272,9 +272,9 @@
 .daytoggle .dchk svg { width: 14px; height: 14px; stroke-width: 3; }
 .dayrow.on .dchk { background: var(--pri); border-color: var(--pri); color: #fff; }
 .dayrow.on { background: #FAF9FF; }
-.daytime { display: none; align-items: center; justify-content: space-between; gap: 12px; padding: 0 14px 12px; }
-.dayrow.on .daytime { display: flex; }
-.daytime .input { width: 140px; height: 42px; text-align: center; }
+.daytime { display: none; padding: 0 14px 14px; }
+.dayrow.on .daytime { display: block; }
+.daytime > .small { display: block; margin-bottom: 8px; }
 
 /* boost sebagai kartu */
 .boost-card { margin-bottom: 14px; border: 1.5px solid var(--pri); background: linear-gradient(180deg, #FAF9FF, #fff); box-shadow: 0 8px 22px rgba(91, 75, 255, .1); }
@@ -350,13 +350,6 @@ button.tc-link { width: 100%; text-align: left; background: none; border: 0; fon
 .price { white-space: nowrap; }
 
 /* paywall ringkas (sheet dan halaman) */
-.gate-sheet { display: grid; justify-items: center; text-align: center; gap: 8px; padding: 8px 4px 4px; }
-.gate-page { padding: 56px 8px; }
-.gate-ic { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: var(--pri-l); color: var(--pri-d); margin-bottom: 4px; }
-.gate-ic svg { width: 24px; height: 24px; }
-.gate-sheet h2 { font-size: 19px; }
-.gate-sheet .sub { max-width: 320px; margin-bottom: 8px; }
-.gate-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 360px; }
 .gate-later { margin-top: 6px; color: var(--ink-3); font-weight: 600; }
 
 /* ringkasan di sheet konfirmasi */
@@ -369,3 +362,10 @@ button.tc-link { width: 100%; text-align: left; background: none; border: 0; fon
 /* banner mode demo */
 .demo-banner { padding: 8px 16px; font-size: 12px; font-weight: 600; text-align: center; background: var(--acc-l); color: #7A4E00; border-bottom: 1px solid #FFD88A; }
 .demo-banner[hidden] { display: none; }
+
+/* pemilih jam: deretan chip yang bisa digeser */
+.timechips { display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; padding: 2px 14px 4px; margin: 0 -14px; }
+.timechips::-webkit-scrollbar { display: none; }
+.time-chip { flex: none; scroll-snap-align: center; min-width: 58px; height: 38px; padding: 0 12px; border-radius: 12px; background: #fff; border: 1px solid var(--line); font-size: 13px; font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; transition: background .12s, color .12s, border-color .12s; }
+.time-chip.on { background: var(--pri); border-color: var(--pri); color: #fff; box-shadow: 0 4px 10px rgba(91, 75, 255, .28); }
+.time-chip:active { transform: scale(.96); }

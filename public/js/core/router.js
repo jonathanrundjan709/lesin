@@ -1,6 +1,7 @@
 import { $ } from "./dom.js";
 import { ApiError } from "./api.js";
 import { session } from "./session.js";
+import { closeSheet } from "./sheet.js";
 
 /**
  * Router berbasis hash. Setiap view adalah objek:
@@ -41,7 +42,7 @@ export async function render() {
   };
 
   if (view.guestOnly && session.user) return navigate("#/");
-  if (view.auth && !session.user) { returnTo.hash = location.hash || "#/"; return show(gate.render(), gate, null); }
+  if (view.auth && !session.user) { returnTo.hash = location.hash || "#/"; return show(gate.render(ctx), gate, null); }
   if (view.tutorOnly && session.mode !== "tutor") return show(tutorGate.render(), tutorGate, null);
 
   const wasLoggedIn = Boolean(session.user);
@@ -53,13 +54,13 @@ export async function render() {
   } catch (e) {
     clearTimeout(slow);
     if (e instanceof ApiError && e.status === 401 && wasLoggedIn) return; // sesi hilang: ditangani listener di main.js
-    if (e instanceof ApiError && e.status === 401) { returnTo.hash = location.hash || "#/"; return show(gate.render(), gate, null); }
+    if (e instanceof ApiError && e.status === 401) { returnTo.hash = location.hash || "#/"; return show(gate.render(ctx), gate, null); }
     show(errorView.render(e), errorView, e);
   }
 }
 
 export const navigate = (hash) => { if (location.hash === hash) return render(); location.hash = hash; };
 export function startRouter() {
-  window.addEventListener("hashchange", () => { window.scrollTo(0, 0); render(); });
+  window.addEventListener("hashchange", () => { closeSheet(); window.scrollTo(0, 0); render(); });
   return render();
 }

@@ -9,6 +9,7 @@ import { session } from "../core/session.js";
 import { closeSheet } from "../core/sheet.js";
 import { toast } from "../core/toast.js";
 import { confirmSheet } from "../components/confirm.js";
+import { bindTimeFields, timeField } from "../components/time-picker.js";
 import { areaPicker, bindPickers, curriculumPicker, levelPicker, subjectPicker } from "../components/picker.js";
 
 const chosenChips = () => {
@@ -43,7 +44,7 @@ export const postView = {
         <div class="daylist">${days.map(([d, full], i) => { const on = i === 0 || i === 3; return `
           <div class="dayrow ${on ? "on" : ""}" data-day="${d}">
             <label class="daytoggle"><input type="checkbox" name="days" value="${d}" ${on ? "checked" : ""}><span class="dn">${full}</span><span class="dsum"></span><span class="dchk">${ic("check")}</span></label>
-            <div class="daytime"><span class="small muted">Jam mulai</span><input class="input" type="time" name="t_${d}" value="16:00" step="900"></div>
+            <div class="daytime"><span class="small muted">Jam mulai</span>${timeField(`t_${d}`, "16:00")}</div>
           </div>`; }).join("")}</div>
         <span class="hint">Pilih hari, lalu atur jam mulainya. Tiap hari boleh beda jam.</span></div>
       <div class="field"><span class="lbl">Budget per sesi: <span class="range-val" id="pbVal">${rp(120000)}</span><span class="muted" id="pbDur"> / 90 menit</span></span>
@@ -60,14 +61,14 @@ export const postView = {
     const updDays = () => {
       const dur = +f.querySelector("input[name=durationMin]:checked").value;
       $$(".dayrow", f).forEach((r) => {
-        const on = r.querySelector("input[type=checkbox]").checked, t = r.querySelector("input[type=time]").value;
+        const on = r.querySelector("input[type=checkbox]").checked, t = r.querySelector("input[name^=t_]").value;
         r.classList.toggle("on", on);
         r.querySelector(".dsum").textContent = on && t ? `${fmtTime(t)} – ${addMin(t, dur)}` : "";
       });
       $("#pbDur").textContent = ` / ${durLabel(dur)}`;
     };
     const upd = () => { $("#pbVal").textContent = rp(+f.budget.value); updDays(); };
-    f.addEventListener("input", upd); f.addEventListener("change", upd); updDays();
+    f.addEventListener("input", upd); f.addEventListener("change", upd); updDays(); bindTimeFields(f);
     $$("[data-unpick]").forEach((b) => (b.onclick = () => { selection.remove(b.dataset.unpick); $("#targets").outerHTML = chosenChips(); navigate("#/post"); }));
 
     f.onsubmit = (e) => { e.preventDefault(); withBusy($("#postSubmit"), async () => {

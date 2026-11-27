@@ -222,6 +222,7 @@ for (const adapter of ADAPTERS) {
       const tutor = await makeTutor(env), parent = await signup(env);
       const admin = await signup(env, "Admin");
       await env.uow.run(async (r) => { const u = (await r.users.byId(admin.id))!; await r.users.update({ ...u, isAdmin: true }); });
+      const { requests, leads } = env.services;
 
       await trust.submitVerification(tutor.user.id, "id");
       assert.equal((await tutors.myProfile(tutor.user.id)).profile!.verification, "pending");
@@ -232,6 +233,9 @@ for (const adapter of ADAPTERS) {
       await trust.decideVerification(admin.id, q.verifications[0].id, true);
       assert.equal((await tutors.get(null, tutor.user.id)).verified, true);
 
+      await rejects(trust.report(parent.id, tutor.user.id, { reason: "Meminta pembayaran di luar aplikasi" }), "forbidden", /merespons/);
+      const req = await requests.create(parent.id, validRequest());
+      await leads.unlock(tutor.user.id, req.id);
       await trust.report(parent.id, tutor.user.id, { reason: "Meminta pembayaran di luar aplikasi" });
       await rejects(trust.report(parent.id, tutor.user.id, { reason: "x" }), "validation");
       const q2 = await trust.queue(admin.id);
