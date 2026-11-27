@@ -1,0 +1,20 @@
+import { test } from "node:test"; import assert from "node:assert/strict";
+import { resetDb, searchTutors, createRequest, contactRequest, leadBalance, createOrder, handleWebhook, sign, tutorRequests, MAX_TUTORS_PER_REQUEST, sanitizeText } from "./store";
+
+test("search never leaks contact", () => { resetDb(); for (const t of searchTutors({})) { assert.equal(t.whatsapp, null); assert.equal(t.photo, null); assert.equal(t.name, "Tutor terverifikasi"); } });
+test("request needs 1-3 tutors", () => { resetDb(); const b = { parentId:"p",parentName:"x",whatsapp:"1",subject:"Matematika",level:"SMP",area:"Tebet",note:"" };
+  assert.throws(() => createRequest({ ...b, tutorIds: [] })); assert.throws(() => createRequest({ ...b, tutorIds: ["t1","t2","t3","t4"] })); createRequest({ ...b, tutorIds: ["t1"] }); });
+test("contact masked until paid unlock; charged once", () => { resetDb(); const before = tutorRequests("t1").find(r => r.id==="r1")!; assert.equal(before.whatsapp, null);
+  assert.equal(leadBalance("t1"), 2); const r = contactRequest("t1","r1"); assert.ok(r.whatsapp); assert.equal(leadBalance("t1"), 1);
+  contactRequest("t1","r1"); assert.equal(leadBalance("t1"), 1); assert.ok(tutorRequests("t1").find(x=>x.id==="r1")!.whatsapp); });
+test("no leads -> blocked", () => { resetDb(); assert.throws(() => contactRequest("t8","r1"), /Lead habis/); });
+test("cap of 10 tutors per request", () => { resetDb(); const d = resetDb(); const r = d.requests[0];
+  for (let i = 0; i < MAX_TUTORS_PER_REQUEST; i++) r.contacted.push("x"+i); assert.throws(() => contactRequest("t1","r1"), /penuh/); });
+test("webhook: signature, amount, idempotency", () => { resetDb(); const o = createOrder("t8","lead5","k1"); assert.equal(createOrder("t8","lead5","k1").id, o.id);
+  const body = JSON.stringify({ eventId:"e1", orderId:o.id, amount:o.amount });
+  assert.throws(() => handleWebhook(body, "bad"), /Signature/); assert.equal(leadBalance("t8"), 0);
+  assert.throws(() => { const b2 = JSON.stringify({ eventId:"e2", orderId:o.id, amount:1 }); handleWebhook(b2, sign(b2)); }, /Nominal/);
+  handleWebhook(body, sign(body)); assert.equal(leadBalance("t8"), 5); handleWebhook(body, sign(body)); assert.equal(leadBalance("t8"), 5); });
+test("plan leads expire at month end", () => { resetDb(); const o = createOrder("t8","plan","k2"); const body = JSON.stringify({ eventId:"e3", orderId:o.id, amount:o.amount }); handleWebhook(body, sign(body));
+  assert.equal(leadBalance("t8"), 8); assert.equal(leadBalance("t8", Date.now() + 40*86400000), 0); });
+test("sanitize strips phones/links/handles", () => { assert.equal(sanitizeText("wa 0812-3456-7890 ig @budi_les http://x.co"), "wa [disembunyikan] ig [disembunyikan] [disembunyikan]"); });
