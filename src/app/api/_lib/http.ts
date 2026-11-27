@@ -47,7 +47,9 @@ export function api<P = object>(handler: Handler<P>, opts: { skipOriginCheck?: b
         async body() { try { return await req.json(); } catch { throw new DomainError("validation", "Body harus berupa JSON."); } },
       };
       const out = await handler(ctx);
-      return out instanceof Response ? out : NextResponse.json(out ?? { ok: true });
+      const res = out instanceof Response ? out : NextResponse.json(out ?? { ok: true });
+      res.headers.set("Cache-Control", "no-store");
+      return res;
     } catch (e) {
       if (e instanceof DomainError) return NextResponse.json({ error: e.message, code: e.code }, { status: e.status });
       console.error("[api]", e);

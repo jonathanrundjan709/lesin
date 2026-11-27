@@ -348,3 +348,24 @@ button.tc-link { width: 100%; text-align: left; background: none; border: 0; fon
 .back svg { width: 18px; height: 18px; }
 .wallet-pill[hidden] { display: none; }
 .price { white-space: nowrap; }
+
+/* paywall ringkas (sheet dan halaman) */
+.gate-sheet { display: grid; justify-items: center; text-align: center; gap: 8px; padding: 8px 4px 4px; }
+.gate-page { padding: 56px 8px; }
+.gate-ic { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: var(--pri-l); color: var(--pri-d); margin-bottom: 4px; }
+.gate-ic svg { width: 24px; height: 24px; }
+.gate-sheet h2 { font-size: 19px; }
+.gate-sheet .sub { max-width: 320px; margin-bottom: 8px; }
+.gate-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 360px; }
+.gate-later { margin-top: 6px; color: var(--ink-3); font-weight: 600; }
+
+/* ringkasan di sheet konfirmasi */
+.confirm-lines { margin: 14px 0 0; padding: 4px 14px; background: var(--bg); border-radius: 14px; }
+.confirm-lines > div { display: grid; grid-template-columns: 92px 1fr; gap: 10px; padding: 9px 0; font-size: 13px; }
+.confirm-lines > div + div { border-top: 1px solid var(--line); }
+.confirm-lines dt { color: var(--ink-3); font-weight: 600; }
+.confirm-lines dd { margin: 0; font-weight: 700; word-break: break-word; }
+
+/* banner mode demo */
+.demo-banner { padding: 8px 16px; font-size: 12px; font-weight: 600; text-align: center; background: var(--acc-l); color: #7A4E00; border-bottom: 1px solid #FFD88A; }
+.demo-banner[hidden] { display: none; }

@@ -44,6 +44,7 @@ export async function render() {
   if (view.auth && !session.user) { returnTo.hash = location.hash || "#/"; return show(gate.render(), gate, null); }
   if (view.tutorOnly && session.mode !== "tutor") return show(tutorGate.render(), tutorGate, null);
 
+  const wasLoggedIn = Boolean(session.user);
   const slow = setTimeout(() => { if (!stale()) target.innerHTML = `<div class="loading" aria-live="polite"><span class="spinner dark"></span>Memuat…</div>`; }, 150);
   try {
     const data = view.load ? await view.load(ctx) : null;
@@ -51,6 +52,7 @@ export async function render() {
     show(view.render(data, ctx), view, data);
   } catch (e) {
     clearTimeout(slow);
+    if (e instanceof ApiError && e.status === 401 && wasLoggedIn) return; // sesi hilang: ditangani listener di main.js
     if (e instanceof ApiError && e.status === 401) { returnTo.hash = location.hash || "#/"; return show(gate.render(), gate, null); }
     show(errorView.render(e), errorView, e);
   }

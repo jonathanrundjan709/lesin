@@ -1,12 +1,14 @@
 import { api } from "../core/api.js";
 import { $, $$, esc } from "../core/dom.js";
 import { autoClearErrors, seg, showErrors, withBusy } from "../core/forms.js";
-import { DAYS_FULL, DURATIONS, addMin, durLabel, fmtTime, rp } from "../core/format.js";
+import { DAYS_FULL, DURATIONS, addMin, durLabel, fmtTime, rp, scheduleText } from "../core/format.js";
 import { ic } from "../core/icons.js";
 import { searchPrefs, selection } from "../core/prefs.js";
 import { navigate } from "../core/router.js";
 import { session } from "../core/session.js";
+import { closeSheet } from "../core/sheet.js";
 import { toast } from "../core/toast.js";
+import { confirmSheet } from "../components/confirm.js";
 import { areaPicker, bindPickers, curriculumPicker, levelPicker, subjectPicker } from "../components/picker.js";
 
 const chosenChips = () => {
@@ -77,16 +79,31 @@ export const postView = {
         { f: "days", ok: days.length > 0, msg: "Pilih minimal satu hari." },
         { f: "days", ok: days.every((d) => times[d]), msg: "Isi jam mulai untuk tiap hari yang dipilih." },
       ])) return;
-      try {
-        await api.requests.create({
-          subject: fd.get("subject"), level: fd.get("level"), curriculum: fd.get("curriculum"), studentNote, area: fd.get("area"), mode: fd.get("mode"),
-          durationMin: +fd.get("durationMin"), budget: +fd.get("budget"), notes: fd.get("notes").trim(),
-          schedule: days.map((day) => ({ day, time: times[day] })), targetTutorIds: selection.list().map((t) => t.id),
-        });
-        selection.clear();
-        toast("Permintaan terkirim. Tutor yang cocok akan menghubungimu.");
-        navigate("#/myposts");
-      } catch (err) { toast(esc(err.message), "err"); }
+      const body = {
+        subject: fd.get("subject"), level: fd.get("level"), curriculum: fd.get("curriculum"), studentNote, area: fd.get("area"), mode: fd.get("mode"),
+        durationMin: +fd.get("durationMin"), budget: +fd.get("budget"), notes: fd.get("notes").trim(),
+        schedule: days.map((day) => ({ day, time: times[day] })), targetTutorIds: selection.list().map((t) => t.id),
+      };
+      const chosen = selection.list();
+      // Konfirmasi dulu: permintaan terkirim ke tutor, jadi jangan sampai terkirim karena salah pencet.
+      confirmSheet({
+        title: "Kirim permintaan ini?",
+        body: "Periksa dulu. Setelah dikirim, tutor yang cocok bisa melihatnya dan menghubungimu lewat WhatsApp.",
+        lines: [
+          ["Pelajaran", `${body.subject} · ${body.level}`], ["Daerah", `${body.area} · ${body.mode === "online" ? "online" : "ke rumah"}`],
+          ["Jadwal", scheduleText(body.schedule)], ["Budget", `${rp(body.budget)} / ${durLabel(body.durationMin)}`],
+          ["Dikirim ke", chosen.length ? chosen.map((t) => t.label).join(", ") : "Tutor yang cocok di daerahmu"],
+        ],
+        confirmLabel: "Ya, kirim sekarang", cancelLabel: "Periksa lagi",
+        onConfirm: async () => {
+          try {
+            await api.requests.create(body);
+            selection.clear(); closeSheet();
+            toast("Permintaan terkirim. Tutor yang cocok akan menghubungimu.");
+            navigate("#/myposts");
+          } catch (err) { toast(esc(err.message), "err"); }
+        },
+      });
     }); };
   },
 };

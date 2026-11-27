@@ -20,6 +20,8 @@ async function request(method, path, body) {
     throw new ApiError("Tidak bisa terhubung ke server. Periksa koneksimu.", 0, "network");
   }
   const data = await res.json().catch(() => ({}));
+  // 401 di luar /auth berarti sesi tidak lagi dikenali server. UI memberi tahu pengguna dan mengarahkan ke Masuk.
+  if (res.status === 401 && !path.startsWith("/auth/")) window.dispatchEvent(new CustomEvent("lesin:session-lost"));
   if (!res.ok) throw new ApiError(data.error || "Terjadi kesalahan.", res.status, data.code);
   return data;
 }

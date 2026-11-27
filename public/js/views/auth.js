@@ -112,9 +112,9 @@ export const signupView = {
 /** Ditampilkan menggantikan halaman yang butuh akun. */
 export const gateView = {
   render() {
-    return `<div class="auth-gate"><img src="assets/mascot.svg" alt="" width="96" height="96"><h2>Masuk dulu yuk</h2>
+    return `<div class="gate-sheet gate-page"><span class="gate-ic">${ic("lock")}</span><h2>Masuk dulu untuk lanjut</h2>
       <p class="sub">Halaman ini khusus pengguna LesIn. Daftar gratis, tidak sampai satu menit.</p>
-      <a class="btn" href="#/masuk">Masuk</a><a class="btn line" href="#/daftar">Daftar gratis</a></div>`;
+      <div class="gate-actions"><a class="btn line" href="#/masuk">Masuk</a><a class="btn" href="#/daftar">Daftar gratis</a></div></div>`;
   },
 };
 

@@ -6,9 +6,11 @@ import { ic } from "../core/icons.js";
 import { searchPrefs, selection } from "../core/prefs.js";
 import { navigate } from "../core/router.js";
 import { session } from "../core/session.js";
+import { closeSheet } from "../core/sheet.js";
 import { toast } from "../core/toast.js";
 import { avatarHTML, nameRow } from "../components/tutor-card.js";
 import { bindCopy, contactCard } from "../components/contact.js";
+import { confirmSheet } from "../components/confirm.js";
 import { lessonSheet, reportSheet, reviewSheet } from "../components/sheets.js";
 
 const stars = (n) => `<span class="stars">${[1, 2, 3, 4, 5].map((i) => ic(i <= n ? "star" : "starO")).join("")}</span>`;
@@ -85,9 +87,17 @@ export const tutorDetailView = {
     bindCopy();
     const pick = $("#pickBtn");
     if (pick) pick.onclick = () => {
+      if (selection.has(t.id)) return navigate("#/post");
       const max = session.meta.limits.maxTargets;
-      if (!selection.has(t.id) && !selection.toggle(t, max)) return toast(`Maksimal ${max} tutor per permintaan.`, "info");
-      navigate("#/post");
+      confirmSheet({
+        title: `Kirim permintaan ke ${t.name}?`,
+        body: "Kamu akan mengisi detail les di langkah berikutnya. Belum ada yang terkirim dan kamu tidak membayar apa pun.",
+        confirmLabel: "Lanjut isi permintaan", cancelLabel: "Batal",
+        onConfirm: () => {
+          if (!selection.toggle(t, max)) return toast(`Maksimal ${max} tutor per permintaan.`, "info");
+          closeSheet(); navigate("#/post");
+        },
+      });
     };
     const rev = $("#revBtn"); if (rev) rev.onclick = () => reviewSheet(t, reviews.find((r) => r.mine), () => navigate(location.hash));
     const rep = $("#reportBtn"); if (rep) rep.onclick = () => (session.user ? reportSheet(t) : (toast("Masuk dulu untuk melapor.", "info"), navigate("#/masuk")));

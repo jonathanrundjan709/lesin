@@ -4,8 +4,9 @@ import { FEATURES, LEAD_PRICE, listPrice, MAX_RESPONDERS, MAX_TARGETS, PRODUCTS,
 import type { ProductKey } from "@/domain/types";
 
 /** Data referensi untuk UI: satu sumber kebenaran, jadi daftar di frontend tidak perlu disalin. */
-export const buildMeta = (opts: { paymentSimulation: boolean }) => ({
+export const buildMeta = (opts: { paymentSimulation: boolean; storage: "postgres" | "memory" }) => ({
   paymentSimulation: opts.paymentSimulation,
+  storage: opts.storage,
   areas: AREA_TREE, comingSoon: COMING_SOON_CITIES,
   subjects: SUBJECTS, levels: LEVELS, curricula: CURRICULA, days: DAYS, durations: DURATIONS,
   limits: { minBudget: MIN_BUDGET, maxBudget: MAX_BUDGET, minRate: MIN_RATE, maxRate: MAX_RATE, maxTargets: MAX_TARGETS, maxResponders: MAX_RESPONDERS, requestDays: REQUEST_DAYS, leadPrice: LEAD_PRICE },
