@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesin — 5 desain ringkas (compact)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, Inter, sans-serif; background: #E7E7EA; color: #111; }
+  .page { max-width: 1240px; margin: 0 auto; padding: 32px 24px 80px; }
+  .page > header h1 { font-size: 26px; letter-spacing: -.02em; margin: 0 0 6px; }
+  .page > header p { color: #555; font-size: 15px; line-height: 1.5; margin: 0; max-width: 760px; }
+  .jump { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; }
+  .jump a { text-decoration: none; color: #111; background: #fff; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+  .option { margin-top: 40px; display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: start; }
+  .desc .num { font-size: 12px; font-weight: 700; color: #777; letter-spacing: .06em; margin: 0; }
+  .desc h2 { font-size: 22px; margin: 2px 0 6px; }
+  .desc p { font-size: 14px; line-height: 1.5; color: #444; margin: 0 0 10px; }
+  .desc dl { font-size: 13px; display: grid; grid-template-columns: 70px 1fr; gap: 4px 8px; margin: 0 0 10px; }
+  .desc dt { color: #777; } .desc dd { margin: 0; font-weight: 600; }
+  .sw { display: flex; gap: 5px; } .sw i { width: 26px; height: 26px; border-radius: 7px; border: 1px solid rgba(0,0,0,.1); }
+  .phones { display: flex; gap: 20px; flex-wrap: wrap; }
+  .cap { text-align: center; font-size: 12px; color: #666; margin-top: 8px; font-weight: 600; }
+
+  /* Bingkai HP dengan lebar layar asli 375px, supaya ukuran huruf terlihat seperti di iPhone */
+  .phone { width: 391px; height: 812px; border-radius: 48px; background: #111; padding: 8px; box-shadow: 0 20px 50px rgba(0,0,0,.18); flex: none; }
+  .scr { width: 375px; height: 796px; border-radius: 40px; overflow: hidden; position: relative; display: flex; flex-direction: column;
+    background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 13px; line-height: 1.35; }
+  .body { flex: 1; overflow: hidden; }
+  svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  p, h1, h2, h3 { margin: 0; }
+  .status { height: 44px; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 28px 6px; font-size: 14px; font-weight: 600; flex: none; }
+
+  /* ---------- header & pencarian ---------- */
+  .hdr { padding: 6px 16px 10px; background: var(--hdr-bg, var(--bg)); color: var(--hdr-ink, var(--ink)); }
+  .hrow { display: flex; align-items: center; gap: 8px; }
+  .loc { flex: 1; min-width: 0; }
+  .loc small { display: block; font-size: 11px; opacity: .65; }
+  .loc b { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 2px; }
+  .loc b svg { width: 14px; height: 14px; }
+  .qpill { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 5px 9px; border-radius: 999px; background: var(--hdr-chip, var(--pri-l)); color: var(--hdr-chip-ink, var(--pri)); }
+  .qpill svg { width: 13px; height: 13px; }
+  .ibtn { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: var(--hdr-chip, var(--fill)); color: inherit; }
+  .sbar { margin-top: 10px; height: 38px; border-radius: var(--r-in); background: var(--sbar, var(--fill)); display: flex; align-items: center; gap: 8px; padding: 0 12px; color: var(--mut); font-size: 13px; border: var(--sbar-bd, 0); }
+  .chips { display: flex; gap: 6px; padding: 10px 16px 0; overflow: hidden; }
+  .chip { flex: none; display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 10px; border-radius: var(--r-chip); font-size: 12px; font-weight: 500; background: var(--card); border: 1px solid var(--line); color: var(--ink); }
+  .chip.on { background: var(--pri-l); border-color: transparent; color: var(--pri); font-weight: 600; }
+  .chip svg { width: 12px; height: 12px; }
+
+  .subjs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 12px 12px 0; }
+  .subj { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: var(--ink2); }
+  .subj i { font-style: normal; width: 38px; height: 38px; border-radius: var(--r-ic); display: grid; place-items: center; font-size: 10px; font-weight: 700; background: var(--c-bg); color: var(--c); }
+
+  .promo { margin: 12px 16px 0; padding: 9px 12px; border-radius: var(--r-in); background: var(--card); border: 1px solid var(--line); display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .promo b { font-weight: 600; } .promo span { color: var(--mut); }
+  .promo > svg:last-child { margin-left: auto; color: var(--mut); width: 14px; height: 14px; }
+  .promo .pi { width: 26px; height: 26px; border-radius: 7px; background: var(--pri); color: #fff; display: grid; place-items: center; flex: none; }
+  .promo .pi svg { width: 14px; height: 14px; }
+
+  .shead { display: flex; align-items: baseline; justify-content: space-between; padding: 14px 16px 6px; }
+  .shead h3 { font-size: 14px; font-weight: 700; }
+  .shead h3 span { color: var(--mut); font-weight: 500; }
+  .shead a { font-size: 12px; color: var(--pri); font-weight: 600; display: flex; align-items: center; gap: 2px; }
+  .shead a svg { width: 12px; height: 12px; }
+
+  /* ---------- baris tutor ---------- */
+  .list { margin: 0 var(--list-m, 12px); background: var(--card); border-radius: var(--r-card); border: var(--card-bd, 0); overflow: hidden; }
+  .list.sep > .tr + .tr { border-top: 1px solid var(--line); }
+  .list.gap { background: none; border: 0; display: grid; gap: 8px; }
+  .list.gap > .tr { background: var(--card); border-radius: var(--r-card); border: var(--card-bd, 0); }
+  .tr { display: flex; gap: 10px; padding: 10px 12px; align-items: flex-start; }
+  .av { width: 40px; height: 40px; border-radius: var(--r-av); display: grid; place-items: center; font-weight: 700; color: #fff; position: relative; overflow: hidden; flex: none; font-size: 13px; }
+  .av em { font-style: normal; filter: blur(4px); }
+  .av svg { position: absolute; width: 13px; height: 13px; }
+  .tm { flex: 1; min-width: 0; }
+  .tn { font-size: 13.5px; font-weight: 600; letter-spacing: .04em; display: flex; align-items: center; gap: 3px; }
+  .tn svg { width: 13px; height: 13px; color: var(--pri); }
+  .t2 { font-size: 12px; color: var(--ink2); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .t3 { font-size: 11px; color: var(--mut); margin-top: 3px; display: flex; gap: 6px; align-items: center; }
+  .t3 .st { color: #F59E0B; display: inline-flex; align-items: center; gap: 2px; font-weight: 600; }
+  .t3 .st svg { width: 11px; height: 11px; }
+  .t3 .st b { color: var(--ink); font-weight: 600; }
+  .tp { text-align: right; flex: none; }
+  .tp b { display: block; font-size: 13px; font-weight: 700; }
+  .tp small { font-size: 10.5px; color: var(--mut); }
+  .mt { display: inline-block; margin-top: 5px; font-size: 10.5px; font-weight: 600; padding: 2px 6px; border-radius: 5px; background: var(--ok-l); color: var(--ok); }
+
+  .tab { display: grid; grid-template-columns: repeat(5, 1fr); height: 78px; padding: 6px 0 28px; flex: none; background: var(--tab-bg, var(--card)); border-top: 1px solid var(--line); }
+  .tab a { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; font-weight: 500; color: var(--mut); }
+  .tab a svg { width: 22px; height: 22px; stroke-width: 1.8; }
+  .tab a.on { color: var(--pri); }
+
+  /* ---------- CV ---------- */
+  .nav { display: flex; align-items: center; gap: 8px; padding: 4px 12px 8px; background: var(--hdr-bg, var(--bg)); color: var(--hdr-ink, var(--ink)); }
+  .nav h3 { flex: 1; font-size: 15px; font-weight: 600; text-align: center; }
+  .nav .ibtn { background: transparent; }
+  .nav .ibtn svg { width: 20px; height: 20px; }
+  .box { margin: 8px var(--list-m, 12px) 0; background: var(--card); border-radius: var(--r-card); border: var(--card-bd, 0); padding: 12px; }
+  .prow { display: flex; gap: 12px; align-items: center; }
+  .prow .av { width: 54px; height: 54px; font-size: 17px; }
+  .prow .tn { font-size: 15px; }
+  .vtag { display: inline-flex; align-items: center; gap: 3px; margin-top: 4px; font-size: 10.5px; font-weight: 600; color: var(--pri); background: var(--pri-l); padding: 2px 7px; border-radius: 5px; }
+  .vtag svg { width: 11px; height: 11px; }
+  .strip { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; text-align: center; }
+  .strip div + div { border-left: 1px solid var(--line); }
+  .strip b { display: block; font-size: 14px; font-weight: 700; }
+  .strip small { font-size: 10.5px; color: var(--mut); }
+  .kv { display: grid; grid-template-columns: 82px 1fr; gap: 0; font-size: 12.5px; }
+  .kv dt, .kv dd { padding: 7px 0; margin: 0; border-top: 1px solid var(--line); }
+  .kv dt:first-of-type, .kv dd:first-of-type { border-top: 0; padding-top: 0; }
+  .kv dt { color: var(--mut); }
+  .kv dd { font-weight: 500; }
+  .days { display: flex; gap: 3px; }
+  .days span { font-size: 10.5px; font-weight: 600; padding: 2px 5px; border-radius: 4px; background: var(--fill); color: var(--mut); }
+  .days span.on { background: var(--pri-l); color: var(--pri); }
+  .bt { font-size: 12px; font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .bt span { font-weight: 500; color: var(--mut); }
+  .txt { font-size: 12.5px; color: var(--ink2); line-height: 1.45; }
+  .rv + .rv { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+  .rv .t3 { margin-top: 0; margin-bottom: 2px; }
+  .lockrow { display: flex; align-items: center; gap: 10px; }
+  .lockrow .li { width: 30px; height: 30px; border-radius: 8px; background: var(--pri-l); color: var(--pri); display: grid; place-items: center; flex: none; }
+  .lockrow b { font-size: 12.5px; font-weight: 600; display: block; }
+  .lockrow small { font-size: 11px; color: var(--mut); }
+  .bar { flex: none; display: flex; align-items: center; gap: 10px; padding: 8px 12px 30px; background: var(--card); border-top: 1px solid var(--line); }
+  .bar .bp b { display: block; font-size: 15px; font-weight: 700; }
+  .bar .bp small { font-size: 11px; color: var(--mut); }
+  .bar button { margin-left: auto; height: 40px; padding: 0 20px; border: 0; border-radius: var(--r-btn); background: var(--pri); color: #fff; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .bar button svg { width: 15px; height: 15px; }
+
+  /* =========== tema =========== */
+  .A { --font: Inter, sans-serif; --bg: #F6F7F9; --card: #fff; --ink: #0F172A; --ink2: #334155; --mut: #64748B; --line: #E8EBF0; --fill: #EEF1F5;
+       --pri: #2563EB; --pri-l: #EAF1FF; --ok: #15803D; --ok-l: #E8F7EE; --r-card: 12px; --r-in: 10px; --r-chip: 8px; --r-ic: 10px; --r-av: 50%; --r-btn: 10px; --sbar: #fff; --sbar-bd: 1px solid #E8EBF0; }
+  .B { --font: "Plus Jakarta Sans", sans-serif; --bg: #F3F4F6; --card: #fff; --ink: #111827; --ink2: #374151; --mut: #6B7280; --line: #E5E7EB; --fill: #F3F4F6;
+       --pri: #0D9488; --pri-l: #E6F6F4; --ok: #0D9488; --ok-l: #E6F6F4; --r-card: 10px; --r-in: 8px; --r-chip: 999px; --r-ic: 50%; --r-av: 10px; --r-btn: 8px;
+       --hdr-bg: #0D9488; --hdr-ink: #fff; --hdr-chip: rgba(255,255,255,.18); --hdr-chip-ink: #fff; --sbar: #fff; --list-m: 0px; }
+  .B .hdr .sbar { color: #6B7280; }
+  .B .list { border-radius: 0; }
+  .B .box { border-radius: 0; margin-left: 0; margin-right: 0; }
+  .C { --font: "DM Sans", sans-serif; --bg: #fff; --card: #fff; --ink: #18181B; --ink2: #3F3F46; --mut: #71717A; --line: #EFEFF1; --fill: #F4F4F5;
+       --pri: #4F46E5; --pri-l: #EEF0FF; --ok: #4F46E5; --ok-l: #EEF0FF; --r-card: 0; --r-in: 10px; --r-chip: 8px; --r-ic: 12px; --r-av: 12px; --r-btn: 10px; --list-m: 0px; }
+  .C .box { border-top: 6px solid #F4F4F5; margin-top: 0; padding: 12px 16px; }
+  .C .tr { padding: 11px 16px; }
+  .D { --font: Manrope, sans-serif; --bg: #FAFAF9; --card: #fff; --ink: #1C1917; --ink2: #44403C; --mut: #78716C; --line: #EEEDEA; --fill: #F2F1EE;
+       --pri: #15803D; --pri-l: #EAF6EE; --ok: #15803D; --ok-l: #EAF6EE; --r-card: 14px; --r-in: 12px; --r-chip: 999px; --r-ic: 50%; --r-av: 50%; --r-btn: 999px; --card-bd: 1px solid #EEEDEA; }
+  .E { --font: Inter, sans-serif; --bg: #0E1014; --card: #171A20; --ink: #F1F3F7; --ink2: #C5CAD4; --mut: #8A91A0; --line: #252932; --fill: #1E222A;
+       --pri: #60A5FA; --pri-l: rgba(96,165,250,.14); --ok: #4ADE80; --ok-l: rgba(74,222,128,.12); --r-card: 12px; --r-in: 10px; --r-chip: 8px; --r-ic: 10px; --r-av: 50%; --r-btn: 10px; --tab-bg: #12151A; }
+  .E .bar button { color: #0E1014; }
+
+
+  /* ===== hierarki: besar untuk yang penting, kecil untuk detail ===== */
+  .ttl { font-size: 24px; font-weight: 700; letter-spacing: -.025em; line-height: 1.15; margin-top: 12px; }
+  .hello { font-size: 12px; opacity: .7; margin-top: 12px; }
+  .hello + .ttl { margin-top: 2px; }
+  .shead { padding-top: 18px; }
+  .shead h3 { font-size: 17px; letter-spacing: -.02em; }
+  .shead h3 span { font-size: 12px; letter-spacing: 0; }
+  .shead h3 span.cnt { color: var(--pri); font-size: 17px; font-weight: 700; }
+  .subj i { width: 46px; height: 46px; font-size: 11px; }
+  .subj { font-size: 11px; font-weight: 500; }
+  .tn { font-size: 15px; }
+  .t2 { font-size: 12.5px; }
+  .tp b { font-size: 15px; letter-spacing: -.01em; }
+  .av { width: 44px; height: 44px; }
+  .prow .av { width: 64px; height: 64px; font-size: 20px; }
+  .prow .tn { font-size: 20px; letter-spacing: .03em; }
+  .strip b { font-size: 18px; letter-spacing: -.02em; }
+  .strip small { font-size: 10.5px; }
+  .lockrow b { font-size: 14px; }
+  .bt { font-size: 15px; letter-spacing: -.01em; margin-bottom: 8px; }
+  .bt span { font-size: 12px; }
+  .bar .bp b { font-size: 18px; letter-spacing: -.02em; }
+  .bar button { height: 44px; font-size: 15px; }
+  .nav h3 { font-size: 16px; }
+  .scale { display: flex; gap: 18px; align-items: baseline; flex-wrap: wrap; margin-top: 14px; padding: 12px 16px; background: #fff; border-radius: 12px; font-family: Inter, sans-serif; }
+  .scale span { color: #111; } .scale small { display: block; font-size: 11px; color: #888; font-weight: 500; }
+  @media (max-width: 1000px) { .option { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>Lesin: 5 desain ringkas</h1>
+    <p>Ukuran huruf sekarang bertingkat: yang penting (judul, nama, harga, angka) dibuat besar dan tebal, detail (ulasan, daerah, label) dibuat kecil. Tetap rapat, jadi satu layar masih memuat beberapa tutor. Bingkai HP di sini <b>seukuran layar iPhone asli (375px)</b>, jadi besar hurufnya sama dengan yang nanti kamu lihat di HP.</p>
+    <div class="scale">
+      <span style="font-size:24px;font-weight:700">Aa<small>Judul halaman · 24</small></span>
+      <span style="font-size:20px;font-weight:700">Aa<small>Nama di CV · 20</small></span>
+      <span style="font-size:18px;font-weight:700">Rp<small>Angka & harga utama · 18</small></span>
+      <span style="font-size:17px;font-weight:700">Aa<small>Judul bagian · 17</small></span>
+      <span style="font-size:15px;font-weight:600">Aa<small>Nama tutor, harga · 15</small></span>
+      <span style="font-size:13px">Aa<small>Teks isi · 12–13</small></span>
+      <span style="font-size:11px;color:#777">Aa<small>Detail kecil · 11</small></span>
+    </div>
+    <nav class="jump"><a href="#A">A · Rapi Biru</a><a href="#B">B · Teal Marketplace</a><a href="#C">C · Daftar Polos</a><a href="#D">D · Netral Hangat</a><a href="#E">E · Gelap</a></nav>
+  </header>
+  <div id="options"></div>
+</div>
+<script>
+const I = {
+  tk: '<path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/>',
+  home: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  plus: '<rect x="3" y="3" width="18" height="18" rx="5"/><path d="M12 8v8M8 12h8"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14c2 .8 3.5 3 3.5 6"/>',
+  board: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  shield: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+  star: '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" fill="currentColor" stroke="none"/>',
+  back: '<path d="m15 18-6-6 6-6"/>', chev: '<path d="m6 9 6 6 6-6"/>', right: '<path d="m9 6 6 6-6 6"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/>',
+  share: '<path d="M12 3v12M8 7l4-4 4 4M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',
+  filter: '<path d="M3 5h18M6 12h12M10 19h4"/>', mega: '<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 8a5 5 0 0 1 0 8"/>',
+  sort: '<path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"/>',
+};
+const ic = (n) => `<svg viewBox="0 0 24 24">${I[n]}</svg>`;
+const status = `<div class="status" style="background:var(--hdr-bg,var(--bg));color:var(--hdr-ink,var(--ink))"><span>9:41</span><span style="font-size:11px;letter-spacing:2px">●●● ▮</span></div>`;
+const tabs = (on) => `<nav class="tab">${[["home", "Beranda"], ["search", "Cari"], ["plus", "Posting"], ["users", "Kontak"], ["board", "Postingan"]]
+  .map(([i, l], k) => `<a class="${k === on ? "on" : ""}">${ic(i)}${l}</a>`).join("")}</nav>`;
+const SUBJ = [["MTK", "Matematika", "#2563EB"], ["ENG", "Inggris", "#DB2777"], ["FIS", "Fisika", "#7C3AED"], ["KIM", "Kimia", "#EA580C"], ["UTBK", "UTBK", "#0D9488"]];
+const TUT = [
+  ["DA", "D••• A•••••", "S1 Matematika UI · 6 th mengajar", "4,9", 87, "Tebet", "Rp120rb", 92, "#2563EB"],
+  ["RP", "R•••• P•••••", "Guru SMP Negeri · Olimpiade MTK", "4,8", 64, "Pancoran", "Rp150rb", 88, "#DB2777"],
+  ["BH", "B•••• H•••••", "Mahasiswa ITB · Matematika & Fisika", "4,7", 31, "Online", "Rp90rb", 85, "#7C3AED"],
+  ["SN", "S••• N••••••", "S1 Pend. Matematika UNJ · sabar", "4,8", 112, "Setiabudi", "Rp110rb", 83, "#0D9488"],
+  ["AK", "A•••• K••••", "Tutor Cambridge & IGCSE · 4 th", "4,9", 45, "Kuningan", "Rp200rb", 80, "#EA580C"],
+];
+const row = ([ini, n, h, r, c, a, p, m, col]) => `<div class="tr"><div class="av" style="background:${col}"><em>${ini}</em>${ic("lock")}</div>
+  <div class="tm"><p class="tn">${n}${ic("shield")}</p><p class="t2">${h}</p><p class="t3"><span class="st">${ic("star")}<b>${r}</b></span>(${c}) · ${a}</p></div>
+  <div class="tp"><b>${p}</b><small>/sesi</small><br><span class="mt">${m}% cocok</span></div></div>`;
+
+const home = (listCls) => `<div class="phone"><div class="scr">${status}
+  <div class="hdr"><div class="hrow"><div class="loc"><small>Lokasi les</small><b>Tebet, Jakarta Selatan${ic("chev")}</b></div>
+    <span class="qpill">${ic("tk")}1 kuota</span><span class="ibtn">${ic("bell")}</span></div>
+    <p class="hello">Halo, Bu Ratna</p><h1 class="ttl">Mau les apa hari ini?</h1>
+    <div class="sbar">${ic("search")}Cari mapel, mis. Matematika SMP</div></div>
+  <div class="body">
+    <div class="chips"><span class="chip">${ic("filter")}Filter</span><span class="chip on">Matematika</span><span class="chip on">SMP</span><span class="chip">Kurikulum${ic("chev")}</span><span class="chip">Ke rumah</span></div>
+    <div class="subjs">${SUBJ.map(([a, b, c]) => `<div class="subj"><i style="--c:${c};--c-bg:${c}1A">${a}</i>${b}</div>`).join("")}</div>
+    <div class="promo"><span class="pi">${ic("mega")}</span><p><b>Posting kebutuhan les</b> <span>· gratis, tutor yang hubungi</span></p>${ic("right")}</div>
+    <div class="shead"><h3><span class="cnt">6</span> tutor cocok <span>· Matematika SMP</span></h3><a>${ic("sort")}Paling cocok</a></div>
+    <div class="list ${listCls}">${TUT.map(row).join("")}</div>
+  </div>${tabs(0)}</div></div>`;
+
+const cv = () => `<div class="phone"><div class="scr">${status}
+  <div class="nav"><span class="ibtn">${ic("back")}</span><h3>CV Tutor</h3><span class="ibtn">${ic("share")}</span></div>
+  <div class="body">
+    <div class="box"><div class="prow"><div class="av" style="background:#0D9488"><em>SN</em>${ic("lock")}</div>
+      <div class="tm"><p class="tn">S••• N••••••</p><p class="t2">Guru SD sabar untuk anak usia 4–12 tahun</p><span class="vtag">${ic("shield")}Identitas terverifikasi</span></div></div>
+      <div class="strip"><div><b>4,8</b><small>112 ulasan</small></div><div><b>95</b><small>murid</small></div><div><b>7 th</b><small>pengalaman</small></div><div><b>83%</b><small>cocok</small></div></div></div>
+    <div class="box"><div class="lockrow"><span class="li">${ic("lock")}</span><div><b>Nama, foto & WhatsApp disembunyikan</b><small>Buka kontak untuk langsung chat di WhatsApp</small></div></div></div>
+    <div class="box"><dl class="kv">
+      <dt>Tarif</dt><dd>Rp110.000 / sesi 90 menit</dd>
+      <dt>Mengajar</dt><dd>Calistung, Matematika · TK, SD</dd>
+      <dt>Kurikulum</dt><dd>Merdeka, K13, Cambridge</dd>
+      <dt>Hari</dt><dd><span class="days">${["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"].map((d, i) => `<span class="${[0, 2, 3, 5].includes(i) ? "on" : ""}">${d}</span>`).join("")}</span></dd>
+      <dt>Daerah</dt><dd>Setiabudi · ke rumah ±6 km, online</dd>
+      <dt>Pendidikan</dt><dd>S1 Pend. Matematika, UNJ</dd></dl></div>
+    <div class="box"><p class="bt">Tentang</p><p class="txt">Mengajar dengan metode bermain sambil belajar. Berpengalaman mendampingi anak yang butuh perhatian ekstra dalam membaca dan berhitung.</p></div>
+    <div class="box"><p class="bt">Ulasan <span>4,8 · 112</span></p>
+      <div class="rv"><p class="t3"><span class="st">${ic("star")}<b>5</b></span>Ibu Dewi · 2 minggu lalu</p><p class="txt">Anak saya jadi semangat belajar, nilainya naik.</p></div>
+      <div class="rv"><p class="t3"><span class="st">${ic("star")}<b>5</b></span>Pak Andi · 1 bulan lalu</p><p class="txt">Tepat waktu dan rutin kasih laporan.</p></div></div>
+  </div>
+  <div class="bar"><div class="bp"><b>1 kuota</b><small>Sisa kuotamu: 1</small></div><button>${ic("lock")}Buka kontak</button></div></div></div>`;
+
+const OPT = [
+  { k: "A", name: "Rapi Biru", list: "gap", vibe: "Netral dan bersih. Abu-abu sangat muda, kartu putih terpisah, satu warna biru. Paling aman dan mudah dibaca.", font: "Inter", c: ["#F6F7F9", "#2563EB", "#EAF1FF", "#0F172A", "#fff"] },
+  { k: "B", name: "Teal Marketplace", list: "sep", vibe: "Header teal penuh seperti aplikasi belanja/ojek online. Daftar tutor menempel tepi layar dengan garis pemisah, paling padat.", font: "Plus Jakarta Sans", c: ["#0D9488", "#E6F6F4", "#F3F4F6", "#111827", "#fff"] },
+  { k: "C", name: "Daftar Polos", list: "sep", vibe: "Latar putih penuh tanpa kartu, hanya garis tipis. Aksen indigo. Rasanya seperti aplikasi chat atau kontak, sangat ringan.", font: "DM Sans", c: ["#FFFFFF", "#4F46E5", "#EEF0FF", "#18181B", "#F4F4F5"] },
+  { k: "D", name: "Netral Hangat", list: "sep", vibe: "Abu hangat (bukan krem kuning) dengan aksen hijau tua. Kartu bergaris tipis, tombol bulat. Tenang dan terpercaya.", font: "Manrope", c: ["#FAFAF9", "#15803D", "#EAF6EE", "#1C1917", "#EEEDEA"] },
+  { k: "E", name: "Gelap", list: "gap", vibe: "Versi ringkas mode gelap dengan aksen biru muda. Bisa juga jadi mode gelap tambahan untuk desain yang kamu pilih.", font: "Inter", c: ["#0E1014", "#171A20", "#60A5FA", "#4ADE80", "#F1F3F7"] },
+];
+document.getElementById("options").innerHTML = OPT.map((o) => `
+  <section class="option" id="${o.k}">
+    <div class="desc"><p class="num">DESAIN ${o.k}</p><h2>${o.name}</h2><p>${o.vibe}</p>
+      <dl><dt>Font</dt><dd>${o.font}</dd></dl>
+      <div class="sw">${o.c.map((x) => `<i style="background:${x}"></i>`).join("")}</div></div>
+    <div class="phones ${o.k}"><div>${home(o.list)}<p class="cap">Beranda + hasil</p></div><div>${cv()}<p class="cap">CV tutor (terkunci)</p></div></div>
+  </section>`).join("");
+</script>
+</body>
+</html>

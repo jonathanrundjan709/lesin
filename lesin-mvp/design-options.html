@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesin — 5 arah desain UI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&family=Inter+Tight:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Inter Tight", sans-serif; background: #EDEDF0; color: #111; }
+  .page { max-width: 1180px; margin: 0 auto; padding: 40px 24px 80px; }
+  .page > header h1 { font-size: 34px; letter-spacing: -.03em; margin: 0 0 8px; }
+  .page > header p { color: #555; font-size: 16px; line-height: 1.5; margin: 0; max-width: 720px; }
+  .jump { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+  .jump a { text-decoration: none; color: #111; background: #fff; padding: 8px 14px; border-radius: 999px; font-size: 14px; font-weight: 600; }
+  .option { margin-top: 48px; display: grid; grid-template-columns: 300px 1fr; gap: 32px; align-items: start; }
+  .desc .num { font-size: 13px; font-weight: 700; color: #777; letter-spacing: .06em; }
+  .desc h2 { font-size: 28px; margin: 4px 0 8px; letter-spacing: -.02em; }
+  .desc p { font-size: 15px; line-height: 1.55; color: #444; margin: 0 0 12px; }
+  .desc dl { font-size: 14px; display: grid; grid-template-columns: 92px 1fr; gap: 6px 10px; margin: 0 0 14px; }
+  .desc dt { color: #777; } .desc dd { margin: 0; font-weight: 600; }
+  .sw { display: flex; gap: 6px; }
+  .sw i { width: 34px; height: 34px; border-radius: 9px; border: 1px solid rgba(0,0,0,.08); }
+  .pros { font-size: 14px; line-height: 1.5; padding-left: 18px; margin: 12px 0 0; color: #333; }
+  .rec { display: inline-block; font-size: 12px; font-weight: 700; background: #111; color: #fff; padding: 4px 10px; border-radius: 999px; margin-bottom: 6px; }
+  .phones { display: flex; gap: 24px; flex-wrap: wrap; }
+  .phone { width: 340px; height: 720px; border-radius: 44px; background: #111; padding: 10px; box-shadow: 0 24px 60px rgba(0,0,0,.18); flex: none; }
+  .scr { width: 100%; height: 100%; border-radius: 35px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+  .body { flex: 1; overflow: hidden; }
+  .status { height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 26px; font-size: 14px; font-weight: 600; flex: none; }
+  .status span:last-child { letter-spacing: 2px; font-size: 11px; }
+  svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  p, h1, h2, h3 { margin: 0; }
+  button { font: inherit; border: 0; cursor: pointer; }
+  .caption { text-align: center; font-size: 13px; color: #666; margin-top: 10px; font-weight: 600; }
+
+  /* -------- struktur umum (dipakai semua tema) -------- */
+  .top { display: flex; align-items: center; justify-content: space-between; padding: 6px 20px 10px; }
+  .logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 20px; }
+  .lm { width: 28px; height: 28px; display: grid; place-items: center; font-size: 15px; }
+  .pill { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; padding: 6px 11px; }
+  .pill svg { width: 15px; height: 15px; }
+  .hero { padding: 4px 20px 0; }
+  .hi { font-size: 14px; margin-bottom: 4px; }
+  .hero h1 { font-size: 30px; line-height: 1.08; }
+  .search { margin-top: 16px; padding: 14px; }
+  .fld { padding: 10px 12px; display: flex; flex-direction: column; gap: 1px; }
+  .fld small { font-size: 11px; }
+  .fld b { font-size: 15px; }
+  .fld + .fld, .fld2 { margin-top: 8px; }
+  .fld2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .fld2 .fld { margin: 0; }
+  .cta { width: 100%; margin-top: 12px; height: 50px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 700; }
+  .cta span { font-size: 12px; padding: 3px 8px; }
+  .sec { padding: 20px 20px 0; }
+  .sec h2 { font-size: 17px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: baseline; }
+  .sec h2 a { font-size: 13px; }
+  .subjs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .subj { padding: 10px 6px; text-align: center; font-size: 11px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .subj i { font-style: normal; width: 36px; height: 36px; display: grid; place-items: center; font-size: 10px; font-weight: 800; }
+  .tcard { padding: 14px; }
+  .tc-row { display: flex; gap: 12px; align-items: center; }
+  .av { width: 46px; height: 46px; display: grid; place-items: center; font-weight: 800; color: #fff; position: relative; overflow: hidden; flex: none; }
+  .av em { font-style: normal; filter: blur(5px); }
+  .av svg { position: absolute; width: 16px; height: 16px; color: #fff; }
+  .tn { font-weight: 800; font-size: 15px; letter-spacing: .06em; }
+  .th { font-size: 12px; margin-top: 2px; }
+  .match { margin-left: auto; text-align: center; font-size: 15px; font-weight: 800; padding: 5px 8px; line-height: 1.05; }
+  .match small { display: block; font-size: 9px; font-weight: 700; }
+  .meta { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+  .meta span { font-size: 11px; font-weight: 600; padding: 4px 8px; display: flex; gap: 4px; align-items: center; }
+  .meta svg { width: 12px; height: 12px; }
+  .tc-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 10px; font-size: 12px; }
+  .tc-foot b { font-size: 15px; }
+  .tab { display: grid; grid-template-columns: repeat(5, 1fr); height: 72px; padding-bottom: 14px; flex: none; }
+  .tab a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 10px; font-weight: 600; }
+  .tab svg { width: 22px; height: 22px; }
+
+  /* CV */
+  .nav { display: flex; align-items: center; gap: 10px; padding: 6px 20px 12px; }
+  .bk { width: 34px; height: 34px; display: grid; place-items: center; }
+  .nav h3 { font-size: 17px; }
+  .prof { margin: 0 20px; padding: 18px; text-align: center; }
+  .prof .av { width: 76px; height: 76px; margin: 0 auto 10px; font-size: 26px; }
+  .prof .tn { font-size: 18px; }
+  .ver { display: inline-flex; gap: 4px; align-items: center; font-size: 11px; font-weight: 700; padding: 4px 9px; margin-top: 8px; }
+  .ver svg { width: 12px; height: 12px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+  .stats div { padding: 9px 4px; }
+  .stats b { display: block; font-size: 17px; }
+  .stats small { font-size: 10px; }
+  .wall { margin: 14px 20px 0; padding: 16px; }
+  .wall h3 { font-size: 16px; display: flex; gap: 8px; align-items: center; }
+  .wall ul { list-style: none; padding: 0; margin: 10px 0 14px; font-size: 13px; }
+  .wall li { display: flex; gap: 8px; align-items: center; padding: 3px 0; }
+  .wall li svg { width: 15px; height: 15px; }
+  .wall .cta { margin-top: 0; }
+  .wall .ft { text-align: center; font-size: 11px; margin-top: 8px; }
+  .wall .ft u { text-decoration: none; font-weight: 700; }
+  .about { margin: 14px 20px 0; padding: 14px 16px; font-size: 13px; line-height: 1.5; }
+  .about b { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
+
+  /* =========== 1. LEMBUT =========== */
+  .t1 .scr { background: #FFF7F0; color: #2B1E16; font-family: "Nunito", sans-serif; }
+  .t1 .lm { background: #FF7A59; color: #fff; border-radius: 10px; }
+  .t1 .pill { background: #fff; border-radius: 999px; color: #FF7A59; box-shadow: 0 2px 8px rgba(255,122,89,.15); }
+  .t1 .hi { color: #A08877; font-weight: 700; }
+  .t1 .hero h1 { font-weight: 900; }
+  .t1 .search { background: #fff; border-radius: 26px; box-shadow: 0 10px 30px rgba(120,70,40,.08); }
+  .t1 .fld { background: #FFF3EA; border-radius: 16px; }
+  .t1 .fld small { color: #A08877; font-weight: 700; }
+  .t1 .cta { background: #FF7A59; color: #fff; border-radius: 999px; box-shadow: 0 8px 18px rgba(255,122,89,.35); }
+  .t1 .cta span { background: rgba(255,255,255,.25); border-radius: 999px; }
+  .t1 .sec h2 { font-weight: 900; } .t1 .sec h2 a { color: #FF7A59; }
+  .t1 .subj { background: #fff; border-radius: 20px; }
+  .t1 .subj i { border-radius: 14px; }
+  .t1 .subj:nth-child(1) i { background: #FFE1D6; color: #D9502F; } .t1 .subj:nth-child(2) i { background: #E4E0FF; color: #5B4BD6; }
+  .t1 .subj:nth-child(3) i { background: #D7F5E6; color: #1E8C5A; } .t1 .subj:nth-child(4) i { background: #FFE7F1; color: #C2407A; }
+  .t1 .tcard { background: #fff; border-radius: 24px; }
+  .t1 .av { border-radius: 50%; background: #B9A3FF; }
+  .t1 .th { color: #8B7566; }
+  .t1 .match { background: #D7F5E6; color: #1E8C5A; border-radius: 14px; }
+  .t1 .meta span { background: #FFF3EA; border-radius: 999px; color: #6B5444; }
+  .t1 .tc-foot { border-top: 1.5px dashed #F2E2D6; color: #A08877; } .t1 .tc-foot b { color: #2B1E16; }
+  .t1 .tab { background: #fff; border-radius: 26px 26px 0 0; color: #C4B3A6; } .t1 .tab a.on { color: #FF7A59; }
+  .t1 .bk { background: #fff; border-radius: 50%; color: #FF7A59; }
+  .t1 .prof, .t1 .wall, .t1 .about { background: #fff; border-radius: 26px; }
+  .t1 .ver { background: #E4E0FF; color: #5B4BD6; border-radius: 999px; }
+  .t1 .stats div { background: #FFF3EA; border-radius: 16px; } .t1 .stats small { color: #A08877; }
+  .t1 .wall { background: #FFE9DF; } .t1 .wall li svg { color: #FF7A59; }
+  .t1 .wall .ft { color: #A08877; } .t1 .wall .ft u { color: #FF7A59; }
+  .t1 .about b { color: #A08877; }
+
+  /* =========== 2. EDITORIAL =========== */
+  .t2 .scr { background: #F5F4EF; color: #0E0E0E; font-family: "Inter Tight", sans-serif; }
+  .t2 .lm { background: #0E0E0E; color: #F5F4EF; border-radius: 4px; }
+  .t2 .logo { letter-spacing: -.04em; }
+  .t2 .pill { border: 1.5px solid #0E0E0E; border-radius: 4px; }
+  .t2 .hi { text-transform: uppercase; font-size: 11px; letter-spacing: .12em; font-weight: 600; color: #6B6B66; }
+  .t2 .hero h1 { font-size: 42px; font-weight: 800; letter-spacing: -.05em; line-height: .98; }
+  .t2 .hero h1::after { content: "."; color: #2350FF; }
+  .t2 .search { padding: 0; border-top: 1.5px solid #0E0E0E; margin-top: 18px; }
+  .t2 .fld { border-bottom: 1px solid #D6D4CC; padding: 10px 0; flex-direction: row; justify-content: space-between; align-items: baseline; }
+  .t2 .fld + .fld, .t2 .fld2 { margin-top: 0; }
+  .t2 .fld2 { gap: 16px; }
+  .t2 .fld small { text-transform: uppercase; letter-spacing: .1em; color: #6B6B66; font-weight: 600; }
+  .t2 .cta { background: #2350FF; color: #fff; border-radius: 4px; justify-content: space-between; padding: 0 16px; margin-top: 16px; }
+  .t2 .cta span { background: #fff; color: #2350FF; border-radius: 2px; }
+  .t2 .sec h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .12em; border-bottom: 1.5px solid #0E0E0E; padding-bottom: 6px; } .t2 .sec h2 a { color: #2350FF; }
+  .t2 .subj { border: 1px solid #D6D4CC; border-radius: 4px; background: #fff; }
+  .t2 .subj i { background: #0E0E0E; color: #fff; border-radius: 2px; }
+  .t2 .tcard { background: #fff; border: 1px solid #D6D4CC; border-radius: 4px; }
+  .t2 .av { background: #0E0E0E; border-radius: 4px; }
+  .t2 .th { color: #6B6B66; }
+  .t2 .match { background: #2350FF; color: #fff; border-radius: 2px; }
+  .t2 .meta span { border: 1px solid #D6D4CC; border-radius: 2px; }
+  .t2 .tc-foot { border-top: 1px solid #D6D4CC; color: #6B6B66; } .t2 .tc-foot b { color: #0E0E0E; }
+  .t2 .tab { background: #F5F4EF; border-top: 1.5px solid #0E0E0E; color: #9A9A94; } .t2 .tab a.on { color: #0E0E0E; }
+  .t2 .bk { border: 1.5px solid #0E0E0E; border-radius: 4px; }
+  .t2 .nav h3 { text-transform: uppercase; font-size: 13px; letter-spacing: .12em; }
+  .t2 .prof { background: #fff; border: 1px solid #D6D4CC; border-radius: 4px; text-align: left; }
+  .t2 .prof .av { margin: 0 0 10px; }
+  .t2 .ver { border: 1px solid #2350FF; color: #2350FF; border-radius: 2px; }
+  .t2 .stats div { border-left: 2px solid #0E0E0E; padding-left: 8px; } .t2 .stats small { color: #6B6B66; text-transform: uppercase; letter-spacing: .06em; }
+  .t2 .wall { background: #0E0E0E; color: #F5F4EF; border-radius: 4px; } .t2 .wall li svg { color: #2350FF; }
+  .t2 .wall .ft { color: #9A9A94; } .t2 .wall .ft u { color: #fff; }
+  .t2 .about { border-top: 1.5px solid #0E0E0E; padding: 12px 0; margin: 14px 20px 0; } .t2 .about b { color: #6B6B66; }
+
+  /* =========== 3. SEGAR (header berwarna) =========== */
+  .t3 .scr { background: #F4F7F6; color: #10201C; font-family: "Plus Jakarta Sans", sans-serif; }
+  .t3 .status, .t3 .top { background: #0E8F79; color: #fff; }
+  .t3 .lm { background: #fff; color: #0E8F79; border-radius: 9px; }
+  .t3 .pill { background: rgba(255,255,255,.18); color: #fff; border-radius: 999px; }
+  .t3 .hero { background: #0E8F79; color: #fff; padding-bottom: 70px; border-radius: 0 0 28px 28px; }
+  .t3 .hi { color: rgba(255,255,255,.75); font-weight: 600; }
+  .t3 .hero h1 { font-size: 26px; font-weight: 800; }
+  .t3 .search { background: #fff; color: #10201C; border-radius: 20px; box-shadow: 0 14px 30px rgba(10,60,50,.16); margin: 16px 0 -70px; position: relative; }
+  .t3 .fld { border: 1px solid #E1E8E6; border-radius: 12px; }
+  .t3 .fld small { color: #6E817C; font-weight: 600; }
+  .t3 .cta { background: #0E8F79; color: #fff; border-radius: 14px; }
+  .t3 .cta span { background: #DDF5EF; color: #0E8F79; border-radius: 999px; }
+  .t3 .sec h2 { font-weight: 800; } .t3 .sec h2 a { color: #0E8F79; }
+  .t3 .hero + .sec { padding-top: 90px; }
+  .t3 .subj { background: #fff; border-radius: 16px; border: 1px solid #E1E8E6; }
+  .t3 .subj i { border-radius: 12px; background: #DDF5EF; color: #0E8F79; }
+  .t3 .subj:nth-child(2) i { background: #E3EEFF; color: #2563EB; } .t3 .subj:nth-child(3) i { background: #FFEBDD; color: #D2601A; } .t3 .subj:nth-child(4) i { background: #F1E6FF; color: #7C3AED; }
+  .t3 .tcard { background: #fff; border-radius: 18px; border: 1px solid #E1E8E6; }
+  .t3 .av { background: #2563EB; border-radius: 14px; }
+  .t3 .th { color: #6E817C; }
+  .t3 .match { background: #DDF5EF; color: #0E8F79; border-radius: 10px; }
+  .t3 .meta span { background: #F4F7F6; border-radius: 8px; color: #3D524C; }
+  .t3 .tc-foot { border-top: 1px solid #E1E8E6; color: #6E817C; } .t3 .tc-foot b { color: #10201C; }
+  .t3 .tab { background: #fff; border-top: 1px solid #E1E8E6; color: #9AABA6; } .t3 .tab a.on { color: #0E8F79; }
+  .t3 .cv .status, .t3 .cv .nav { background: #0E8F79; color: #fff; }
+  .t3 .cv .nav { padding-bottom: 60px; }
+  .t3 .bk { background: rgba(255,255,255,.18); border-radius: 50%; }
+  .t3 .prof { background: #fff; border-radius: 20px; margin-top: -50px; box-shadow: 0 10px 24px rgba(10,60,50,.1); }
+  .t3 .prof .av { border-radius: 24px; }
+  .t3 .ver { background: #DDF5EF; color: #0E8F79; border-radius: 999px; }
+  .t3 .stats div { background: #F4F7F6; border-radius: 12px; } .t3 .stats small { color: #6E817C; }
+  .t3 .wall { background: #fff; border-radius: 20px; border: 1.5px solid #0E8F79; } .t3 .wall li svg { color: #0E8F79; }
+  .t3 .wall h3 svg { color: #0E8F79; }
+  .t3 .wall .ft { color: #6E817C; } .t3 .wall .ft u { color: #0E8F79; }
+  .t3 .about { background: #fff; border-radius: 20px; } .t3 .about b { color: #6E817C; }
+
+  /* =========== 4. MALAM (dark premium) =========== */
+  .t4 .scr { background: #0B0D12; color: #ECEEF5; font-family: "Manrope", sans-serif; }
+  .t4 .lm { background: linear-gradient(135deg, #8EA6FF, #6EE7D2); color: #0B0D12; border-radius: 9px; }
+  .t4 .pill { background: #171A22; border: 1px solid #262A35; border-radius: 999px; color: #8EA6FF; }
+  .t4 .hi { color: #7D8496; font-weight: 600; }
+  .t4 .hero h1 { font-weight: 800; letter-spacing: -.03em; }
+  .t4 .hero h1 br + * {}
+  .t4 .search { background: #12151C; border: 1px solid #232733; border-radius: 22px; }
+  .t4 .fld { background: #171A22; border-radius: 14px; }
+  .t4 .fld small { color: #7D8496; }
+  .t4 .cta { background: #ECEEF5; color: #0B0D12; border-radius: 14px; }
+  .t4 .cta span { background: #0B0D12; color: #6EE7D2; border-radius: 999px; }
+  .t4 .sec h2 a { color: #8EA6FF; }
+  .t4 .subj { background: #12151C; border: 1px solid #232733; border-radius: 16px; color: #C7CBD8; }
+  .t4 .subj i { border-radius: 12px; background: rgba(142,166,255,.14); color: #8EA6FF; }
+  .t4 .subj:nth-child(2) i, .t4 .subj:nth-child(4) i { background: rgba(110,231,210,.12); color: #6EE7D2; }
+  .t4 .tcard { background: #12151C; border: 1px solid #232733; border-radius: 20px; }
+  .t4 .av { background: linear-gradient(135deg, #8EA6FF, #B794F6); border-radius: 50%; }
+  .t4 .th { color: #7D8496; }
+  .t4 .match { background: rgba(110,231,210,.12); color: #6EE7D2; border-radius: 12px; }
+  .t4 .meta span { background: #171A22; border-radius: 8px; color: #A9AFBF; }
+  .t4 .tc-foot { border-top: 1px solid #232733; color: #7D8496; } .t4 .tc-foot b { color: #fff; }
+  .t4 .tab { background: #0F1117; border-top: 1px solid #1E222C; color: #545A6B; } .t4 .tab a.on { color: #ECEEF5; }
+  .t4 .bk { background: #171A22; border-radius: 50%; }
+  .t4 .prof, .t4 .about { background: #12151C; border: 1px solid #232733; border-radius: 22px; }
+  .t4 .prof .av { width: 84px; height: 84px; box-shadow: 0 0 0 4px #0B0D12, 0 0 0 6px #8EA6FF33; }
+  .t4 .ver { background: rgba(142,166,255,.14); color: #8EA6FF; border-radius: 999px; }
+  .t4 .stats div { background: #171A22; border-radius: 14px; } .t4 .stats small { color: #7D8496; }
+  .t4 .wall { background: linear-gradient(160deg, #1A1F33, #12151C); border: 1px solid #2E3550; border-radius: 22px; }
+  .t4 .wall li svg, .t4 .wall h3 svg { color: #6EE7D2; }
+  .t4 .wall .ft { color: #7D8496; } .t4 .wall .ft u { color: #8EA6FF; }
+  .t4 .about b { color: #7D8496; }
+
+  /* =========== 5. BERANI (neo-brutal) =========== */
+  .t5 .scr { background: #FBF8F1; color: #111; font-family: "Bricolage Grotesque", sans-serif; }
+  .t5 .lm { background: #6C7BFF; color: #fff; border: 2px solid #111; border-radius: 8px; box-shadow: 2px 2px 0 #111; }
+  .t5 .pill { background: #B9F3D3; border: 2px solid #111; border-radius: 999px; box-shadow: 2px 2px 0 #111; }
+  .t5 .hi { font-weight: 600; color: #555; }
+  .t5 .hero h1 { font-size: 34px; font-weight: 800; letter-spacing: -.03em; }
+  .t5 .search { background: #fff; border: 2px solid #111; border-radius: 18px; box-shadow: 5px 5px 0 #111; }
+  .t5 .fld { border: 2px solid #111; border-radius: 12px; }
+  .t5 .fld small { color: #555; font-weight: 600; }
+  .t5 .cta { background: #6C7BFF; color: #fff; border: 2px solid #111; border-radius: 12px; box-shadow: 3px 3px 0 #111; }
+  .t5 .cta span { background: #fff; color: #111; border: 1.5px solid #111; border-radius: 999px; }
+  .t5 .sec h2 { font-weight: 800; font-size: 19px; } .t5 .sec h2 a { color: #111; text-decoration: underline; }
+  .t5 .subj { border: 2px solid #111; border-radius: 14px; box-shadow: 3px 3px 0 #111; }
+  .t5 .subj:nth-child(1) { background: #FFC8DD; } .t5 .subj:nth-child(2) { background: #B9F3D3; } .t5 .subj:nth-child(3) { background: #C9D1FF; } .t5 .subj:nth-child(4) { background: #FFD9B8; }
+  .t5 .subj i { background: #fff; border: 2px solid #111; border-radius: 50%; color: #111; }
+  .t5 .tcard { background: #fff; border: 2px solid #111; border-radius: 18px; box-shadow: 4px 4px 0 #111; }
+  .t5 .av { background: #FF8FB8; border: 2px solid #111; border-radius: 12px; }
+  .t5 .th { color: #555; }
+  .t5 .match { background: #B9F3D3; border: 2px solid #111; border-radius: 10px; }
+  .t5 .meta span { border: 1.5px solid #111; border-radius: 999px; }
+  .t5 .tc-foot { border-top: 2px solid #111; } .t5 .tc-foot b { font-size: 17px; }
+  .t5 .tab { background: #fff; border-top: 2px solid #111; color: #888; } .t5 .tab a.on { color: #111; }
+  .t5 .tab a.on svg { background: #C9D1FF; border: 2px solid #111; border-radius: 10px; padding: 2px; width: 30px; height: 26px; }
+  .t5 .bk { background: #fff; border: 2px solid #111; border-radius: 10px; box-shadow: 2px 2px 0 #111; }
+  .t5 .prof { background: #C9D1FF; border: 2px solid #111; border-radius: 18px; box-shadow: 4px 4px 0 #111; }
+  .t5 .ver { background: #fff; border: 1.5px solid #111; border-radius: 999px; }
+  .t5 .stats div { background: #fff; border: 2px solid #111; border-radius: 12px; }
+  .t5 .wall { background: #fff; border: 2px solid #111; border-radius: 18px; box-shadow: 4px 4px 0 #111; }
+  .t5 .wall h3 svg { background: #FFD9B8; border: 2px solid #111; border-radius: 8px; padding: 3px; width: 26px; height: 26px; }
+  .t5 .wall li svg { color: #111; background: #B9F3D3; border-radius: 50%; padding: 2px; }
+  .t5 .wall .ft { color: #555; } .t5 .wall .ft u { color: #111; text-decoration: underline; }
+  .t5 .about { background: #fff; border: 2px solid #111; border-radius: 18px; } .t5 .about b { color: #555; }
+
+  @media (max-width: 900px) { .option { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>Lesin: 5 arah desain UI</h1>
+    <p>Setiap arah menampilkan dua layar yang sama: <b>Beranda pencari</b> dan <b>CV tutor yang masih terkunci</b>. Isi dan alurnya sama persis, yang berbeda hanya gaya visualnya. Pilih satu (atau gabungan), nanti seluruh app aku bangun ulang dengan gaya itu.</p>
+    <nav class="jump"><a href="#o1">1 · Lembut</a><a href="#o2">2 · Editorial</a><a href="#o3">3 · Segar</a><a href="#o4">4 · Malam</a><a href="#o5">5 · Berani</a></nav>
+  </header>
+  <div id="options"></div>
+</div>
+
+<script>
+const I = {
+  tk: '<path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/>',
+  home: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14c2 .8 3.5 3 3.5 6"/>',
+  board: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  shield: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+  star: '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" fill="currentColor" stroke="none"/>',
+  pin: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  cap: '<path d="m2 9 10-5 10 5-10 5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5"/>',
+  back: '<path d="m15 18-6-6 6-6"/>',
+};
+const ic = (n) => `<svg viewBox="0 0 24 24">${I[n]}</svg>`;
+const status = `<div class="status"><span>9:41</span><span>●●● ▮</span></div>`;
+const tabs = (on = 0) => `<nav class="tab">${[["home", "Beranda"], ["search", "Cari"], ["plus", "Posting"], ["users", "Kontak"], ["board", "Postingan"]]
+  .map(([i, l], k) => `<a class="${k === on ? "on" : ""}">${ic(i)}${l}</a>`).join("")}</nav>`;
+
+const home = () => `<div class="phone"><div class="scr">${status}
+  <div class="top"><div class="logo"><span class="lm">L</span>Lesin</div><div class="pill">${ic("tk")}1 kuota</div></div>
+  <div class="body">
+    <div class="hero"><p class="hi">Halo, Bu Ratna</p><h1>Cari guru les<br>dekat rumah</h1>
+      <div class="search">
+        <div class="fld"><small>Daerah</small><b>Tebet, Jakarta Selatan</b></div>
+        <div class="fld"><small>Mata pelajaran</small><b>Matematika</b></div>
+        <div class="fld2"><div class="fld"><small>Jenjang</small><b>SMP</b></div><div class="fld"><small>Kurikulum</small><b>Merdeka</b></div></div>
+        <button class="cta">${ic("search")}Cari tutor <span>6 cocok</span></button>
+      </div></div>
+    <div class="sec"><h2>Pelajaran populer <a>Semua</a></h2>
+      <div class="subjs">${[["MTK", "Matematika"], ["ENG", "Inggris"], ["FIS", "Fisika"], ["UTBK", "UTBK"]].map(([a, b]) => `<div class="subj"><i>${a}</i>${b}</div>`).join("")}</div></div>
+    <div class="sec"><h2>Tutor di sekitarmu <a>Lihat semua</a></h2>
+      <div class="tcard"><div class="tc-row"><div class="av"><em>DA</em>${ic("lock")}</div>
+        <div><p class="tn">D••• A•••••</p><p class="th">S1 Matematika UI · sabar & runtut</p></div>
+        <div class="match">92%<small>cocok</small></div></div>
+        <div class="meta"><span>${ic("star")}4,9</span><span>${ic("cap")}6 th</span><span>${ic("pin")}Tebet</span></div>
+        <div class="tc-foot"><span>Ke rumah · Online</span><b>Rp120.000<small style="font-weight:500"> /sesi</small></b></div></div></div>
+  </div>${tabs(0)}</div></div>`;
+
+const cv = () => `<div class="phone cv"><div class="scr">${status}
+  <div class="nav"><span class="bk">${ic("back")}</span><h3>CV Tutor</h3></div>
+  <div class="body">
+    <div class="prof"><div class="av"><em>SN</em>${ic("lock")}</div>
+      <p class="tn">S••• N••••••</p><p class="th">Guru SD sabar untuk anak usia 4–12 tahun</p>
+      <span class="ver">${ic("shield")}Identitas terverifikasi</span>
+      <div class="stats"><div><b>4,8</b><small>112 ulasan</small></div><div><b>95</b><small>Murid diajar</small></div><div><b>7 th</b><small>Pengalaman</small></div></div></div>
+    <div class="wall"><h3>${ic("lock")}Kontak masih tersembunyi</h3>
+      <ul><li>${ic("check")}Nama lengkap & foto asli</li><li>${ic("check")}Nomor WhatsApp, langsung chat</li><li>${ic("check")}Tersimpan selamanya di Kontak</li></ul>
+      <button class="cta">Buka kontak · 1 kuota</button>
+      <p class="ft">Kamu punya 1 kuota · <u>Apa itu kuota?</u></p></div>
+    <div class="about"><b>Tentang</b>Mengajar dengan metode bermain sambil belajar. Berpengalaman mendampingi anak yang butuh perhatian ekstra.</div>
+  </div>${tabs(1)}</div></div>`;
+
+const OPTIONS = [
+  { name: "Lembut", vibe: "Hangat, ramah, membumi. Krem, coral, dan tile pastel dengan sudut sangat bulat.",
+    font: "Nunito", colors: ["#FFF7F0", "#FF7A59", "#E4E0FF", "#D7F5E6", "#2B1E16"], target: "Orang tua yang cari guru untuk anak kecil (SD, calistung)",
+    pros: ["Paling 'friendly', tidak terasa seperti aplikasi teknis", "Cocok untuk jenjang SD", "Risiko: kurang terasa profesional untuk SMA/UTBK"] },
+  { name: "Editorial", vibe: "Seperti majalah. Monokrom krem-hitam, tipografi besar, satu aksen biru elektrik, sudut tajam.",
+    font: "Inter Tight", colors: ["#F5F4EF", "#0E0E0E", "#2350FF", "#D6D4CC", "#FFFFFF"], target: "Kesan premium dan serius",
+    pros: ["Paling beda dari aplikasi lain, terasa mahal", "Teks dan harga sangat jelas", "Risiko: terasa dingin untuk orang tua"] },
+  { name: "Segar", vibe: "Header hijau teal penuh, kartu putih menimpa header. Pola yang familiar dari aplikasi Indonesia.", rec: true,
+    font: "Plus Jakarta Sans", colors: ["#0E8F79", "#DDF5EF", "#F4F7F6", "#2563EB", "#10201C"], target: "Semua orang tua & murid, kesan tepercaya",
+    pros: ["Langsung terasa familiar bagi pengguna Indonesia", "Hijau = aman, tepercaya, pendidikan", "Hierarki jelas: cari dulu, baru lainnya"] },
+  { name: "Malam", vibe: "Mode gelap premium. Kartu abu-gelap, aksen periwinkle dan mint, gradasi tipis.",
+    font: "Manrope", colors: ["#0B0D12", "#12151C", "#8EA6FF", "#6EE7D2", "#ECEEF5"], target: "Murid SMA/kuliah, kesan teknologi",
+    pros: ["Modern dan nyaman di malam hari", "Kontras tinggi untuk angka dan harga", "Risiko: kurang cocok untuk orang tua yang lebih tua"] },
+  { name: "Berani", vibe: "Neo-brutalism. Garis hitam tebal, bayangan solid, blok warna cerah. Main-main tapi rapi.",
+    font: "Bricolage Grotesque", colors: ["#FBF8F1", "#6C7BFF", "#FFC8DD", "#B9F3D3", "#111111"], target: "Murid muda, kampanye media sosial",
+    pros: ["Paling mudah diingat dan viral di TikTok/IG", "Tombol dan kartu sangat jelas bisa ditekan", "Risiko: terlalu ramai kalau datanya banyak"] },
+];
+
+document.getElementById("options").innerHTML = OPTIONS.map((o, i) => `
+  <section class="option" id="o${i + 1}">
+    <div class="desc">
+      ${o.rec ? `<span class="rec">Rekomendasi aku</span>` : ""}
+      <p class="num">ARAH ${i + 1}</p><h2>${o.name}</h2><p>${o.vibe}</p>
+      <dl><dt>Font</dt><dd>${o.font}</dd><dt>Cocok untuk</dt><dd>${o.target}</dd></dl>
+      <div class="sw">${o.colors.map((c) => `<i style="background:${c}" title="${c}"></i>`).join("")}</div>
+      <ul class="pros">${o.pros.map((p) => `<li>${p}</li>`).join("")}</ul>
+    </div>
+    <div class="phones t${i + 1}"><div>${home()}<p class="caption">Beranda</p></div><div>${cv()}<p class="caption">CV tutor (terkunci)</p></div></div>
+  </section>`).join("");
+</script>
+</body>
+</html>
