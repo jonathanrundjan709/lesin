@@ -15,6 +15,23 @@ import { planSheet } from "../components/plan-sheet.js";
 const DEFAULTS = { headline: "", subjects: ["Matematika"], levels: ["SMP"], curricula: ["Merdeka"], area: "Tebet", rate: 100000, rateDurationMin: 60,
   experienceYears: 1, education: "", bio: "", achievements: "" };
 
+const consentPoints = () => `<ul class="consent-list">${session.meta.consent.points.map((t) => `<li>${ic("check")}<span>${esc(t)}</span></li>`).join("")}</ul>`;
+
+/** Persetujuan wajib saat CV pertama (UU PDP): nama dan WhatsApp tutor boleh dibuka pencari. */
+const consentBox = () => `<div class="field" data-f="consent"><span class="lbl">Persetujuan data ${`<b class="req" title="Wajib">*</b>`}</span>
+  <div class="consent-box">${consentPoints()}
+    <label class="pick consent-ok"><input type="checkbox" name="consent"><span>Saya mengerti dan setuju</span></label></div></div>`;
+
+/** Setelah CV ada: status persetujuan dan tombol cabut/aktifkan. Tutor lama yang belum setuju diajak mengaktifkan. */
+const consentCard = () => {
+  const on = Boolean(session.profile?.consentAt);
+  return `<div class="section"><div class="card consent-card"><div class="row" style="gap:10px"><span class="mi">${ic(on ? "check" : "lock")}</span>
+    <div class="grow"><b>${on ? "Kontak langsung aktif" : "Kontak langsung belum aktif"}</b>
+      <p class="small muted">${on ? "Pencari bisa membuka nama dan WhatsApp-mu dengan kuota mereka." : "Aktifkan supaya pencari bisa membuka kontakmu dan menghubungimu. Tanpa ini kamu hanya dihubungi lewat permintaan."}</p></div></div>
+    ${on ? "" : consentPoints()}
+    <button class="btn ${on ? "line" : ""}" id="consentBtn" style="margin-top:10px">${on ? "Cabut persetujuan" : "Setujui & aktifkan"}</button></div></div>`;
+};
+
 const docState = (kind) => session.docs.find((d) => d.kind === kind);
 
 function docButton(kind, icon, title, hint) {
@@ -39,7 +56,7 @@ export const profileView = {
     <div class="section"><p class="small muted" style="margin-bottom:6px;font-weight:700">PRATINJAU DI HASIL PENCARIAN</p>${tutorCard(preview, { preview: true })}</div>
     <form id="cvForm" class="section" novalidate>
       <label class="field" data-f="name"><span class="lbl">Nama lengkap ${req}</span><input class="input" name="name" value="${esc(session.user.name)}" placeholder="Nama sesuai identitas"></label>
-      <label class="field"><span class="lbl">Nomor WhatsApp (akun)</span><input class="input" value="${esc(session.user.phone)}" disabled>
+      <label class="field"><span class="lbl">Nomor WhatsApp (akun)</span><input class="input" value="${esc(session.user.phone ?? "")}" disabled>
         <span class="hint">Nomor akun tidak bisa diubah. Terbuka untuk pencari setelah kamu merespons permintaan mereka.</span></label>
       <label class="field"><span class="lbl">Headline (opsional)</span><input class="input" name="headline" maxlength="60" value="${esc(p.headline)}" placeholder="cth. Bikin Matematika jadi masuk akal"></label>
       <div class="field" data-f="subjects"><span class="lbl">Mata pelajaran ${req}</span><div class="chips" id="subjChips">${subjOpts.map((s) => `<label class="pick"><input type="checkbox" name="subjects" value="${esc(s)}" ${p.subjects.includes(s) ? "checked" : ""}><span>${esc(s)}</span></label>`).join("")}
@@ -57,8 +74,10 @@ export const profileView = {
         ${docButton("id", "idcard", "Foto identitas (KTP/KTM)", "Hanya dilihat tim verifikasi, dihapus 90 hari setelah diverifikasi")}
         ${docButton("skill", "doc", "Bukti keahlian", "Sertifikat kursus, sertifikat lomba, atau portofolio")}
         <p class="hint" style="margin-top:8px">Dokumen tidak pernah ditampilkan ke pencari. Pencari hanya melihat badge "Identitas terverifikasi".</p></div>
+      ${cvReady() ? "" : consentBox()}
       <button class="btn" id="cvSave">${cvReady() ? "Simpan CV" : "Simpan CV & mulai jadi tutor"}</button>
     </form>
+    ${cvReady() ? consentCard() : ""}
     ${planCard()}`;
   },
   mount() {
@@ -68,7 +87,7 @@ export const profileView = {
       const fd = new FormData(f);
       return { name: fd.get("name").trim(), headline: fd.get("headline").trim(), subjects: fd.getAll("subjects"), levels: fd.getAll("levels"), curricula: fd.getAll("curricula"),
         area: fd.get("area"), rate: +fd.get("rate"), rateDurationMin: +fd.get("rateDurationMin"), experienceYears: +fd.get("experienceYears"),
-        education: fd.get("education").trim(), bio: fd.get("bio").trim(), achievements: fd.get("achievements").trim() };
+        education: fd.get("education").trim(), bio: fd.get("bio").trim(), achievements: fd.get("achievements").trim(), consent: fd.get("consent") === "on" };
     };
 
     $("#addSubj").onclick = () => openSheet(`<h2>Tambah mata pelajaran</h2>
@@ -92,6 +111,12 @@ export const profileView = {
       catch (e) { toast(esc(e.message), "err"); }
     }));
     const plan = $("#goPlan"); if (plan) plan.onclick = planSheet;
+    const consent = $("#consentBtn");
+    if (consent) consent.onclick = () => withBusy(consent, async () => {
+      const accept = !session.profile?.consentAt;
+      try { await api.me.consent(accept); await refreshProfile(); toast(accept ? "Kontak langsung aktif." : "Persetujuan dicabut. Kontak yang sudah terbuka tidak ditarik kembali."); navigate("/profile"); }
+      catch (e) { toast(esc(e.message), "err"); }
+    });
 
     f.onsubmit = (e) => { e.preventDefault(); withBusy($("#cvSave"), async () => {
       const v = read();
@@ -101,6 +126,7 @@ export const profileView = {
         { f: "levels", ok: v.levels.length > 0, msg: "Pilih minimal satu jenjang." },
         { f: "rate", ok: v.rate >= session.meta.limits.minRate && v.rate <= session.meta.limits.maxRate, msg: "Isi tarif antara Rp25.000 dan Rp400.000." },
         { f: "education", ok: v.education.length >= 3, msg: "Isi pendidikan terakhirmu." },
+        { f: "consent", ok: cvReady() || v.consent, msg: "Centang persetujuan untuk melanjutkan." },
       ])) return;
       const first = !cvReady();
       try {

@@ -39,9 +39,9 @@ Semua angka adalah asumsi perencanaan. Pendapatan tutor dari PRD bagian 7. Ganti
 
 | Risiko | Pengaman |
 |---|---|
-| Trial dipakai berulang dengan banyak nomor | Satu akun per nomor WhatsApp. **OTP WhatsApp wajib aktif sebelum iklan berbayar**. Trial dibatasi 10 kontak |
+| Trial dipakai berulang | Email diverifikasi OTP, lalu **nomor WhatsApp wajib dan unik**; trial diberikan saat nomor ditambahkan dengan id berdasarkan nomor, jadi sekali per nomor dan nomor tidak bisa diganti sendiri. Celah: nomor belum diverifikasi OTP, jadi orang bisa memakai nomor lain yang ia punya. Pasang OTP WhatsApp bila penyalahgunaan terlihat. **Isi `RESEND_API_KEY` sebelum iklan berbayar** |
 | Tutor merasa dihubungi gratis, lalu berhenti beli lead | Pantau pangsa jalur langsung. Opsi: kabari tutor saat kontaknya dibuka (belum dibangun) |
-| Nomor tutor terbuka tanpa persetujuan (UU PDP) | Tambahkan persetujuan di onboarding tutor: nama dan WhatsApp bisa dibuka pencari yang memakai kuota. **Wajib sebelum peluncuran** |
+| Nomor tutor terbuka tanpa persetujuan (UU PDP) | **Sudah dibangun:** persetujuan wajib di CV pertama (versi dan waktu tersimpan), bisa dicabut, dan buka kontak langsung hanya untuk tutor yang setuju. Teks persetujuan perlu ditinjau penasihat hukum (PRD §15) |
 | Nomor tutor tidak valid | Kuota dikembalikan. Selain itu buka kontak tidak bisa dibatalkan |
 | Kuota dianggap uang elektronik | Kuota adalah kredit layanan, tidak bisa ditarik. Masuk pemeriksaan hukum PRD bagian 15 |
 | Pencari hanya memakai jalur gratis | Wajar. Tinjau di bulan ke-4 bila yang membayar di bawah 5% |
@@ -82,14 +82,14 @@ Tanggal mengikuti peta jalan PRD (peluncuran sekitar 11 Jan 2027).
 | Periode | Kerja | Keluar |
 |---|---|---|
 | Sekarang | Kode siap di staging: trial, kuota kontak, paket, buka kontak, banner, halaman `/kuota`, migrasi aman | Bisa dicoba di staging |
-| Sampai 10 Jan | OTP WhatsApp. Persetujuan tutor (UU PDP). Halaman syarat dan kebijakan kuota. Adapter gateway QRIS untuk paket pencari. Dasbor sederhana dari query di atas | **Gate 1:** pembayaran QRIS sungguhan untuk paket pencari dan lead tutor |
+| Sampai 10 Jan | ~~OTP~~ dan ~~persetujuan tutor~~ (selesai). Halaman syarat dan kebijakan kuota. Adapter gateway QRIS untuk paket pencari. Dasbor sederhana dari query di atas | **Gate 1:** pembayaran QRIS sungguhan untuk paket pencari dan lead tutor |
 | 11 Jan – 28 Feb | Pilot 2 kecamatan. Tidak ada perubahan harga. Kumpulkan data | **Bulan 3:** baca semua metrik di atas |
 | Mar – Apr | Eksperimen berurutan, satu per satu: harga satuan Rp8.000 vs Rp10.000, lalu trial 7 vs 14 hari, lalu 10 vs 5 kontak | Bulan 4: aturan berhenti diperluas (bayar <5% atau jalur langsung >60% = rancang ulang) |
 | Mei | Putuskan harga akhir dan apakah model dua sisi dipertahankan | Bulan 6: lanjut, ubah, atau berhenti |
 
 ## Keputusan yang masih terbuka
 
-1. Trial per nomor WhatsApp atau per perangkat?
+1. ~~Trial per nomor WhatsApp atau per perangkat?~~ Diputuskan: per nomor WhatsApp.
 2. Beri tahu tutor bila kontaknya dibuka pencari (pemberitahuan gratis)?
 3. Setelah trial, apakah kirim permintaan tetap tanpa batas? Sekarang ya.
 4. Uji harga dan trial seperti di jadwal, atau tetap?

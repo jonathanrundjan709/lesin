@@ -70,7 +70,7 @@ export class LessonService {
           if (!fresh) continue;
           const users = await r.users.byIds([lesson.tutorId, lesson.seekerId]);
           const msg = (to: User) => `Halo ${to.name.split(" ")[0]}, pengingat les ${lesson.subject} (${lesson.child}) ${slot.day} pukul ${slot.time.replace(":", ".")}. Sampai jumpa!`;
-          for (const u of users) await this.d.notifier.send(toWaNumber(u.phone), msg(u));
+          for (const u of users) if (u.phone) await this.d.notifier.send(toWaNumber(u.phone), msg(u));
           sent++;
         }
       }
@@ -81,7 +81,7 @@ export class LessonService {
   private async views(r: Repositories, lessons: Lesson[], viewerId: Id): Promise<LessonView[]> {
     const users = new Map((await r.users.byIds([...new Set(lessons.flatMap((l) => [l.tutorId, l.seekerId]))])).map((u) => [u.id, u]));
     const notes = await r.lessons.notesByLessons(lessons.map((l) => l.id));
-    const party = (id: Id) => { const u = users.get(id); return { id, name: u?.name ?? "Pengguna", waNumber: u ? toWaNumber(u.phone) : "" }; };
+    const party = (id: Id) => { const u = users.get(id); return { id, name: u?.name ?? "Pengguna", waNumber: u?.phone ? toWaNumber(u.phone) : "" }; };
     return lessons.map((l) => ({
       id: l.id, child: l.child, subject: l.subject, slots: l.slots, createdAt: l.createdAt, tutor: party(l.tutorId), seeker: party(l.seekerId),
       canAddNote: viewerId === l.tutorId, notes: notes.filter((n) => n.lessonId === l.id).sort((a, b) => b.createdAt - a.createdAt),

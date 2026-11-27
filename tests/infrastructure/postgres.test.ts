@@ -50,6 +50,10 @@ test("migrasi dari skema lama (kolom tutor_id/leads) tanpa kehilangan data", asy
   await uow.run(async (r) => {
     assert.equal((await r.ledger.byUser("u1", "lead")).length, 1);
     assert.equal((await r.orders.byBuyer("u1")).length, 1);
+    const legacy = await r.users.byPhone("081200000001");
+    assert.deepEqual({ email: legacy?.email, verified: legacy?.emailVerifiedAt, phone: legacy?.phone }, { email: null, verified: null, phone: "081200000001" }, "akun lama tetap bisa masuk dengan nomor");
+    await r.users.insert({ id: "u2", name: "Baru", passwordHash: "x", email: "baru@contoh.id", emailVerifiedAt: null, phone: null, isAdmin: false, status: "active", createdAt: 5 });
+    assert.equal((await r.users.byEmail("baru@contoh.id"))?.phone, null, "nomor boleh kosong sampai diisi");
     assert.equal(await r.ledger.insertOnce({ id: "trial:u1", userId: "u1", kind: "contact", delta: 10, reason: "trial", refId: "t", expiresAt: null, createdAt: 3 }), true);
     assert.equal(await r.ledger.insertOnce({ id: "trial:u1", userId: "u1", kind: "contact", delta: 10, reason: "trial", refId: "t", expiresAt: null, createdAt: 3 }), false);
   });

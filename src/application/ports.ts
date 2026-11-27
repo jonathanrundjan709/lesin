@@ -1,5 +1,5 @@
 import type {
-  AppEvent, ContactUnlock, CreditKind, Id, LedgerEntry, Lesson, LessonRequest, Millis, Order, Report, Review, SessionNote,
+  AppEvent, ContactUnlock, CreditKind, Id, LedgerEntry, Lesson, LessonRequest, Millis, Order, OtpChallenge, Report, Review, SessionNote,
   TutorProfile, Unlock, User, VerificationDoc,
 } from "@/domain/types";
 
@@ -12,6 +12,7 @@ export interface UserRepo {
   lockById(id: Id): Promise<User | null>;
   byIds(ids: readonly Id[]): Promise<User[]>;
   byPhone(phone: string): Promise<User | null>;
+  byEmail(email: string): Promise<User | null>;
 }
 export interface TutorRepo {
   upsert(p: TutorProfile): Promise<void>;
@@ -86,6 +87,14 @@ export interface VerificationRepo {
   byTutor(tutorId: Id): Promise<VerificationDoc[]>;
   pending(): Promise<VerificationDoc[]>;
 }
+export interface OtpRepo {
+  insert(c: OtpChallenge): Promise<void>;
+  update(c: OtpChallenge): Promise<void>;
+  /** Tantangan terbaru untuk email ini (yang belum dipakai maupun sudah). */
+  latest(email: string): Promise<OtpChallenge | null>;
+  countByEmailSince(email: string, since: Millis): Promise<number>;
+  countByIpSince(ipHash: string, since: Millis): Promise<number>;
+}
 export interface EventRepo {
   insert(e: AppEvent): Promise<void>;
   /** Simpan hanya jika `key` belum ada. true bila tersimpan. */
@@ -95,7 +104,7 @@ export interface EventRepo {
 export interface Repositories {
   users: UserRepo; tutors: TutorRepo; requests: RequestRepo; unlocks: UnlockRepo; contactUnlocks: ContactUnlockRepo; ledger: LedgerRepo;
   orders: OrderRepo; webhookEvents: WebhookEventRepo; lessons: LessonRepo; reviews: ReviewRepo;
-  reports: ReportRepo; verifications: VerificationRepo; events: EventRepo;
+  reports: ReportRepo; verifications: VerificationRepo; events: EventRepo; otp: OtpRepo;
 }
 /** Menjalankan `fn` secara atomik: semua perubahan berhasil bersama atau dibatalkan bersama. */
 export interface UnitOfWork { run<T>(fn: (repos: Repositories) => Promise<T>): Promise<T> }
@@ -113,3 +122,13 @@ export interface PaymentGateway {
   createCharge(order: Order): Promise<{ gatewayRef: string; qrisPayload: string }>;
 }
 export interface Notifier { send(phone: string, message: string): Promise<void> }
+/**
+ * Pengirim kode OTP lewat email. `echo` terisi hanya oleh pengirim mode demo (kode dikembalikan agar alur bisa dicoba
+ * tanpa penyedia email); pengirim sungguhan tidak pernah mengembalikannya.
+ */
+export interface OtpSender { send(email: string, subject: string, body: string, code: string): Promise<{ echo?: string }> }
+/** Pembuat dan pencocok kode OTP. Kode tidak pernah disimpan, hanya hash-nya. */
+export interface OtpCodes {
+  generate(): string;
+  hash(salt: string, value: string): string;
+}

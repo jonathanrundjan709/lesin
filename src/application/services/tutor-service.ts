@@ -1,15 +1,16 @@
 import { fail } from "@/domain/errors";
 import { type Match, matchTutor, sorters } from "@/domain/matching";
 import { sanitizeText } from "@/domain/masking";
+import { CONSENT_VERSION } from "@/domain/consent";
 import { FOUNDING_LEADS, FOUNDING_SLOTS } from "@/domain/pricing";
 import type { Id, TutorProfile } from "@/domain/types";
 import { toTutorView, type TutorView } from "@/domain/views";
 import type { Repositories } from "../ports";
 import { parse, profileInput, searchInput } from "../validation";
-import { type BaseDeps, recordEvent } from "./context";
+import { type BaseDeps, recordEvent, requirePhone } from "./context";
 
 export type TutorListItem = TutorView & { match: number; reach: boolean; areaLevel: 0 | 1 | 2 };
-export interface MyProfile { name: string; phone: string; profile: TutorProfile | null }
+export interface MyProfile { name: string; phone: string | null; profile: TutorProfile | null }
 
 /** Pencarian tutor, CV publik (tersamar), dan CV milik tutor sendiri. */
 export class TutorService {
@@ -60,24 +61,41 @@ export class TutorService {
     });
   }
 
+  /** Setuju atau cabut persetujuan pembukaan nama dan WhatsApp (UU PDP). Kontak yang sudah terbuka tidak ditarik kembali. */
+  async setConsent(userId: Id, accept: boolean): Promise<MyProfile> {
+    const now = this.d.clock.now();
+    return this.d.uow.run(async (r) => {
+      const user = (await r.users.byId(userId)) ?? fail("unauthorized", "Masuk dulu.");
+      const p = (await r.tutors.lockByUserId(userId)) ?? fail("not_found", "Lengkapi CV dulu.");
+      const updated: TutorProfile = { ...p, consentAt: accept ? now : null, consentVersion: accept ? CONSENT_VERSION : null, updatedAt: now };
+      await r.tutors.upsert(updated);
+      return { name: user.name, phone: user.phone, profile: updated };
+    });
+  }
+
   /** Simpan CV. Saat CV pertama kali lengkap: tutor terdaftar dan (200 tutor pertama) mendapat 2 lead Founding Tutor. */
   async saveProfile(userId: Id, raw: unknown): Promise<MyProfile & { foundingGranted: boolean }> {
     const input = parse(profileInput, raw);
     const now = this.d.clock.now();
     return this.d.uow.run(async (r) => {
       const user = (await r.users.byId(userId)) ?? fail("unauthorized", "Masuk dulu.");
+      requirePhone(user);
       const existing = await r.tutors.lockByUserId(userId);
       const first = !existing || existing.completedAt === null;
+      if (first && input.consent !== true) {
+        return fail("validation", "Setujui dulu pembukaan nama dan WhatsApp-mu kepada pencari yang memakai kuota.");
+      }
       const base: TutorProfile = existing ?? {
         userId, headline: "", subjects: [], levels: [], curricula: [], area: input.area, rate: input.rate, rateDurationMin: input.rateDurationMin,
         experienceYears: 0, education: "", bio: "", achievements: "", teachesOffline: true, teachesOnline: true, gender: null, age: null, availableDays: [],
-        verification: "unverified", planUntil: null, ratingAvg: 0, reviewCount: 0, studentsTaught: 0, completedAt: null, createdAt: now, updatedAt: now,
+        verification: "unverified", planUntil: null, ratingAvg: 0, reviewCount: 0, studentsTaught: 0, completedAt: null, consentAt: null, consentVersion: null, createdAt: now, updatedAt: now,
       };
       const profile: TutorProfile = {
         ...base, headline: sanitizeText(input.headline), subjects: [...new Set(input.subjects)], levels: [...new Set(input.levels)],
         curricula: [...new Set(input.curricula)], area: input.area, rate: input.rate, rateDurationMin: input.rateDurationMin,
         experienceYears: input.experienceYears, education: sanitizeText(input.education), bio: sanitizeText(input.bio),
         achievements: sanitizeText(input.achievements), completedAt: base.completedAt ?? now, updatedAt: now,
+        ...(first ? { consentAt: now, consentVersion: CONSENT_VERSION } : {}), // persetujuan hanya lewat centang CV pertama atau tombol di halaman CV
       };
       await r.tutors.upsert(profile);
       if (input.name !== user.name) await r.users.update({ ...user, name: input.name });

@@ -15,7 +15,7 @@ export async function seedDemoData(d: { uow: UnitOfWork; clock: Clock; hasher: P
   const passwordHash = await d.hasher.hash(randomBytes(24).toString("hex"));
   return d.uow.run(async (r) => {
     if (await r.users.byPhone(SEED_TUTORS[0].phone)) return false;
-    const mkUser = (id: string, name: string, phone: string): User => ({ id, name, phone, passwordHash, isAdmin: false, status: "active", createdAt: now });
+    const mkUser = (id: string, name: string, phone: string): User => ({ id, name, phone, email: null, emailVerifiedAt: null, passwordHash, isAdmin: false, status: "active", createdAt: now });
 
     for (const t of SEED_TUTORS) {
       await r.users.insert(mkUser(t.id, t.name, t.phone));
@@ -23,7 +23,7 @@ export async function seedDemoData(d: { uow: UnitOfWork; clock: Clock; hasher: P
         userId: t.id, headline: t.headline, subjects: t.subjects, levels: t.levels, curricula: t.curricula, area: t.area, rate: t.rate, rateDurationMin: 90,
         experienceYears: t.exp, education: t.edu, bio: t.bio, achievements: t.achievements, teachesOffline: t.offline, teachesOnline: t.online,
         gender: t.gender, age: t.age, availableDays: t.avail as DayCode[], verification: t.verified ? "verified" : "unverified", planUntil: null,
-        ratingAvg: t.rating, reviewCount: t.reviews, studentsTaught: t.students, completedAt: now, createdAt: now, updatedAt: now,
+        ratingAvg: t.rating, reviewCount: t.reviews, studentsTaught: t.students, completedAt: now, consentAt: now, consentVersion: "demo", createdAt: now, updatedAt: now,
       };
       await r.tutors.upsert(p);
     }

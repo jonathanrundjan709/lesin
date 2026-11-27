@@ -39,7 +39,8 @@ export class LeadService {
       if (!req || req.expiresAt <= now) return fail("not_found", "Permintaan tidak aktif.");
       if (req.seekerId === tutorId) return fail("validation", "Ini permintaanmu sendiri.");
       const owner = (await r.users.byId(req.seekerId)) ?? fail("not_found", "Pemilik permintaan tidak ditemukan.");
-      const contact = { seekerId: owner.id, name: owner.name, phone: owner.phone, waNumber: toWaNumber(owner.phone) };
+      const ownerPhone = owner.phone ?? fail("not_found", "Pencari ini belum melengkapi kontaknya.");
+      const contact = { seekerId: owner.id, name: owner.name, phone: ownerPhone, waNumber: toWaNumber(ownerPhone) };
       const entries = await r.ledger.byUser(tutorId, "lead");
       const planActive = isPlanActive(profile, now);
 

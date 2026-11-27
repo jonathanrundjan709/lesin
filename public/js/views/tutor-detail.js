@@ -35,6 +35,11 @@ export const tutorDetailView = {
 
     const cta = me ? `<div class="info">${ic("info")}<span>Ini tampilan CV-mu di mata orang tua. Nama dan kontakmu tersamar sampai pencari membuka kontakmu atau kamu merespons permintaannya.</span></div>`
       : open ? contactCard({ color: avColor(t.id), name: t.name, note: `${t.age ? `${t.age} tahun · ` : ""}${esc(t.area)}`, rows: [["WhatsApp", t.phone, true], ["Domisili", `Kec. ${t.area}`]], wa: waLink(t.waNumber, msg) })
+      : !t.directContact ? `<div class="lockbox" style="margin-top:12px">
+          <div class="row"><span style="display:inline-flex;width:20px;color:var(--acc)">${ic("lock")}</span><h3>Kontak tutor ini belum dibuka untuk umum</h3></div>
+          <ul><li>${ic("check")}<span>Tutor ini belum mengaktifkan buka kontak langsung</span></li>
+            <li>${ic("check")}<span><b>Kirim permintaan gratis</b>: tutor yang tertarik akan menghubungimu</span></li></ul>
+          <button class="btn acc" id="pickBtn">${picked ? `${ic("check")}Dipilih. Lanjut kirim permintaan` : "Kirim permintaan gratis"}</button></div>`
       : `${trialBanner()}<div class="lockbox" style="margin-top:12px">
           <div class="row"><span style="display:inline-flex;width:20px;color:var(--acc)">${ic("lock")}</span><h3>Identitas & kontak tersamar</h3></div>
           <ul><li>${ic("check")}<span><b>Buka kontak</b> untuk melihat nama asli dan WhatsApp tutor (1 kuota)</span></li>
@@ -89,6 +94,7 @@ export const tutorDetailView = {
     bindCopy();
     const unlock = $("#unlockBtn");
     if (unlock) unlock.onclick = () => {
+      if (session.user.needsPhone) return window.dispatchEvent(new CustomEvent("lesin:needs-phone"));
       const c = session.contact;
       if (!c || c.credits < 1) {
         return confirmSheet({

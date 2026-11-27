@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { after, describe, test } from "node:test";
 import { DomainError } from "@/domain/errors";
-import { ADAPTERS, buyAndPay, DAY, type Env, makeEnv, makeTutor, signup, validProfile, validRequest } from "../support/harness";
+import { ADAPTERS, buyAndPay, DAY, type Env, lastCode, makeEnv, makeTutor, phoneN, signup, validProfile, validRequest } from "../support/harness";
 
 const rejects = (p: Promise<unknown>, code: string, msg?: RegExp) =>
   assert.rejects(p, (e: unknown) => e instanceof DomainError && e.code === code && (!msg || msg.test(e.message)));
@@ -12,19 +12,97 @@ for (const adapter of ADAPTERS) {
     const fresh = async () => { const e = await makeEnv(adapter); envs.push(e); return e; };
     after(async () => { for (const e of envs) await e.close(); });
 
-    test("daftar, masuk, nomor kembar, password salah, token sesi", async () => {
+    test("daftar lewat email + OTP, masuk, email kembar, password salah, token sesi", async () => {
       const env = await fresh(); const { auth } = env.services;
-      const a = await auth.signup({ name: "Ibu Ratna", phone: "0812-1111-2222", password: "rahasia1" });
-      assert.equal(a.user.phone, "081211112222");
-      await rejects(auth.signup({ name: "Orang Lain", phone: "081211112222", password: "abcdef" }), "conflict", /sudah terdaftar/);
-      await rejects(auth.signup({ name: "Ab", phone: "0812", password: "1" }), "validation");
-      await rejects(auth.login({ phone: "081211112222", password: "salah" }), "unauthorized", /salah/);
-      await rejects(auth.login({ phone: "081299990000", password: "rahasia1" }), "unauthorized");
-      const l = await auth.login({ phone: "+62 812-1111-2222", password: "rahasia1" });
+      const p = await auth.signup({ name: "Ibu Ratna", email: "  Ratna@Contoh.ID ", password: "rahasia1" }, "1.1.1.1");
+      assert.equal(p.email, "ratna@contoh.id", "email dinormalkan");
+      assert.match(p.echo ?? "", /^\d{6}$/, "mode demo mengembalikan kode");
+      await rejects(auth.login({ id: "ratna@contoh.id", password: "rahasia1" }), "unverified", /belum diverifikasi/);
+      const a = await auth.verify({ email: "ratna@contoh.id", code: lastCode(env, "ratna@contoh.id") });
+      assert.equal(a.user.email, "ratna@contoh.id"); assert.equal(a.user.phone, null); assert.equal(a.user.needsPhone, true);
+      await rejects(auth.signup({ name: "Orang Lain", email: "RATNA@contoh.id", password: "abcdef" }, "1.1.1.1"), "conflict", /sudah terdaftar/);
+      await rejects(auth.signup({ name: "Ab", email: "bukan-email", password: "1" }, "1.1.1.1"), "validation");
+      await rejects(auth.login({ id: "ratna@contoh.id", password: "salah" }), "unauthorized", /salah/);
+      await rejects(auth.login({ id: "tidak@ada.id", password: "rahasia1" }), "unauthorized");
+      const l = await auth.login({ id: "RATNA@contoh.id", password: "rahasia1" });
       assert.equal((await auth.authenticate(l.token))?.id, a.user.id);
       assert.equal(await auth.authenticate(l.token + "x"), null);
       env.clock.advance(31 * DAY);
       assert.equal(await auth.authenticate(l.token), null, "sesi kedaluwarsa 30 hari");
+    });
+
+    test("OTP: kode salah dihitung dan terkunci, kedaluwarsa, kirim ulang ada jeda, batas per email", async () => {
+      const env = await fresh(); const { auth } = env.services;
+      const email = "otp@contoh.id";
+      await auth.signup({ name: "Pengguna OTP", email, password: "rahasia1" }, "2.2.2.2");
+      const code = lastCode(env, email), wrong = code === "000000" ? "111111" : "000000";
+      await rejects(auth.verify({ email, code: "12" }), "validation", /6 angka/);
+      for (let i = 0; i < 4; i++) await rejects(auth.verify({ email, code: wrong }), "validation", /salah/);
+      await rejects(auth.verify({ email, code: wrong }), "rate_limited", /percobaan/);
+      await rejects(auth.verify({ email, code }), "rate_limited", /percobaan/);
+      await rejects(auth.resend({ email }, "2.2.2.2"), "rate_limited", /Tunggu/);
+      env.clock.advance(31_000);
+      assert.deepEqual(Object.keys(await auth.resend({ email }, "2.2.2.2")), ["echo"]);
+      const fresh1 = lastCode(env, email);
+      env.clock.advance(6 * 60_000);
+      await rejects(auth.verify({ email, code: fresh1 }), "validation", /kedaluwarsa/);
+      assert.deepEqual(await auth.resend({ email: "tak-dikenal@contoh.id" }, "2.2.2.2"), {}, "email tak dikenal: jawaban sama, tidak membocorkan");
+      for (let i = 0; i < 3; i++) { env.clock.advance(31_000); await auth.resend({ email }, "2.2.2.2"); }
+      env.clock.advance(31_000);
+      await rejects(auth.resend({ email }, "2.2.2.2"), "rate_limited", /Terlalu banyak/);
+      const ok = await auth.verify({ email, code: lastCode(env, email) });
+      assert.equal(ok.user.email, email);
+      await rejects(auth.verify({ email, code: lastCode(env, email) }), "validation", /kedaluwarsa/);
+    });
+
+    test("nomor WhatsApp wajib: dipagari, unik, tidak bisa diganti, trial sekali per nomor (akun kedua tidak dapat trial)", async () => {
+      const env = await fresh(); const { auth, contacts, requests } = env.services;
+      const reg = async (email: string) => {
+        await auth.signup({ name: "Ibu Dua", email, password: "rahasia1" }, "3.3.3.3");
+        return (await auth.verify({ email, code: lastCode(env, email) })).user;
+      };
+      const tutor = await makeTutor(env);
+      const a = await reg("a@contoh.id");
+      await rejects(contacts.unlockTutor(a.id, tutor.user.id), "unverified", /WhatsApp/);
+      await rejects(requests.create(a.id, validRequest()), "unverified", /WhatsApp/);
+      await rejects(env.services.billing.createOrder(a.id, "contact5", "k1"), "unverified", /WhatsApp/);
+      await rejects(env.services.tutors.saveProfile(a.id, validProfile()), "unverified", /WhatsApp/);
+      assert.equal((await env.uow.run((r) => r.ledger.byUser(a.id, "contact"))).length, 0, "belum ada trial sebelum nomor");
+
+      await rejects(auth.setPhone(a.id, { phone: "12345" }), "validation", /WhatsApp/);
+      const set = await auth.setPhone(a.id, { phone: "+62 812-5555-0001" });
+      assert.equal(set.user.phone, "081255550001"); assert.equal(set.trialGranted, true); assert.equal(set.user.needsPhone, false);
+      assert.equal((await contacts.status(a.id)).credits, 10);
+      assert.equal((await auth.setPhone(a.id, { phone: "081255550001" })).trialGranted, false, "ulang dengan nomor sama: tidak dobel");
+      await rejects(auth.setPhone(a.id, { phone: "081255550002" }), "conflict", /tidak bisa diganti/);
+
+      const b = await reg("b@contoh.id");
+      await rejects(auth.setPhone(b.id, { phone: "0812-5555-0001" }), "conflict", /sudah dipakai/);
+      assert.equal((await contacts.status(a.id)).credits, 10);
+      await auth.setPhone(b.id, { phone: phoneN() });
+      assert.equal((await contacts.status(b.id)).credits, 10, "nomor berbeda = orang berbeda");
+      assert.equal((await contacts.unlockTutor(a.id, tutor.user.id)).charged, true);
+    });
+
+    test("persetujuan tutor (UU PDP): wajib saat CV pertama, kontak langsung hanya untuk yang setuju, bisa dicabut", async () => {
+      const env = await fresh(); const { tutors, contacts } = env.services;
+      const u = await signup(env, "Rizky Pratama"), parent = await signup(env, "Ibu Ratna");
+      await rejects(tutors.saveProfile(u.id, validProfile({ consent: undefined })), "validation", /Setujui/);
+      await rejects(tutors.saveProfile(u.id, validProfile({ consent: false })), "validation", /Setujui/);
+      const saved = await tutors.saveProfile(u.id, validProfile());
+      assert.equal(saved.profile?.consentAt, env.clock.now()); assert.equal(saved.profile?.consentVersion, "2026-11-28");
+      assert.equal((await tutors.get(parent.id, u.id)).directContact, true);
+
+      const off = await tutors.setConsent(u.id, false);
+      assert.equal(off.profile?.consentAt, null);
+      assert.equal((await tutors.get(parent.id, u.id)).directContact, false);
+      await rejects(contacts.unlockTutor(parent.id, u.id), "forbidden", /belum membuka kontak langsung/);
+      assert.equal((await contacts.status(parent.id)).credits, 10, "ditolak tanpa memotong kuota");
+
+      await tutors.saveProfile(u.id, validProfile({ consent: undefined, bio: "Edit CV tidak mengubah persetujuan" }));
+      assert.equal((await tutors.get(parent.id, u.id)).directContact, false, "menyimpan CV tanpa centang tidak menyetujui diam-diam");
+      await tutors.setConsent(u.id, true);
+      assert.equal((await contacts.unlockTutor(parent.id, u.id)).charged, true);
     });
 
     test("CV: wajib lengkap; teks bebas dibersihkan; Founding Tutor 2 lead sekali saja", async () => {
@@ -231,7 +309,7 @@ for (const adapter of ADAPTERS) {
 
     test("akun lama (dibuat sebelum fitur trial) mendapat trial sekali saat pertama dicek, tidak dobel", async () => {
       const env = await fresh(); const { contacts } = env.services;
-      await env.uow.run(async (r) => { await r.users.insert({ id: "legacy", name: "Akun Lama", phone: "081200009999", passwordHash: "x", isAdmin: false, status: "active", createdAt: 1 }); });
+      await env.uow.run(async (r) => { await r.users.insert({ id: "legacy", name: "Akun Lama", phone: "081200009999", email: null, emailVerifiedAt: null, passwordHash: "x", isAdmin: false, status: "active", createdAt: 1 }); });
       const first = await contacts.status("legacy");
       assert.equal(first.credits, 10); assert.equal(first.trialEndsAt, env.clock.now() + 7 * DAY);
       env.clock.advance(3 * DAY);

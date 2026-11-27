@@ -36,8 +36,9 @@ Tabel dibuat otomatis saat start. Data contoh dimasukkan hanya bila database mas
 1. Import repo, biarkan preset **Next.js**.
 2. Sambungkan database: **Storage → Supabase** (atau Neon). Integrasinya mengisi `POSTGRES_URL` otomatis. Aplikasi memakai `DATABASE_URL`, atau `POSTGRES_URL` bila yang pertama kosong. Pakai URL **pooler** (port 6543) untuk serverless.
 3. (Disarankan) isi `SESSION_SECRET` dan `PAYMENT_WEBHOOK_SECRET` dengan string acak panjang. Bila kosong, keduanya diturunkan dari URL database.
-4. Opsional: `ADMIN_PHONE` dan `ADMIN_PASSWORD` untuk akun admin pertama, `CRON_SECRET` agar cron harian jalan.
-5. **Redeploy** (variabel baru hanya berlaku untuk deployment baru).
+4. **Sebelum iklan berbayar:** isi `RESEND_API_KEY` dan `EMAIL_FROM` (domain pengirim terverifikasi) supaya kode OTP dikirim ke email. Tanpanya aplikasi berjalan di *mode demo*: kode OTP ditampilkan di layar dan siapa pun bisa mendaftar dengan email orang lain.
+5. Opsional: `ADMIN_PHONE` dan `ADMIN_PASSWORD` untuk akun admin pertama, `CRON_SECRET` agar cron harian jalan.
+6. **Redeploy** (variabel baru hanya berlaku untuk deployment baru).
 
 Tabel dibuat otomatis saat start dan **RLS diaktifkan di semua tabel**. Supabase membuka skema `public` lewat REST API publik, jadi tanpa RLS data pengguna bisa terbaca. Backend memakai role pemilik tabel yang melewati RLS, jadi tidak terpengaruh. Jangan menambah kebijakan RLS untuk `anon` atau `authenticated`.
 
@@ -52,7 +53,8 @@ Tanpa database, Vercel memakai memori per instance dan akun bisa hilang antar pe
 | `PAYMENT_WEBHOOK_SECRET` | Tanda tangan webhook pembayaran |
 | `ALLOW_PAYMENT_SIMULATION` | `false` mematikan tombol bayar demo (saat gateway sungguhan dipasang) |
 | `SEED_DEMO_DATA` | `false` = jangan isi data contoh |
-| `ADMIN_PHONE`, `ADMIN_PASSWORD` | Membuat akun admin |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Kirim OTP email lewat Resend. Kosong = mode demo (kode tampil di layar) |
+| `ADMIN_PHONE`, `ADMIN_PASSWORD` | Membuat akun admin (masuk dengan nomor) |
 | `CRON_SECRET` | Melindungi `GET /api/cron` |
 
 ## Uji coba tampilan lewat URL

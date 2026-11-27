@@ -3,7 +3,7 @@ import { monthEnd } from "@/domain/leads";
 import { type Audience, creditKindOf, isProduct, listPrice, ORDER_TTL_MIN, PRODUCTS } from "@/domain/pricing";
 import type { Id, Order, ProductKey } from "@/domain/types";
 import type { PaymentGateway, WebhookSigner } from "../ports";
-import { type BaseDeps, recordEvent } from "./context";
+import { type BaseDeps, recordEvent, requirePhone } from "./context";
 
 export interface OrderView { id: Id; product: ProductKey; audience: Audience; amount: number; units: number; status: Order["status"]; expiresAt: number; qrisPayload: string }
 export interface ProductView { key: ProductKey; audience: Audience; label: string; amount: number; units: number; plan: boolean; listPrice: number; perUnit: number }
@@ -30,6 +30,7 @@ export class BillingService {
     if (!idempotencyKey) fail("validation", "Kunci idempotensi wajib.");
     const p = PRODUCTS[product as ProductKey], now = this.d.clock.now();
     const order = await this.d.uow.run(async (r) => {
+      requirePhone((await r.users.byId(buyerId)) ?? fail("unauthorized", "Masuk dulu."));
       if (p.audience === "tutor") {
         const profile = await r.tutors.byUserId(buyerId);
         if (!profile || profile.completedAt === null) return fail("forbidden", "Lengkapi CV dulu sebelum membeli lead.");

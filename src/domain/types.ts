@@ -9,8 +9,21 @@ export type Gender = "L" | "P";
 export interface ScheduleSlot { day: DayCode; time: string } // time = "HH:MM"
 
 export interface User {
-  id: Id; name: string; phone: string; passwordHash: string;
+  id: Id; name: string; passwordHash: string;
+  /** Email terverifikasi lewat OTP. Akun lama (sebelum OTP) belum punya. */
+  email: string | null; emailVerifiedAt: Millis | null;
+  /**
+   * Nomor WhatsApp, diisi sesudah email terverifikasi. Wajib untuk membuka kontak, mengirim permintaan, membeli, dan menjadi tutor.
+   * Unik: satu nomor satu akun, dan kredit trial diberikan sekali per nomor.
+   */
+  phone: string | null;
   isAdmin: boolean; status: "active" | "suspended"; createdAt: Millis;
+}
+
+export interface OtpChallenge {
+  id: Id; email: string; codeHash: string; expiresAt: Millis; attempts: number; consumedAt: Millis | null;
+  /** Hash alamat IP peminta, untuk membatasi penyalahgunaan tanpa menyimpan IP mentah. */
+  ipHash: string; createdAt: Millis;
 }
 
 export type VerificationStatus = "unverified" | "pending" | "verified" | "suspended";
@@ -28,6 +41,8 @@ export interface TutorProfile {
   ratingAvg: number; reviewCount: number; studentsTaught: number;
   /** Terisi saat CV wajib lengkap pertama kali. */
   completedAt: Millis | null;
+  /** Persetujuan pembukaan nama dan WhatsApp (UU PDP). null = belum setuju atau dicabut. */
+  consentAt: Millis | null; consentVersion: string | null;
   createdAt: Millis; updatedAt: Millis;
 }
 

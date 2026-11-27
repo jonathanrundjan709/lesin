@@ -27,7 +27,7 @@ Sumber: PRD "Lesin — Tutor Marketplace" (rev. 27 Nov 2026). Aturan prioritas d
 | 15 | Budget dan durasi | Tidak ada di PRD | PRD hanya menyebut `budget` | **UI live.** Budget maks Rp400.000 dengan durasi 60/90/120 menit. Tarif dinormalkan per jam |
 | 16 | Radius jarak | Dihapus di UI (feedback 11) | `radius_km` dengan PostGIS (§8) | **UI live.** Kecocokan memakai kecamatan (L3) dan kota/kabupaten. Tanpa PostGIS |
 | 17 | Daerah | Kecamatan L3 Jabodetabek, kota lain "Segera hadir" | Kota di luar Jabodetabek di luar lingkup (§2) | **Selaras.** 183 kecamatan, satu sumber kebenaran di `src/domain/areas.ts` |
-| 18 | Masuk | Nomor WhatsApp + password | WhatsApp OTP (§8) | **UI live.** Password (scrypt) dulu. OTP menunggu pilihan penyedia WhatsApp (PRD §15) |
+| 18 | Masuk / daftar | Email + password, kode OTP email saat daftar, lalu nomor WhatsApp wajib | WhatsApp OTP (§8) | **Sengaja beda dari PRD (keputusan 28 Nov 2026).** OTP lewat email (gratis), nomor WhatsApp wajib diisi sesudahnya dan jadi pagar trial: satu nomor satu akun, trial sekali per nomor. Nomor belum diverifikasi OTP. Akun lama masuk dengan nomor |
 | 19 | Ulasan | Setelah kontak terbuka | P1: setelah 4 sesi (§5). §11: hanya dari pencari yang kontaknya terbuka | **UI live + §11.** Hanya dari pencari yang tutornya sudah merespons. Aturan "4 sesi" menyusul bersama pelacakan sesi |
 | 20 | Tambah mapel berbayar (permintaan feedback #10) | Paywall Rp10.000 | Tidak ada di PRD | **Belum ditagih.** Alur "Tambah" tetap ada tanpa biaya. Perlu keputusan harga sebelum dijadikan produk |
 | 21 | Tamu membuka CV tutor | CV bisa dibaca tamu | PRD: CV tersamar, nama dan kontak tidak dikirim (§5, §8). Tidak melarang tamu | **Permintaan produk (staging).** Tamu hanya melihat daftar hasil (tersamar). Membuka CV, memilih tutor, dan mengirim permintaan butuh akun. Dikunci di server (`GET /api/tutors/:id` mengembalikan 401) dan paywall "Masuk dulu yuk" di UI |
@@ -46,7 +46,8 @@ Sumber: PRD "Lesin — Tutor Marketplace" (rev. 27 Nov 2026). Aturan prioritas d
 | Laporan, verifikasi manual, konsol admin | P0 | Selesai minimal. KTP/KTM hanya status tinjauan, belum unggah berkas (R2) |
 | Filter kontak di teks bebas | P0 | Selesai |
 | Event funnel | P0 | Peristiwa tercatat (`events`). Dasbor belum ada |
-| OTP WhatsApp | P0 | **Belum.** Memakai password |
+| OTP | P0 | **Selesai dengan email** (6 angka, 5 menit, 5 percobaan, jeda 30 dtk, batas per email dan IP). Nomor WhatsApp wajib tapi belum diverifikasi. Pengirim: Resend, atau mode demo bila `RESEND_API_KEY` kosong |
+| Persetujuan tutor (UU PDP) | P0 | **Selesai.** Wajib dicentang saat CV pertama, versi dan waktu tersimpan, bisa dicabut di halaman CV. Buka kontak langsung hanya untuk tutor yang setuju |
 | Admin 2FA, rate limit, backup harian, PostGIS | P0 teknis | **Belum** |
 | Ulasan setelah 4 sesi, payment log, prompt musim ujian | P1 | Belum |
 | Boost orang tua, profile highlight, e-wallet | P2 | Belum |

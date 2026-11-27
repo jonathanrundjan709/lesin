@@ -1,4 +1,4 @@
-import { initialsOf, maskName, toWaNumber } from "./masking";
+import { initialsOf, maskName, waOrNull } from "./masking";
 import type { DayCode, Id, Millis, TutorProfile, User } from "./types";
 
 /**
@@ -14,6 +14,8 @@ export interface TutorView {
   education: string; bio: string; achievements: string[];
   teachesOffline: boolean; teachesOnline: boolean; availableDays: DayCode[]; age: number | null;
   verified: boolean; proBadge: boolean;
+  /** Tutor sudah menyetujui kontaknya dibuka pencari dengan kuota. */
+  directContact: boolean;
   rating: number; reviewCount: number; studentsTaught: number;
 }
 
@@ -23,12 +25,12 @@ export function toTutorView(user: User, p: TutorProfile, revealed: boolean, now:
   return {
     id: p.userId, masked: !revealed,
     name: revealed ? user.name : maskName(user.name), initials: initialsOf(user.name),
-    phone: revealed ? user.phone : null, waNumber: revealed ? toWaNumber(user.phone) : null,
+    phone: revealed ? user.phone : null, waNumber: revealed ? waOrNull(user.phone) : null,
     headline: p.headline, subjects: p.subjects, levels: p.levels, curricula: p.curricula,
     area: p.area, rate: p.rate, rateDurationMin: p.rateDurationMin, experienceYears: p.experienceYears,
     education: p.education, bio: p.bio, achievements: p.achievements.split("\n").map((s) => s.trim()).filter(Boolean),
     teachesOffline: p.teachesOffline, teachesOnline: p.teachesOnline, availableDays: p.availableDays, age: revealed ? p.age : null,
-    verified: p.verification === "verified", proBadge: isPlanActive(p, now),
+    verified: p.verification === "verified", proBadge: isPlanActive(p, now), directContact: p.consentAt !== null,
     rating: p.reviewCount ? p.ratingAvg : 0, reviewCount: p.reviewCount, studentsTaught: p.studentsTaught,
   };
 }

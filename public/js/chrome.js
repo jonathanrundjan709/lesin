@@ -20,6 +20,7 @@ export function renderChrome() {
 
   const pill = $("#walletPill");
   if (!session.user) { pill.hidden = false; pill.href = "/masuk"; pill.innerHTML = `${ic("user")}Masuk`; }
+  else if (session.user.needsPhone) { pill.hidden = false; pill.href = "/whatsapp"; pill.innerHTML = `${ic("wa")}Tambah WA`; }
   else if (session.mode === "tutor" && cvReady() && session.leads) { pill.hidden = false; pill.href = "/wallet"; pill.innerHTML = `${ic("ticket")}${session.leads.leads} lead`; }
   else if (session.mode === "pencari" && session.contact) { pill.hidden = false; pill.href = "/kuota"; pill.innerHTML = `${ic("ticket")}${session.contact.credits} kuota`; }
   else pill.hidden = true;

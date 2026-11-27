@@ -1,17 +1,17 @@
 import type { Repositories, UnitOfWork } from "@/application/ports";
 import type {
-  AppEvent, ContactUnlock, LedgerEntry, Lesson, LessonRequest, Order, Report, Review, SessionNote, TutorProfile, Unlock, User, VerificationDoc,
+  AppEvent, ContactUnlock, LedgerEntry, Lesson, LessonRequest, Order, OtpChallenge, Report, Review, SessionNote, TutorProfile, Unlock, User, VerificationDoc,
 } from "@/domain/types";
 
 /** Seluruh data dalam memori. Dipakai untuk tes, pengembangan lokal, dan mode demo tanpa DATABASE_URL. */
 export interface MemoryData {
   users: Map<string, User>; tutors: Map<string, TutorProfile>; requests: Map<string, LessonRequest>; unlocks: Unlock[]; contactUnlocks: ContactUnlock[];
   ledger: LedgerEntry[]; orders: Map<string, Order>; webhookEvents: Set<string>; lessons: Map<string, Lesson>; notes: SessionNote[];
-  reviews: Review[]; reports: Map<string, Report>; verifications: Map<string, VerificationDoc>; events: AppEvent[]; eventKeys: Set<string>;
+  reviews: Review[]; reports: Map<string, Report>; verifications: Map<string, VerificationDoc>; events: AppEvent[]; eventKeys: Set<string>; otp: OtpChallenge[];
 }
 export const emptyData = (): MemoryData => ({
   users: new Map(), tutors: new Map(), requests: new Map(), unlocks: [], contactUnlocks: [], ledger: [], orders: new Map(), webhookEvents: new Set(),
-  lessons: new Map(), notes: [], reviews: [], reports: new Map(), verifications: new Map(), events: [], eventKeys: new Set(),
+  lessons: new Map(), notes: [], reviews: [], reports: new Map(), verifications: new Map(), events: [], eventKeys: new Set(), otp: [],
 });
 
 const clone = <T>(v: T): T => structuredClone(v);
@@ -25,6 +25,7 @@ function buildRepos(db: MemoryData): Repositories {
       async lockById(id) { return clone(db.users.get(id) ?? null); }, // transaksi sudah serial
       async byIds(ids) { return ids.flatMap((id) => { const u = db.users.get(id); return u ? [clone(u)] : []; }); },
       async byPhone(phone) { return clone([...db.users.values()].find((u) => u.phone === phone) ?? null); },
+      async byEmail(email) { return clone([...db.users.values()].find((u) => u.email === email) ?? null); },
     },
     tutors: {
       async upsert(p) { db.tutors.set(p.userId, clone(p)); },
@@ -106,6 +107,13 @@ function buildRepos(db: MemoryData): Repositories {
       async byId(id) { return clone(db.verifications.get(id) ?? null); },
       async byTutor(tutorId) { return [...db.verifications.values()].filter((d) => d.tutorId === tutorId).map(clone); },
       async pending() { return [...db.verifications.values()].filter((d) => d.status === "pending").map(clone); },
+    },
+    otp: {
+      async insert(c) { db.otp.push(clone(c)); },
+      async update(c) { const i = db.otp.findIndex((x) => x.id === c.id); if (i >= 0) db.otp[i] = clone(c); },
+      async latest(email) { return clone([...db.otp].filter((c) => c.email === email).sort((a, b) => b.createdAt - a.createdAt)[0] ?? null); },
+      async countByEmailSince(email, since) { return db.otp.filter((c) => c.email === email && c.createdAt >= since).length; },
+      async countByIpSince(ipHash, since) { return db.otp.filter((c) => c.ipHash === ipHash && c.createdAt >= since).length; },
     },
     events: {
       async insert(e) { db.events.push(clone(e)); },

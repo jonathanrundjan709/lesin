@@ -36,7 +36,7 @@ export function modeSheet() {
   const u = session.user;
   const opt = (m, icon, title, desc) => `<button type="button" class="mode-opt ${session.mode === m ? "on" : ""}" data-role="${m}"><span class="mi">${ic(icon)}</span>
     <span class="grow"><b>${title}</b><small>${desc}</small></span>${session.mode === m ? ic("check", "ck") : ""}</button>`;
-  openSheet(`<div class="acc-row"><div class="avatar sm" style="background:${avColor(u.id)}">${esc(initials(u.name))}</div><div class="grow"><b>${esc(u.name)}</b><small>${esc(u.phone)}</small></div>
+  openSheet(`<div class="acc-row"><div class="avatar sm" style="background:${avColor(u.id)}">${esc(initials(u.name))}</div><div class="grow"><b>${esc(u.name)}</b><small>${esc(u.email || u.phone || "")}</small></div>
     <button type="button" class="link" id="logoutBtn">Keluar</button></div>
     <h2>Pakai LesIn sebagai</h2><p class="sub" style="margin:4px 0 14px">Kamu bisa pindah kapan saja. Data dan lead tetap tersimpan.</p>
     <div class="stack">${opt("pencari", "search", "Pencari guru les", "Cari tutor untuk anak atau dirimu sendiri. Gratis.")}${opt("tutor", "cap", "Tutor", "Pasang CV dan temukan murid baru")}</div>`, (sh) => {

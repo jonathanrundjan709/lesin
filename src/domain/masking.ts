@@ -18,3 +18,5 @@ export const maskOwner = (name: string): string => {
 
 /** Nomor lokal 08xx -> format wa.me tanpa plus. */
 export const toWaNumber = (phone: string): string => "62" + phone.replace(/\D/g, "").replace(/^0/, "");
+/** Seperti toWaNumber, tetapi null untuk akun yang belum mengisi nomor. */
+export const waOrNull = (phone: string | null): string | null => (phone ? toWaNumber(phone) : null);

@@ -18,6 +18,15 @@ window.addEventListener("lesin:session-lost", async () => {
   handlingLost = false;
 });
 
+/** Aksi butuh nomor WhatsApp (mis. buka kontak sebelum nomor diisi): arahkan ke langkah tambah nomor, lalu kembali. */
+window.addEventListener("lesin:needs-phone", () => {
+  if (!session.user || currentPath() === "/whatsapp") return;
+  session.user = { ...session.user, needsPhone: true, phone: null };
+  returnTo.path = currentPath();
+  toast("Tambahkan nomor WhatsApp dulu untuk melanjutkan.", "info", 4500);
+  navigate("/whatsapp");
+});
+
 /** Titik masuk: muat data referensi + sesi dari server, pasang rute, lalu render halaman pertama. */
 async function main() {
   $("#roleBtn").onclick = modeSheet;

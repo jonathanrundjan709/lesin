@@ -16,9 +16,20 @@ DO $$ BEGIN
   END IF;
 END $$;
 CREATE TABLE IF NOT EXISTS users (
-  id TEXT PRIMARY KEY, name TEXT NOT NULL, phone TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL,
+  id TEXT PRIMARY KEY, name TEXT NOT NULL, phone TEXT UNIQUE, password_hash TEXT NOT NULL,
   is_admin BOOLEAN NOT NULL DEFAULT FALSE, status TEXT NOT NULL DEFAULT 'active', created_at BIGINT NOT NULL
 );
+-- Peningkatan dari skema lama: email terverifikasi OTP, dan nomor WhatsApp menjadi isian sesudah daftar (boleh kosong sementara).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at BIGINT;
+ALTER TABLE users ALTER COLUMN phone DROP NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_key ON users (email);
+CREATE TABLE IF NOT EXISTS otp_challenges (
+  id TEXT PRIMARY KEY, email TEXT NOT NULL, code_hash TEXT NOT NULL, expires_at BIGINT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0,
+  consumed_at BIGINT, ip_hash TEXT NOT NULL, created_at BIGINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS otp_email_idx ON otp_challenges (email, created_at);
+CREATE INDEX IF NOT EXISTS otp_ip_idx ON otp_challenges (ip_hash, created_at);
 CREATE TABLE IF NOT EXISTS tutor_profiles (
   user_id TEXT PRIMARY KEY REFERENCES users(id), headline TEXT NOT NULL, subjects JSONB NOT NULL, levels JSONB NOT NULL, curricula JSONB NOT NULL,
   area TEXT NOT NULL, rate INTEGER NOT NULL, rate_duration_min INTEGER NOT NULL, experience_years INTEGER NOT NULL, education TEXT NOT NULL,
@@ -26,6 +37,10 @@ CREATE TABLE IF NOT EXISTS tutor_profiles (
   available_days JSONB NOT NULL, verification TEXT NOT NULL, plan_until BIGINT, rating_avg REAL NOT NULL, review_count INTEGER NOT NULL,
   students_taught INTEGER NOT NULL, completed_at BIGINT, created_at BIGINT NOT NULL, updated_at BIGINT NOT NULL
 );
+-- Persetujuan tutor atas pembukaan nama dan WhatsApp (UU PDP). Tutor contoh (id t1, t2, ...) dianggap sudah setuju.
+ALTER TABLE tutor_profiles ADD COLUMN IF NOT EXISTS consent_at BIGINT;
+ALTER TABLE tutor_profiles ADD COLUMN IF NOT EXISTS consent_version TEXT;
+UPDATE tutor_profiles SET consent_at = created_at, consent_version = 'demo' WHERE consent_at IS NULL AND user_id ~ '^t[0-9]+$';
 CREATE TABLE IF NOT EXISTS requests (
   id TEXT PRIMARY KEY, seeker_id TEXT NOT NULL REFERENCES users(id), subject TEXT NOT NULL, level TEXT NOT NULL, curriculum TEXT NOT NULL,
   student_note TEXT NOT NULL, area TEXT NOT NULL, mode TEXT NOT NULL, duration_min INTEGER NOT NULL, budget INTEGER NOT NULL,
@@ -91,4 +106,5 @@ ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE verification_docs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contact_unlocks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE otp_challenges ENABLE ROW LEVEL SECURITY;
 `;

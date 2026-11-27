@@ -1,6 +1,6 @@
 import type { Repositories, UnitOfWork } from "@/application/ports";
 import type {
-  AppEvent, ContactUnlock, LedgerEntry, Lesson, LessonRequest, Order, Report, Review, ScheduleSlot, SessionNote, TutorProfile, Unlock, User, VerificationDoc,
+  AppEvent, ContactUnlock, LedgerEntry, Lesson, LessonRequest, Order, OtpChallenge, Report, Review, ScheduleSlot, SessionNote, TutorProfile, Unlock, User, VerificationDoc,
 } from "@/domain/types";
 import { SCHEMA_SQL } from "./schema";
 import type { Row, SqlClient, SqlDatabase } from "./sql-database";
@@ -11,14 +11,22 @@ const json = (v: unknown): string => JSON.stringify(v);
 const list = <T>(rows: Row[], map: (r: Row) => T): T[] => rows.map(map);
 const one = <T>(rows: Row[], map: (r: Row) => T): T | null => (rows[0] ? map(rows[0]) : null);
 
-const user = (r: Row): User => ({ id: String(r.id), name: String(r.name), phone: String(r.phone), passwordHash: String(r.password_hash), isAdmin: Boolean(r.is_admin), status: r.status as User["status"], createdAt: n(r.created_at) });
+const user = (r: Row): User => ({
+  id: String(r.id), name: String(r.name), passwordHash: String(r.password_hash), email: r.email ? String(r.email) : null, emailVerifiedAt: nn(r.email_verified_at),
+  phone: r.phone ? String(r.phone) : null, isAdmin: Boolean(r.is_admin), status: r.status as User["status"], createdAt: n(r.created_at),
+});
+const otpRow = (r: Row): OtpChallenge => ({
+  id: String(r.id), email: String(r.email), codeHash: String(r.code_hash), expiresAt: n(r.expires_at), attempts: n(r.attempts), consumedAt: nn(r.consumed_at),
+  ipHash: String(r.ip_hash), createdAt: n(r.created_at),
+});
 const tutor = (r: Row): TutorProfile => ({
   userId: String(r.user_id), headline: String(r.headline), subjects: r.subjects as string[], levels: r.levels as string[], curricula: r.curricula as string[],
   area: String(r.area), rate: n(r.rate), rateDurationMin: n(r.rate_duration_min), experienceYears: n(r.experience_years), education: String(r.education),
   bio: String(r.bio), achievements: String(r.achievements), teachesOffline: Boolean(r.teaches_offline), teachesOnline: Boolean(r.teaches_online),
   gender: (r.gender as TutorProfile["gender"]) ?? null, age: nn(r.age), availableDays: r.available_days as TutorProfile["availableDays"],
   verification: r.verification as TutorProfile["verification"], planUntil: nn(r.plan_until), ratingAvg: n(r.rating_avg), reviewCount: n(r.review_count),
-  studentsTaught: n(r.students_taught), completedAt: nn(r.completed_at), createdAt: n(r.created_at), updatedAt: n(r.updated_at),
+  studentsTaught: n(r.students_taught), completedAt: nn(r.completed_at), consentAt: nn(r.consent_at), consentVersion: r.consent_version ? String(r.consent_version) : null,
+  createdAt: n(r.created_at), updatedAt: n(r.updated_at),
 });
 const request = (r: Row): LessonRequest => ({
   id: String(r.id), seekerId: String(r.seeker_id), subject: String(r.subject), level: String(r.level), curriculum: String(r.curriculum), studentNote: String(r.student_note),
@@ -43,21 +51,22 @@ function buildRepos(db: SqlClient): Repositories {
   const ANY = (ids: readonly string[]) => [ids as string[]];
   return {
     users: {
-      async insert(u) { await q("INSERT INTO users (id,name,phone,password_hash,is_admin,status,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)", [u.id, u.name, u.phone, u.passwordHash, u.isAdmin, u.status, u.createdAt]); },
-      async update(u) { await q("UPDATE users SET name=$2, phone=$3, password_hash=$4, is_admin=$5, status=$6 WHERE id=$1", [u.id, u.name, u.phone, u.passwordHash, u.isAdmin, u.status]); },
+      async insert(u) { await q("INSERT INTO users (id,name,email,email_verified_at,phone,password_hash,is_admin,status,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)", [u.id, u.name, u.email, u.emailVerifiedAt, u.phone, u.passwordHash, u.isAdmin, u.status, u.createdAt]); },
+      async update(u) { await q("UPDATE users SET name=$2, email=$3, email_verified_at=$4, phone=$5, password_hash=$6, is_admin=$7, status=$8 WHERE id=$1", [u.id, u.name, u.email, u.emailVerifiedAt, u.phone, u.passwordHash, u.isAdmin, u.status]); },
       async byId(id) { return one(await q("SELECT * FROM users WHERE id=$1", [id]), user); },
       async lockById(id) { return one(await q("SELECT * FROM users WHERE id=$1 FOR UPDATE", [id]), user); },
       async byIds(ids) { return ids.length ? list(await q("SELECT * FROM users WHERE id = ANY($1::text[])", ANY(ids)), user) : []; },
       async byPhone(phone) { return one(await q("SELECT * FROM users WHERE phone=$1", [phone]), user); },
+      async byEmail(email) { return one(await q("SELECT * FROM users WHERE email=$1", [email]), user); },
     },
     tutors: {
       async upsert(p) {
-        await q(`INSERT INTO tutor_profiles (user_id,headline,subjects,levels,curricula,area,rate,rate_duration_min,experience_years,education,bio,achievements,teaches_offline,teaches_online,gender,age,available_days,verification,plan_until,rating_avg,review_count,students_taught,completed_at,created_at,updated_at)
-          VALUES ($1,$2,$3::jsonb,$4::jsonb,$5::jsonb,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18,$19,$20,$21,$22,$23,$24,$25)
+        await q(`INSERT INTO tutor_profiles (user_id,headline,subjects,levels,curricula,area,rate,rate_duration_min,experience_years,education,bio,achievements,teaches_offline,teaches_online,gender,age,available_days,verification,plan_until,rating_avg,review_count,students_taught,completed_at,created_at,updated_at,consent_at,consent_version)
+          VALUES ($1,$2,$3::jsonb,$4::jsonb,$5::jsonb,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
           ON CONFLICT (user_id) DO UPDATE SET headline=$2,subjects=$3::jsonb,levels=$4::jsonb,curricula=$5::jsonb,area=$6,rate=$7,rate_duration_min=$8,experience_years=$9,education=$10,bio=$11,achievements=$12,
-          teaches_offline=$13,teaches_online=$14,gender=$15,age=$16,available_days=$17::jsonb,verification=$18,plan_until=$19,rating_avg=$20,review_count=$21,students_taught=$22,completed_at=$23,updated_at=$25`,
+          teaches_offline=$13,teaches_online=$14,gender=$15,age=$16,available_days=$17::jsonb,verification=$18,plan_until=$19,rating_avg=$20,review_count=$21,students_taught=$22,completed_at=$23,updated_at=$25,consent_at=$26,consent_version=$27`,
           [p.userId, p.headline, json(p.subjects), json(p.levels), json(p.curricula), p.area, p.rate, p.rateDurationMin, p.experienceYears, p.education, p.bio, p.achievements,
-            p.teachesOffline, p.teachesOnline, p.gender, p.age, json(p.availableDays), p.verification, p.planUntil, p.ratingAvg, p.reviewCount, p.studentsTaught, p.completedAt, p.createdAt, p.updatedAt]);
+            p.teachesOffline, p.teachesOnline, p.gender, p.age, json(p.availableDays), p.verification, p.planUntil, p.ratingAvg, p.reviewCount, p.studentsTaught, p.completedAt, p.createdAt, p.updatedAt, p.consentAt, p.consentVersion]);
       },
       async byUserId(id) { return one(await q("SELECT * FROM tutor_profiles WHERE user_id=$1", [id]), tutor); },
       async lockByUserId(id) { return one(await q("SELECT * FROM tutor_profiles WHERE user_id=$1 FOR UPDATE", [id]), tutor); },
@@ -128,6 +137,13 @@ function buildRepos(db: SqlClient): Repositories {
       async byId(id) { return one(await q("SELECT * FROM verification_docs WHERE id=$1", [id]), doc); },
       async byTutor(tutorId) { return list(await q("SELECT * FROM verification_docs WHERE tutor_id=$1", [tutorId]), doc); },
       async pending() { return list(await q("SELECT * FROM verification_docs WHERE status='pending'"), doc); },
+    },
+    otp: {
+      async insert(c) { await q("INSERT INTO otp_challenges (id,email,code_hash,expires_at,attempts,consumed_at,ip_hash,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)", [c.id, c.email, c.codeHash, c.expiresAt, c.attempts, c.consumedAt, c.ipHash, c.createdAt]); },
+      async update(c) { await q("UPDATE otp_challenges SET attempts=$2, consumed_at=$3 WHERE id=$1", [c.id, c.attempts, c.consumedAt]); },
+      async latest(email) { return one(await q("SELECT * FROM otp_challenges WHERE email=$1 ORDER BY created_at DESC LIMIT 1", [email]), otpRow); },
+      async countByEmailSince(email, since) { return n((await q("SELECT COUNT(*) AS c FROM otp_challenges WHERE email=$1 AND created_at>=$2", [email, since]))[0].c); },
+      async countByIpSince(ipHash, since) { return n((await q("SELECT COUNT(*) AS c FROM otp_challenges WHERE ip_hash=$1 AND created_at>=$2", [ipHash, since]))[0].c); },
     },
     events: {
       async insert(e: AppEvent) { await q("INSERT INTO events (id,user_id,type,payload,created_at) VALUES ($1,$2,$3,$4::jsonb,$5)", [e.id, e.userId, e.type, json(e.payload), e.createdAt]); },

@@ -1,10 +1,10 @@
 import { fail } from "@/domain/errors";
 import { creditBalance } from "@/domain/leads";
 import { CONTACT_PRICE, PRODUCTS, TRIAL_CONTACTS, TRIAL_DAYS } from "@/domain/pricing";
-import type { Id, LedgerEntry } from "@/domain/types";
+import type { Id, LedgerEntry, User } from "@/domain/types";
 import { toTutorView, type TutorView } from "@/domain/views";
 import type { Repositories } from "../ports";
-import { type BaseDeps, recordEvent } from "./context";
+import { type BaseDeps, recordEvent, requirePhone } from "./context";
 import { TutorService } from "./tutor-service";
 import type { HistoryItem } from "./lead-service";
 
@@ -20,9 +20,9 @@ export interface ContactStatus {
 }
 export interface ContactUnlockResult { charged: boolean; tutor: TutorView; status: ContactStatus }
 
-/** Kredit trial pencari baru. Id deterministik supaya tidak pernah diberikan dua kali. */
-export const trialEntry = (userId: Id, now: number): LedgerEntry => ({
-  id: `trial:${userId}`, userId, kind: "contact", delta: TRIAL_CONTACTS, reason: "trial", refId: "trial", expiresAt: now + TRIAL_DAYS * DAY_MS, createdAt: now,
+/** Kredit trial. Id berdasarkan NOMOR WhatsApp (bukan akun), jadi satu nomor hanya pernah mendapat satu trial. */
+export const trialEntry = (userId: Id, phone: string, now: number): LedgerEntry => ({
+  id: `trial:${phone}`, userId, kind: "contact", delta: TRIAL_CONTACTS, reason: "trial", refId: "trial", expiresAt: now + TRIAL_DAYS * DAY_MS, createdAt: now,
 });
 
 /**
@@ -32,10 +32,10 @@ export const trialEntry = (userId: Id, now: number): LedgerEntry => ({
 export class ContactService {
   constructor(private d: BaseDeps) {}
 
-  private async snapshot(r: Repositories, userId: Id, now: number): Promise<ContactStatus> {
-    // Akun lama (sebelum fitur ini) mendapat trial sekali, mulai saat pertama kali dicek.
-    await r.ledger.insertOnce(trialEntry(userId, now));
-    const entries = await r.ledger.byUser(userId, "contact");
+  private async snapshot(r: Repositories, user: User, now: number): Promise<ContactStatus> {
+    // Akun lama yang sudah punya nomor mendapat trial sekali, mulai saat pertama kali dicek. Akun baru mendapatnya saat menambah nomor.
+    if (user.phone) await r.ledger.insertOnce(trialEntry(user.id, user.phone, now));
+    const entries = await r.ledger.byUser(user.id, "contact");
     const trial = entries.find((e) => e.reason === "trial");
     return {
       credits: creditBalance(entries, now), trialActive: Boolean(trial?.expiresAt && trial.expiresAt > now), trialEndsAt: trial?.expiresAt ?? null,
@@ -45,7 +45,7 @@ export class ContactService {
 
   async status(userId: Id): Promise<ContactStatus> {
     const now = this.d.clock.now();
-    return this.d.uow.run((r) => this.snapshot(r, userId, now));
+    return this.d.uow.run(async (r) => this.snapshot(r, (await r.users.byId(userId)) ?? fail("unauthorized", "Masuk dulu."), now));
   }
 
   /**
@@ -56,11 +56,13 @@ export class ContactService {
     const now = this.d.clock.now();
     return this.d.uow.run(async (r) => {
       const seeker = (await r.users.lockById(seekerId)) ?? fail("unauthorized", "Masuk dulu.");
+      requirePhone(seeker);
       if (seekerId === tutorId) return fail("validation", "Ini CV-mu sendiri.");
       const [tutorUser, profile] = await Promise.all([r.users.byId(tutorId), r.tutors.byUserId(tutorId)]);
       if (!tutorUser || !profile || profile.completedAt === null || profile.verification === "suspended") return fail("not_found", "Tutor tidak ditemukan.");
 
-      const status0 = await this.snapshot(r, seeker.id, now);
+      if (profile.consentAt === null) return fail("forbidden", "Tutor ini belum membuka kontak langsung. Kirim permintaan supaya tutor bisa menghubungimu.");
+      const status0 = await this.snapshot(r, seeker, now);
       if (await r.contactUnlocks.has(seekerId, tutorId)) return { charged: false, tutor: toTutorView(tutorUser, profile, true, now), status: status0 };
       if (status0.credits < 1) {
         return fail("payment_required", status0.trialEndsAt && !status0.trialActive

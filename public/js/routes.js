@@ -1,7 +1,7 @@
 import { configureRouter, defineRoute } from "./core/router.js";
 import { renderChrome } from "./chrome.js";
 import { adminView } from "./views/admin.js";
-import { errorView, gateView, loginView, signupView, tutorGateView } from "./views/auth.js";
+import { errorView, gateView, loginView, phoneView, signupView, tutorGateView } from "./views/auth.js";
 import { boardView, lowonganView } from "./views/board.js";
 import { homeView } from "./views/home.js";
 import { lessonsView } from "./views/lessons.js";
@@ -22,6 +22,7 @@ const ROUTES = {
   board: { ...boardView, auth: true, tutorOnly: true }, lowongan: { ...lowonganView, auth: true, tutorOnly: true },
   wallet: { ...walletView, auth: true, tutorOnly: true }, kuota: { ...quotaView, auth: true },
   harga: { ...pricesView, auth: true }, riwayat: { ...historyView, auth: true },
+  whatsapp: { ...phoneView, auth: true },
   admin: { ...adminView, auth: true },
 };
 

@@ -1,8 +1,8 @@
 export type ErrorCode =
-  | "validation" | "unauthorized" | "forbidden" | "not_found" | "conflict" | "payment_required" | "rate_limited";
+  | "validation" | "unauthorized" | "forbidden" | "unverified" | "not_found" | "conflict" | "payment_required" | "rate_limited";
 
 const STATUS: Record<ErrorCode, number> = {
-  validation: 400, unauthorized: 401, forbidden: 403, not_found: 404, conflict: 409, payment_required: 402, rate_limited: 429,
+  validation: 400, unauthorized: 401, forbidden: 403, unverified: 403, not_found: 404, conflict: 409, payment_required: 402, rate_limited: 429,
 };
 
 /** Kesalahan yang aman ditampilkan ke pengguna (pesan berbahasa Indonesia). */

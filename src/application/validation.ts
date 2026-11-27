@@ -3,6 +3,7 @@ import { DAYS, DURATIONS, MAX_BUDGET, MAX_RATE, MIN_BUDGET, MIN_RATE, LEVELS, CU
 import { isArea } from "@/domain/areas";
 import { DomainError } from "@/domain/errors";
 import { MAX_TARGETS } from "@/domain/pricing";
+import { isValidEmail, normalizeEmail, OTP_LENGTH } from "@/domain/otp";
 
 export const normalizePhone = (p: string): string => {
   const d = p.replace(/\D/g, "");
@@ -17,11 +18,17 @@ const day = z.enum(DAYS as unknown as [string, ...string[]]);
 const duration = z.number().refine((d) => (DURATIONS as readonly number[]).includes(d), "Durasi harus 60, 90, atau 120 menit.");
 const slots = z.array(z.object({ day, time })).min(1, "Pilih minimal satu hari.").max(7);
 
+const email = z.string().trim().refine(isValidEmail, "Alamat email tidak valid.").transform(normalizeEmail);
+
 export const signupInput = z.object({
   name: z.string().trim().min(3, "Isi nama lengkapmu.").max(60),
-  phone, password: z.string().min(6, "Password minimal 6 karakter.").max(100),
+  email, password: z.string().min(6, "Password minimal 6 karakter.").max(100),
 });
-export const loginInput = z.object({ phone, password: z.string().min(1, "Isi password.") });
+/** `id` = email, atau nomor WhatsApp untuk akun lama yang belum punya email. */
+export const loginInput = z.object({ id: z.string().trim().min(3, "Isi email atau nomor WhatsApp."), password: z.string().min(1, "Isi password.") });
+export const emailInput = z.object({ email });
+export const verifyInput = z.object({ email, code: z.string().trim().regex(new RegExp(`^\\d{${OTP_LENGTH}}$`), `Kode terdiri dari ${OTP_LENGTH} angka.`) });
+export const phoneInput = z.object({ phone });
 
 export const searchInput = z.object({
   area, subject: z.string().max(40).optional(), level: z.string().max(20).optional(), curriculum: z.string().max(20).optional(),
@@ -42,6 +49,8 @@ export const profileInput = z.object({
   education: z.string().trim().min(3, "Isi pendidikan terakhirmu.").max(120),
   bio: z.string().trim().max(600).default(""),
   achievements: z.string().trim().max(600).default(""),
+  /** Persetujuan membuka nama dan WhatsApp (UU PDP). Wajib saat CV pertama kali dilengkapi. */
+  consent: z.boolean().optional(),
 });
 
 export const requestInput = z.object({

@@ -1,4 +1,5 @@
 import type { Clock, IdGenerator, Repositories, UnitOfWork } from "../ports";
+import { fail } from "@/domain/errors";
 import type { AppEvent, User } from "@/domain/types";
 
 /** Dependensi dasar yang dibutuhkan semua service. */
@@ -10,5 +11,13 @@ export async function recordEvent(repos: Repositories, d: BaseDeps, type: string
   await repos.events.insert(e);
 }
 
-export interface PublicUser { id: string; name: string; phone: string; isAdmin: boolean }
-export const toPublicUser = (u: User): PublicUser => ({ id: u.id, name: u.name, phone: u.phone, isAdmin: u.isAdmin });
+export interface PublicUser { id: string; name: string; email: string | null; phone: string | null; isAdmin: boolean; needsPhone: boolean }
+export const toPublicUser = (u: User): PublicUser => ({ id: u.id, name: u.name, email: u.email, phone: u.phone, isAdmin: u.isAdmin, needsPhone: u.phone === null });
+
+/**
+ * Pagar nomor WhatsApp: aksi yang membuka kontak, memakai uang, atau menampilkan identitas butuh nomor yang terdaftar.
+ * Nomor inilah yang membuat satu orang hanya mendapat satu masa percobaan.
+ */
+export function requirePhone(u: User): string {
+  return u.phone ?? fail("unverified", "Tambahkan nomor WhatsApp dulu untuk melanjutkan.");
+}

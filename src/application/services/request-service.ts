@@ -5,7 +5,7 @@ import { FEATURES, MAX_RESPONDERS, REQUEST_DAYS } from "@/domain/pricing";
 import type { Id, LessonRequest, ScheduleSlot, TutorProfile, Unlock } from "@/domain/types";
 import { toTutorView, type TutorView } from "@/domain/views";
 import { parse, requestInput } from "../validation";
-import { type BaseDeps, recordEvent } from "./context";
+import { type BaseDeps, recordEvent, requirePhone } from "./context";
 
 const DAY_MS = 86_400_000;
 
@@ -35,6 +35,7 @@ export class RequestService {
     if (!FEATURES.requestBoost && input.boostDays > 0) fail("validation", "Boost postingan belum tersedia.");
     const now = this.d.clock.now();
     return this.d.uow.run(async (r) => {
+      requirePhone((await r.users.byId(seekerId)) ?? fail("unauthorized", "Masuk dulu."));
       const targets = [...new Set(input.targetTutorIds)];
       for (const id of targets) {
         const p = await r.tutors.byUserId(id);
@@ -97,13 +98,13 @@ export class RequestService {
     });
   }
 
-  private boardView(req: LessonRequest, p: TutorProfile, unlocks: Unlock[], owner?: { name: string; phone: string }): BoardRequestView {
+  private boardView(req: LessonRequest, p: TutorProfile, unlocks: Unlock[], owner?: { name: string; phone: string | null }): BoardRequestView {
     const mine = unlocks.some((u) => u.tutorId === p.userId);
     const name = owner?.name ?? "Pencari";
     return {
       ...toView(req), owner: mine ? name : maskOwner(name), contacted: unlocks.length, slotsLeft: Math.max(0, MAX_RESPONDERS - unlocks.length), unlocked: mine,
       ...requestFitsTutor(req, p),
-      contact: mine && owner ? { seekerId: req.seekerId, name, phone: owner.phone, waNumber: toWaNumber(owner.phone) } : null,
+      contact: mine && owner?.phone ? { seekerId: req.seekerId, name, phone: owner.phone, waNumber: toWaNumber(owner.phone) } : null,
     };
   }
 }

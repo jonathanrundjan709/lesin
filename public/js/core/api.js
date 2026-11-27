@@ -22,6 +22,8 @@ async function request(method, path, body) {
   const data = await res.json().catch(() => ({}));
   // 401 di luar /auth berarti sesi tidak lagi dikenali server. UI memberi tahu pengguna dan mengarahkan ke Masuk.
   if (res.status === 401 && !path.startsWith("/auth/")) window.dispatchEvent(new CustomEvent("lesin:session-lost"));
+  // 403 "unverified" di luar /auth = aksi ini butuh nomor WhatsApp. UI mengarahkan ke langkah tambah nomor.
+  if (res.status === 403 && data.code === "unverified" && !path.startsWith("/auth/")) window.dispatchEvent(new CustomEvent("lesin:needs-phone"));
   if (!res.ok) throw new ApiError(data.error || "Terjadi kesalahan.", res.status, data.code);
   return data;
 }
@@ -39,6 +41,8 @@ export const api = {
     me: () => request("GET", "/auth/me"),
     signup: (b) => request("POST", "/auth/signup", b),
     login: (b) => request("POST", "/auth/login", b),
+    verify: (b) => request("POST", "/auth/verify", b),
+    resend: (b) => request("POST", "/auth/otp", b),
     logout: () => request("POST", "/auth/logout", {}),
   },
   tutors: {
@@ -56,6 +60,8 @@ export const api = {
     credits: () => request("GET", "/me/credits"),
     contacts: () => request("GET", "/me/contacts"),
     verify: (kind) => request("POST", "/me/verification", { kind }),
+    setPhone: (phone) => request("POST", "/me/phone", { phone }),
+    consent: (accept) => request(accept ? "POST" : "DELETE", "/me/consent", accept ? {} : undefined),
   },
   requests: {
     create: (b) => request("POST", "/requests", b),

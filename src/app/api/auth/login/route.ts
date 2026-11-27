@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { api, clearSession, setSession } from "@/app/api/_lib/http";
+import { api, setSession } from "@/app/api/_lib/http";
 
 export const POST = api(async (c) => {
   const { user, token } = await c.services.auth.login(await c.body());

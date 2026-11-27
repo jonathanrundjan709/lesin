@@ -18,6 +18,10 @@ export function trialBanner() {
     return `<section class="trial-banner"><span class="tb-ic">${ic("ticket")}</span><div class="grow"><b>${days} hari pertama gratis</b>
       <p>Daftar sekarang dan buka sampai ${contacts} kontak tutor tanpa bayar.</p></div><a class="btn sm" href="/daftar">Daftar gratis</a></section>`;
   }
+  if (session.user.needsPhone) {
+    return `<section class="trial-banner"><span class="tb-ic">${ic("ticket")}</span><div class="grow"><b>Tambahkan nomor WhatsApp</b>
+      <p>Langkah terakhir untuk memulai ${days} hari gratis (sampai ${contacts} kontak tutor).</p></div><a class="btn sm" href="/whatsapp">Tambah nomor</a></section>`;
+  }
   const c = session.contact;
   if (!c) return "";
   if (c.trialActive) {

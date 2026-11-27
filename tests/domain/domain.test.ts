@@ -62,7 +62,7 @@ test("daerah: kecamatan L3 Jabodetabek, tanpa radius", () => {
 const profile = (over: Partial<TutorProfile> = {}): TutorProfile => ({
   userId: "t", headline: "", subjects: ["Matematika"], levels: ["SMP"], curricula: ["Merdeka"], area: "Tebet", rate: 120_000, rateDurationMin: 90, experienceYears: 3,
   education: "S1", bio: "", achievements: "", teachesOffline: true, teachesOnline: true, gender: null, age: null, availableDays: [], verification: "unverified",
-  planUntil: null, ratingAvg: 0, reviewCount: 0, studentsTaught: 0, completedAt: T, createdAt: T, updatedAt: T, ...over,
+  planUntil: null, ratingAvg: 0, reviewCount: 0, studentsTaught: 0, completedAt: T, consentAt: T, consentVersion: "t", createdAt: T, updatedAt: T, ...over,
 });
 const filter = { area: "Tebet", subject: "Matematika", budget: 120_000, durationMin: 90 };
 
