@@ -36,7 +36,7 @@ export const walletView = {
   mount() {
     $$("[data-pack]").forEach((b) => (b.onclick = () => purchase(b.dataset.pack, { title: `Beli ${products().find((p) => p.key === b.dataset.pack).label}`, onPaid: () => navigate("/wallet") })));
     const plan = $("#goPlan"); if (plan) plan.onclick = planSheet;
-    $("#logoutBtn2").onclick = logout;
+    const out = $("#logoutBtn2"); if (out) out.onclick = logout;
   },
 };
 
