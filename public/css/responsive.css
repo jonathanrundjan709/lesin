@@ -140,3 +140,4 @@ main { padding-bottom: 28px; }
 .wallet-pill, .role-pill { min-height: 36px; }
 .chip.pri[data-bf], button.chip { min-height: 38px; }
 .foot-links { gap: 0 20px; }
+.foot-links a[hidden] { display: none; }
