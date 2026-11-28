@@ -18,6 +18,7 @@ export function renderChrome() {
   rb.innerHTML = `${ic(session.mode === "tutor" ? "cap" : "user")}<span class="mdot"></span>`;
   rb.setAttribute("aria-label", session.mode === "tutor" ? "Mode tutor, ganti mode" : "Mode pencari, ganti mode");
 
+  $("#footAuth").hidden = Boolean(session.user);
   const pill = $("#walletPill");
   if (!session.user) { pill.hidden = false; pill.href = "/masuk"; pill.innerHTML = `${ic("user")}Masuk`; }
   else if (session.mode === "tutor" && cvReady() && session.leads) { pill.hidden = false; pill.href = "/wallet"; pill.innerHTML = `${ic("ticket")}${session.leads.leads} lead`; }

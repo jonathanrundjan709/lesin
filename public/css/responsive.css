@@ -77,8 +77,9 @@ main { padding-bottom: 28px; }
   .timeline li { flex-direction: column; padding-bottom: 0; }
   .timeline li:not(:last-child)::before { display: none; }
 
-  #app > .auth-head, #app > .auth-tabs, #app > .role-pick, #app > form#authForm, #app > .auth-gate { max-width: 560px; margin-left: auto; margin-right: auto; }
-  #cvForm, #postForm, #searchForm { max-width: 720px; }
+  #app > .fade-in:has(#cvForm, #postForm, #searchForm) { max-width: 720px; margin: 0 auto; }
+  #app > .fade-in:has(#authForm, .auth-gate) { max-width: 520px; margin: 0 auto; }
+  .timechips { flex-wrap: wrap; overflow: visible; margin: 0; padding: 2px 0 6px; }
   .opt-grid { grid-template-columns: repeat(3, 1fr); }
   .kv { grid-template-columns: 150px 1fr; }
 
@@ -133,3 +134,10 @@ main { padding-bottom: 28px; }
 @supports (padding: max(0px)) {
   @media (max-width: 1023px) { .topbar, main, .site-footer { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); } }
 }
+
+/* target sentuh minimal ~40px */
+.foot-links a { display: inline-flex; align-items: center; min-height: 40px; }
+.wallet-pill, .role-pill { min-height: 36px; }
+.chip.pri[data-bf], button.chip { min-height: 38px; }
+.foot-links { gap: 0 20px; }
+.foot-links a[hidden] { display: none; }
